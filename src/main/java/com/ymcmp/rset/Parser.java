@@ -159,6 +159,14 @@ public class Parser {
         final Token t = getToken();
         if (t != null) {
             switch (t.type) {
+            case S_QM:
+                return new EvalRule((self, env, state) -> {
+                    base.captures.clear();
+                    state.push();
+                    if (base.eval(env, state)) self.captures.putAll(base.captures);
+                    else state.pop();
+                    return true;
+                });
             case S_AD:
                 return new EvalRule((self, env, state) -> {
                     for (int i = 0; /* no condition */ ; ++i) {
@@ -324,7 +332,8 @@ public class Parser {
 
         final int k = elms.size() - 1;
         if (elms.get(k) == null) elms.remove(k);
-        return (env) -> Stdlib.concat(elms.toArray(new Object[elms.size()]));
+        return (env) -> Stdlib.concat(elms.stream().map(e -> e.apply(env))
+                .toArray(Object[]::new));
     }
 
     public ExprAction parseArray() {

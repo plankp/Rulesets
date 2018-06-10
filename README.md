@@ -20,7 +20,7 @@ rule alhex
   = (&digit | a-f | A-F)+
 
 rule number
-  = n:('0' x &alhex | '0' | '1'-'9' &digit | '1'-'9')
+  = n:('0' (x &alhex)? | '1'-'9' &digit?)
 {
     'Yes: ' ~ (*_concat *n)
 }

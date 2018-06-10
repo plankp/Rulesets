@@ -9,7 +9,7 @@ public final class Token implements Serializable {
     public enum Type {
         L_NUMBER, L_IDENT,
         S_CM,
-        S_MN, S_AD,
+        S_MN, S_AD, S_QM,
         S_EQ, S_CO,
         S_OR, S_TD, S_ST,
         S_AM, S_EX,

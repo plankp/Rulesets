@@ -26,7 +26,7 @@ public class Main {
             // "# Is this considered a meta-lexer?\n" +
             // "rule digit    = n:('0'-'9'+),\n" +
             // "rule alhex    = n:((&digit | a-f | A-F)+),\n" +
-            // "rule number   = n:('0' x &alhex | '0' | '1'-'9' &digit | '1'-'9') { 'Yes: '~(*_concat *n) }"
+            // "rule number   = n:('0' (x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (*_concat *n) }"
         );
         try (final Lexer lexer = new Lexer(reader)) {
             final Parser parser = new Parser(lexer);
@@ -38,7 +38,7 @@ public class Main {
                 { 1 },
                 { 0, 1, "abc" },
                 { "a", "b", "c", },
-                { "a", "b", "c", "d", "e", "f" }
+                { "a", "b", "c", "d", "e", "f" },
 
                 // { "x" },
                 // { "0" }, { "1" }, { "2" }, { "3" }, { "4" },

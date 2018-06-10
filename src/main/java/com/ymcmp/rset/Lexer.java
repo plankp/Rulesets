@@ -28,6 +28,7 @@ public class Lexer implements Closeable {
                 case '=':  return new Token(Token.Type.S_EQ, "=");
                 case '-':  return new Token(Token.Type.S_MN, "-");
                 case '+':  return new Token(Token.Type.S_AD, "+");
+                case '?':  return new Token(Token.Type.S_QM, "?");
                 case ':':  return new Token(Token.Type.S_CO, ":");
                 case '|':  return new Token(Token.Type.S_OR, "|");
                 case '~':  return new Token(Token.Type.S_TD, "~");
