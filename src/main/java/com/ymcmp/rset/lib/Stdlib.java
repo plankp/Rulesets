@@ -1,6 +1,7 @@
 package com.ymcmp.rset.lib;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Collection;
 import java.util.function.Function;
 
@@ -161,6 +162,20 @@ public final class Stdlib {
         } catch (IndexOutOfBoundsException ex) {
             return null;
         }
+    }
+
+    @Export("_eqls")
+    @Varargs(2)
+    public static boolean equals(final Object a, final Object b, final Object... c) {
+        if (Objects.equals(a, b)) {
+            for (final Object k : c) {
+                if (!(Objects.equals(a, k) || Objects.equals(b, k))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     @Export("_truthy")

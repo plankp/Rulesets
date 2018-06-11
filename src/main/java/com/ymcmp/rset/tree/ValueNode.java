@@ -31,9 +31,7 @@ public final class ValueNode extends ParseTree {
     public Object toObject() {
         switch (token.type) {
             case L_IDENT:
-                return token.text.length() == 1
-                    ? token.text.charAt(0)
-                    : token.text;
+                return token.text;
             case L_NUMBER:
                 return Integer.parseInt(token.text);
             default:

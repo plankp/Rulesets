@@ -14,7 +14,7 @@ public final class KaryRule extends ParseTree {
     public enum Type {
         SEQ, SWITCH,
         SUBSCRIPT, JOIN, ARRAY,
-        CALL, AND, OR, ASSIGN
+        CALL, AND, OR, ASSIGN;
     }
 
     public final Type type;

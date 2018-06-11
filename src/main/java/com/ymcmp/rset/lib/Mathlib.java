@@ -56,6 +56,16 @@ public final class Mathlib {
         return k;
     }
 
+    @Export("_pow")
+    public static double pow(double a, double b) {
+        return Math.pow(a, b);
+    }
+
+    @Export("_sqrt")    // make it varargs
+    public static double sqrt(double a) {
+        return Math.sqrt(a);
+    }
+
     @Export
     @Varargs(2)
     public static int _and(int a, int b, Object[] c) {
