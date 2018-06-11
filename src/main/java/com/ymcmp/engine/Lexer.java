@@ -1,18 +1,23 @@
 package com.ymcmp.engine;
 
+import java.util.function.IntPredicate;
+
 public interface Lexer<T extends Enum<T>> {
 
     public Token<T> nextToken();
 
-    public static boolean isDigit(final int digit) {
-        return digit >= '0' && digit <= '9';
-    }
+    public int read();
 
-    public static boolean isIdent(final int id) {
-        return id >= 'a' && id <= 'z'
-            || id >= 'A' && id <= 'Z'
-            || id == '$' || id == '_'
-            || isDigit(id);
+    public void unread(int k);
+
+    public default String readWhile(IntPredicate pred) {
+        final StringBuilder sb = new StringBuilder();
+        int k;
+        while (pred.test(k = read())) {
+            sb.append((char) k);
+        }
+        unread(k);
+        return sb.toString();
     }
 
     public static boolean isEOL(final int eol) {

@@ -8,6 +8,8 @@ import com.ymcmp.rset.tree.*;
 import com.ymcmp.engine.Lexer;
 import com.ymcmp.engine.Token;
 import com.ymcmp.engine.Parser;
+import com.ymcmp.engine.IllegalParseException;
+
 import com.ymcmp.engine.tree.ParseTree;
 
 public class RsetParser implements Parser<Type, RulesetGroup> {
@@ -145,10 +147,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         final Token<Type> t = getToken();
         if (t != null) {
             if (t.type == Type.L_IDENT && "rule".equals(t.text)) {
-                final ValueNode name = parseValue();
-                if (name == null) {
-                    throw new RuntimeException("Missing name for ruleset");
-                }
+                final ValueNode name = consumeRule(this::parseValue, "Missing name for ruleset");
 
                 consumeToken(Type.S_EQ, "Expected '=' in ruleset '" + name.getText() + "' before rule");
 
@@ -198,7 +197,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         if (substs.size() == 1) return substs.get(0);
 
         if (substs.get(substs.size() - 1) == null) {
-            throw new RuntimeException("Incomplete ':' expression, missing rhs");
+            throw new IllegalParseException("Incomplete ':' expression, missing rhs");
         }
         return new KaryRule(KaryRule.Type.SUBSCRIPT, substs);
     }
@@ -255,7 +254,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);
         if (elms.get(elms.size() - 1) == null) {
-            throw new RuntimeException("Incomplete '&' expression, missing rhs");
+            throw new IllegalParseException("Incomplete '&' expression, missing rhs");
         }
         return new KaryRule(KaryRule.Type.AND, elms);
     }
@@ -266,7 +265,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);
         if (elms.get(elms.size() - 1) == null) {
-            throw new RuntimeException("Incomplete '|' expression, missing rhs");
+            throw new IllegalParseException("Incomplete '|' expression, missing rhs");
         }
         return new KaryRule(KaryRule.Type.OR, elms);
     }
@@ -277,7 +276,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);
         if (elms.get(elms.size() - 1) == null) {
-            throw new RuntimeException("Incomplete '=' expression, missing rhs");
+            throw new IllegalParseException("Incomplete '=' expression, missing rhs");
         }
         return new KaryRule(KaryRule.Type.ASSIGN, elms);
     }

@@ -24,7 +24,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
             final int c = read();
             switch (c) {
                 case -1:   return null;
-                case '#':  while (!isEOL(read()));
+                case '#':  readWhile(k -> !Lexer.isEOL(k));
                 case ' ':
                 case '\n':
                 case '\r':
@@ -80,23 +80,16 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                     return new Token(Type.L_IDENT, sb.toString());
                 }
                 default: {
-                    final StringBuilder sb = new StringBuilder();
-                    if (isDigit(c)) {
-                        int k = c;
-                        do {
-                            sb.append((char) k);
-                        } while (isDigit((k = read())));
-                        unread(k);
-                        return new Token(Type.L_NUMBER, sb.toString());
+                    unread(c);
+
+                    final String t = readWhile(Character::isDigit);
+                    if (!t.isEmpty()) {
+                        return new Token(Type.L_NUMBER, t);
                     }
 
-                    if (isIdent(c)) {
-                        int k = c;
-                        do {
-                            sb.append((char) k);
-                        } while (isIdent((k = read())));
-                        unread(k);
-                        return new Token(Type.L_IDENT, sb.toString());
+                    final String i = readWhile(RsetLexer::isIdent);
+                    if (!i.isEmpty()) {
+                        return new Token(Type.L_IDENT, i);
                     }
 
                     throw new RuntimeException("Unknown char " + (char) c);
@@ -105,6 +98,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
         }
     }
 
+    @Override
     public int read() {
         try {
             if (buf == -1) return reader.read();
@@ -116,6 +110,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
         }
     }
 
+    @Override
     public void unread(final int k) {
         if (buf != -1) throw new RuntimeException("Not buffering > 1 chars");
         buf = k;
@@ -124,5 +119,12 @@ public class RsetLexer implements Lexer<Type>, Closeable {
     @Override
     public void close() throws IOException {
         reader.close();
+    }
+
+    public static boolean isIdent(final int id) {
+        return id >= 'a' && id <= 'z'
+            || id >= 'A' && id <= 'Z'
+            || id == '$' || id == '_'
+            || Character.isDigit(id);
     }
 }

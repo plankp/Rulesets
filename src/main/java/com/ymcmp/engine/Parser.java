@@ -23,10 +23,16 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
 
     public R parse();
 
+    public default Token<T> peekToken() {
+        final Token<T> t = getToken();
+        ungetToken(t);
+        return t;
+    }
+
     public default Token<T> consumeToken(T type, String messageWhenUnmatched) {
         final Token<T> token = getToken();
         if (token == null || token.type != type) {
-            throw new RuntimeException(messageWhenUnmatched);
+            throw new IllegalParseException(messageWhenUnmatched);
         }
         return token;
     }
@@ -34,7 +40,7 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
     public default <R> R consumeRule(Supplier<? extends R> rule, String messageWhenUnmatched) {
         final R t = rule.get();
         if (t == null) {
-            throw new RuntimeException(messageWhenUnmatched);
+            throw new IllegalParseException(messageWhenUnmatched);
         }
         return t;
     }
@@ -66,10 +72,9 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
 
     public default <R> R consumeRules(TriFunction<? super Token<T>, ? super R, ? super R, ? extends R> fn,
                                       Supplier<? extends R> rule, List<T> delim) {
-        final R head = rule.get();
+        R head = rule.get();
         if (head == null) return null;
 
-        R ret = head;
         while (true) {
             Token<T> t = null;
             if (!delim.isEmpty()) {
@@ -82,12 +87,12 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
             final R tail = rule.get();
             if (tail == null) {
                 if (!delim.isEmpty()) {
-                    ret = fn.apply(t, ret, tail);
+                    head = fn.apply(t, head, tail);
                 }
                 break;
             }
-            ret = fn.apply(t, ret, tail);
+            head = fn.apply(t, head, tail);
         }
-        return ret;
+        return head;
     }
 }
