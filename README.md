@@ -22,7 +22,7 @@ rule alhex
 rule number
   = n:('0' (x &alhex)? | '1'-'9' &digit?)
 {
-    'Yes: ' ~ (*_concat *n)
+    'Yes: ' ~ (?_concat ?n)
 }
 ```
 

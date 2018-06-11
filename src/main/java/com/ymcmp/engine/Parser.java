@@ -2,11 +2,18 @@ package com.ymcmp.engine;
 
 import java.util.List;
 import java.util.ArrayList;
+
 import java.util.function.Supplier;
 
 import com.ymcmp.engine.tree.ParseTree;
 
 public interface Parser<T extends Enum<T>, R extends ParseTree> {
+
+    @FunctionalInterface
+    public static interface TriFunction<A, B, C, R> {
+
+        public R apply(A a, B b, C c);
+    }
 
     public Lexer<T> getLexer();
 
@@ -41,7 +48,7 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
 
         while (true) {
             if (delim != null) {
-                final Token t = getToken();
+                final Token<T> t = getToken();
                 if (t == null || t.type != delim) {
                     ungetToken(t);
                     break;
@@ -55,5 +62,32 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
             elms.add(el);
         }
         return elms;
+    }
+
+    public default <R> R consumeRules(TriFunction<? super Token<T>, ? super R, ? super R, ? extends R> fn,
+                                      Supplier<? extends R> rule, List<T> delim) {
+        final R head = rule.get();
+        if (head == null) return null;
+
+        R ret = head;
+        while (true) {
+            Token<T> t = null;
+            if (!delim.isEmpty()) {
+                t = getToken();
+                if (t == null || !delim.contains(t.type)) {
+                    ungetToken(t);
+                    break;
+                }
+            }
+            final R tail = rule.get();
+            if (tail == null) {
+                if (!delim.isEmpty()) {
+                    ret = fn.apply(t, ret, tail);
+                }
+                break;
+            }
+            ret = fn.apply(t, ret, tail);
+        }
+        return ret;
     }
 }

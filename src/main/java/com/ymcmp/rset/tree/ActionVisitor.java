@@ -9,7 +9,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.ymcmp.rset.ExprAction;
+
 import com.ymcmp.rset.lib.Stdlib;
+import com.ymcmp.rset.lib.Mathlib;
 
 import com.ymcmp.engine.tree.Visitor;
 import com.ymcmp.engine.tree.ParseTree;
@@ -28,10 +30,49 @@ public class ActionVisitor extends Visitor<ExprAction> {
     public ExprAction visitUnaryRule(UnaryRule n) {
         final ExprAction ref = visit(n.rule);
         switch (n.op.type) {
-            case S_ST:
+            case S_QM:
                 return (env) -> env.get(ref.apply(env).toString());
             default:
                 throw new RuntimeException("Unknown unary operator " + n.op);
+        }
+    }
+
+    public ExprAction visitBinaryRule(BinaryRule n) {
+        final ExprAction lhs = visit(n.rule1);
+        final ExprAction rhs = visit(n.rule2);
+        switch (n.op.type) {
+            case S_AD:
+                return (env) -> {
+                    final Number a = (Number) lhs.apply(env);
+                    final Number b = (Number) rhs.apply(env);
+                    return Mathlib.add(a.doubleValue(), b.doubleValue());
+                };
+            case S_MN:
+                return (env) -> {
+                    final Number a = (Number) lhs.apply(env);
+                    final Number b = (Number) rhs.apply(env);
+                    return Mathlib.sub(a.doubleValue(), b.doubleValue());
+                };
+            case S_ST:
+                return (env) -> {
+                    final Number a = (Number) lhs.apply(env);
+                    final Number b = (Number) rhs.apply(env);
+                    return Mathlib.mul(a.doubleValue(), b.doubleValue());
+                };
+            case S_DV:
+                return (env) -> {
+                    final Number a = (Number) lhs.apply(env);
+                    final Number b = (Number) rhs.apply(env);
+                    return Mathlib.div(a.doubleValue(), b.doubleValue());
+                };
+            case S_MD:
+                return (env) -> {
+                    final Number a = (Number) lhs.apply(env);
+                    final Number b = (Number) rhs.apply(env);
+                    return Mathlib.mod(a.doubleValue(), b.doubleValue());
+                };
+            default:
+                throw new RuntimeException("Unknown binary operator " + n.op);
         }
     }
 

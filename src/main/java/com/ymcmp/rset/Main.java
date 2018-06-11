@@ -21,17 +21,17 @@ public class Main {
     public static void main(String[] args) {
         final StringReader reader = new StringReader(
             "# A bunch of rule clauses follow...\n" +
-            "rule alpha = 0 abc | (1!) { *_ ((*_add 1 2 3) & abc | def) },\n" +
+            "rule alpha = 0 abc | (1!) { ?_ ((1 + 2 + 3) & abc | def) },\n" +
             "rule beta  = 00 (abc | 1),\n" +
             "rule all   = ((*) (*) | (*))! { 'Kleen AF' },\n" +
             "rule inc   = &beta abc,\n" +
             "rule abc   = a b c { 'rule abc is matched' },\n" +
-            "rule a2f   = r:&abc d e f:f { *_join You can count from *r:0 to *f }"
+            "rule a2f   = r:&abc d e f:f { ?_join You can count from ?r:0 to ?f }"
 
             // "# Is this considered a meta-lexer?\n" +
             // "rule digit    = n:('0'-'9'+),\n" +
             // "rule alhex    = n:((&digit | a-f | A-F)+),\n" +
-            // "rule number   = n:('0' (x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (*_concat *n) }"
+            // "rule number   = n:('0' (x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (?_concat ?n) }"
         );
         try (final RsetLexer lexer = new RsetLexer(reader)) {
             final Parser<Type, RulesetGroup> parser = new RsetParser(lexer);

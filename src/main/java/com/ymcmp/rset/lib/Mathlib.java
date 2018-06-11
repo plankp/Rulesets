@@ -6,9 +6,9 @@ public final class Mathlib {
         //
     }
 
-    @Export
+    @Export("_add")
     @Varargs(2)
-    public static double _add(double a, double b, Object[] c) {
+    public static double add(double a, double b, Object... c) {
         double k = a + b;
         for (final Object i : c) {
             k += ((Number) i).doubleValue();
@@ -16,9 +16,9 @@ public final class Mathlib {
         return k;
     }
 
-    @Export
+    @Export("_sub")
     @Varargs(2)
-    public static double _sub(double a, double b, Object[] c) {
+    public static double sub(double a, double b, Object... c) {
         double k = a - b;
         for (final Object i : c) {
             k -= ((Number) i).doubleValue();
@@ -26,9 +26,9 @@ public final class Mathlib {
         return k;
     }
 
-    @Export
+    @Export("_mul")
     @Varargs(2)
-    public static double _mul(double a, double b, Object[] c) {
+    public static double mul(double a, double b, Object... c) {
         double k = a * b;
         for (final Object i : c) {
             k *= ((Number) i).doubleValue();
@@ -36,9 +36,9 @@ public final class Mathlib {
         return k;
     }
 
-    @Export
+    @Export("_div")
     @Varargs(2)
-    public static double _div(double a, double b, Object[] c) {
+    public static double div(double a, double b, Object... c) {
         double k = a / b;
         for (final Object i : c) {
             k /= ((Number) i).doubleValue();
@@ -46,9 +46,9 @@ public final class Mathlib {
         return k;
     }
 
-    @Export
+    @Export("_mod")
     @Varargs(2)
-    public static double _mod(double a, double b, Object[] c) {
+    public static double mod(double a, double b, Object... c) {
         double k = a % b;
         for (final Object i : c) {
             k %= ((Number) i).doubleValue();

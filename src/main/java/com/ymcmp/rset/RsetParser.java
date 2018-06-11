@@ -178,7 +178,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         final Token<Type> t = getToken();
         if (t != null) {
             switch (t.type) {
-                case S_ST:
+                case S_QM:
                     return new UnaryRule(t, parseExprValue());
                 case S_LP: {
                     final ParseTree r = parseExpression();
@@ -203,8 +203,26 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         return new KaryRule(KaryRule.Type.SUBSCRIPT, substs);
     }
 
+    private static final List<Type> TOKS_PARSE_MUL = new ArrayList<Type>() {{
+        add(Type.S_ST);
+        add(Type.S_DV);
+        add(Type.S_MD);
+    }};
+
+    private static final List<Type> TOKS_PARSE_ADD = new ArrayList<Type>() {{
+        add(Type.S_AD);
+        add(Type.S_MN);
+    }};
+
+    public ParseTree parseMath() {
+        return consumeRules(BinaryRule::new, () ->
+                consumeRules(BinaryRule::new, this::parseSubscript,
+                        TOKS_PARSE_MUL),
+                TOKS_PARSE_ADD);
+    }
+
     public ParseTree parseJoin() {
-        final List<ParseTree> elms = consumeRules(this::parseSubscript, Type.S_TD);
+        final List<ParseTree> elms = consumeRules(this::parseMath, Type.S_TD);
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);
 

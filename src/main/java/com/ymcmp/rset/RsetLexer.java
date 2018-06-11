@@ -39,6 +39,8 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                 case '|':  return new Token(Type.S_OR, "|");
                 case '~':  return new Token(Type.S_TD, "~");
                 case '*':  return new Token(Type.S_ST, "*");
+                case '/':  return new Token(Type.S_DV, "/");
+                case '%':  return new Token(Type.S_MD, "&");
                 case '!':  return new Token(Type.S_EX, "!");
                 case '&':  return new Token(Type.S_AM, "&");
                 case '(':  return new Token(Type.S_LP, "(");
