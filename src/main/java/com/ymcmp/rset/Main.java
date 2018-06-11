@@ -4,12 +4,17 @@ import java.io.IOException;
 import java.io.StringReader;
 
 import java.util.Map;
+import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 import com.ymcmp.rset.lib.Extensions;
+import com.ymcmp.rset.tree.RulesetGroup;
+
+import com.ymcmp.engine.Parser;
+import com.ymcmp.engine.tree.ParseTree;
 
 public class Main {
 
@@ -28,9 +33,10 @@ public class Main {
             // "rule alhex    = n:((&digit | a-f | A-F)+),\n" +
             // "rule number   = n:('0' (x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (*_concat *n) }"
         );
-        try (final Lexer lexer = new Lexer(reader)) {
-            final Parser parser = new Parser(lexer);
-            final Map<String, Ruleset> env = Ruleset.toEvalMap(parser.parseRulesets());
+        try (final RsetLexer lexer = new RsetLexer(reader)) {
+            final Parser<Type, RulesetGroup> parser = new RsetParser(lexer);
+            final RulesetGroup tree = parser.parse();
+            final Map<String, Ruleset> env = Ruleset.toEvalMap(tree.toRulesetStream());
             final Extensions ext = new Extensions();
             final Object[][] tests = {
                 { 0, "abc" },

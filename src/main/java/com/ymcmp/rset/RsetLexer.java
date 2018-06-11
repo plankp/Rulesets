@@ -4,16 +4,22 @@ import java.io.Reader;
 import java.io.Closeable;
 import java.io.IOException;
 
-public class Lexer implements Closeable {
+import com.ymcmp.engine.Lexer;
+import com.ymcmp.engine.Token;
+
+import static com.ymcmp.engine.Lexer.*;
+
+public class RsetLexer implements Lexer<Type>, Closeable {
 
     private Reader reader;
     private int buf = -1;
 
-    public Lexer(final Reader reader) {
+    public RsetLexer(final Reader reader) {
         this.reader = reader;
     }
 
-    public Token nextToken() {
+    @Override
+    public Token<Type> nextToken() {
         while (true) {
             final int c = read();
             switch (c) {
@@ -24,21 +30,21 @@ public class Lexer implements Closeable {
                 case '\r':
                 case '\t': continue;
 // NOTE: Above cases abuses fallthroughs! Careful when re-ordering
-                case ',':  return new Token(Token.Type.S_CM, ",");
-                case '=':  return new Token(Token.Type.S_EQ, "=");
-                case '-':  return new Token(Token.Type.S_MN, "-");
-                case '+':  return new Token(Token.Type.S_AD, "+");
-                case '?':  return new Token(Token.Type.S_QM, "?");
-                case ':':  return new Token(Token.Type.S_CO, ":");
-                case '|':  return new Token(Token.Type.S_OR, "|");
-                case '~':  return new Token(Token.Type.S_TD, "~");
-                case '*':  return new Token(Token.Type.S_ST, "*");
-                case '!':  return new Token(Token.Type.S_EX, "!");
-                case '&':  return new Token(Token.Type.S_AM, "&");
-                case '(':  return new Token(Token.Type.S_LP, "(");
-                case ')':  return new Token(Token.Type.S_RP, ")");
-                case '{':  return new Token(Token.Type.S_LB, "{");
-                case '}':  return new Token(Token.Type.S_RB, "}");
+                case ',':  return new Token(Type.S_CM, ",");
+                case '=':  return new Token(Type.S_EQ, "=");
+                case '-':  return new Token(Type.S_MN, "-");
+                case '+':  return new Token(Type.S_AD, "+");
+                case '?':  return new Token(Type.S_QM, "?");
+                case ':':  return new Token(Type.S_CO, ":");
+                case '|':  return new Token(Type.S_OR, "|");
+                case '~':  return new Token(Type.S_TD, "~");
+                case '*':  return new Token(Type.S_ST, "*");
+                case '!':  return new Token(Type.S_EX, "!");
+                case '&':  return new Token(Type.S_AM, "&");
+                case '(':  return new Token(Type.S_LP, "(");
+                case ')':  return new Token(Type.S_RP, ")");
+                case '{':  return new Token(Type.S_LB, "{");
+                case '}':  return new Token(Type.S_RB, "}");
                 case '\'':
                 case '"': {
                     final StringBuilder sb = new StringBuilder();
@@ -69,7 +75,7 @@ public class Lexer implements Closeable {
                                 sb.append((char) k);
                         }
                     }
-                    return new Token(Token.Type.L_IDENT, sb.toString());
+                    return new Token(Type.L_IDENT, sb.toString());
                 }
                 default: {
                     final StringBuilder sb = new StringBuilder();
@@ -79,7 +85,7 @@ public class Lexer implements Closeable {
                             sb.append((char) k);
                         } while (isDigit((k = read())));
                         unread(k);
-                        return new Token(Token.Type.L_NUMBER, sb.toString());
+                        return new Token(Type.L_NUMBER, sb.toString());
                     }
 
                     if (isIdent(c)) {
@@ -88,7 +94,7 @@ public class Lexer implements Closeable {
                             sb.append((char) k);
                         } while (isIdent((k = read())));
                         unread(k);
-                        return new Token(Token.Type.L_IDENT, sb.toString());
+                        return new Token(Type.L_IDENT, sb.toString());
                     }
 
                     throw new RuntimeException("Unknown char " + (char) c);
@@ -116,27 +122,5 @@ public class Lexer implements Closeable {
     @Override
     public void close() throws IOException {
         reader.close();
-    }
-
-    public static boolean isDigit(final int digit) {
-        return digit >= '0' && digit <= '9';
-    }
-
-    public static boolean isIdent(final int id) {
-        return id >= 'a' && id <= 'z'
-            || id >= 'A' && id <= 'Z'
-            || id == '$' || id == '_'
-            || isDigit(id);
-    }
-
-    public static boolean isEOL(final int eol) {
-        switch (eol) {
-            case -1:
-            case '\n':
-            case '\r':
-                return true;
-            default:
-                return false;
-        }
     }
 }

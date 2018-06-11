@@ -3,6 +3,7 @@ package com.ymcmp.rset;
 import java.util.Map;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
 import com.ymcmp.rset.lib.Extensions;
@@ -35,9 +36,8 @@ public class Ruleset {
         this.action = act;
     }
 
-    public static Map<String, Ruleset> toEvalMap(List<Ruleset> rsets) {
-        return rsets.stream()
-                .filter(e -> e != null)
+    public static Map<String, Ruleset> toEvalMap(Stream<Ruleset> rsets) {
+        return rsets.filter(e -> e != null)
                 .collect(Collectors.toMap(Ruleset::getName, e -> e));
     }
 

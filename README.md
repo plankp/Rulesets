@@ -29,9 +29,9 @@ rule number
 Interfacing the rules with Java:
 
 ```java
-try (final Lexer lexer = new Lexer(/* A Reader that contains the above code */)) {
-    final Parser parser = new Parser(lexer);
-    final Map<String, Ruleset> env = Ruleset.toEvalMap(parser.parseRulesets());
+try (final RsetLexer lexer = new RsetLexer(/* A Reader that contains the above code */)) {
+    final RsetParser parser = new RsetParser(lexer);
+    final Map<String, Ruleset> env = Ruleset.toEvalMap(parser.parse().toRulesetStream());
     final Extensions ext = new Extensions();
 
     // Replace with your own sequence of data, using 0x1234 as example
