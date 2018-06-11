@@ -26,9 +26,9 @@ public class Main {
             "rule a2f   = r:&abc d e f:f { ?_join You can count from ?r:0 to ?f }"
 
             // "# Is this considered a meta-lexer?\n" +
-            // "rule digit    = n:('0'-'9'+),\n" +
-            // "rule alhex    = n:((&digit | a-f | A-F)+),\n" +
-            // "rule number   = n:('0' (x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (?_concat ?n) }"
+            // "rule digit    = '0'-'9'+,\n" +
+            // "rule alhex    = (&digit | a-f | A-F)+,\n" +
+            // "rule number   = n:('0' a:(x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (?_concat ?n) }"
         );
         try (final RsetLexer lexer = new RsetLexer(reader)) {
             final RsetParser parser = new RsetParser(lexer);

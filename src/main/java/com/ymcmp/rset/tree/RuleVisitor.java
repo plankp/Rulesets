@@ -127,7 +127,9 @@ public class RuleVisitor extends Visitor<EvalRule> {
                 for (int i = 0; i < capture.length; ++i) {
                     m.put(Integer.toString(i), capture[i]);
                 }
+                self.captures.putAll(rule.captures);
                 self.captures.put(dest, m);
+                // System.out.println(" -- DEBUG" + self.captures);
             }
             return ret;
         });
