@@ -4,11 +4,13 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.function.Function;
 
+import com.ymcmp.function.TriPredicate;
+
 public final class EvalRule {
 
-    public static interface EvalFunc {
+    @FunctionalInterface
+    public static interface EvalFunc extends TriPredicate<EvalRule, Map<String, Ruleset>, EvalState> {
 
-        public boolean eval(final EvalRule self, Map<String, Ruleset> env, EvalState eval);
     }
 
     public final Map<String, Object> captures = new HashMap<>();
@@ -24,10 +26,10 @@ public final class EvalRule {
 
     public boolean eval(Map<String, Ruleset> env, EvalState eval) {
         reset();
-        return clause.eval(this, env, eval);
+        return clause.test(this, env, eval);
     }
 
     public boolean eval(EvalRule self, Map<String, Ruleset> env, EvalState eval) {
-        return clause.eval(self, env, eval);
+        return clause.test(self, env, eval);
     }
 }

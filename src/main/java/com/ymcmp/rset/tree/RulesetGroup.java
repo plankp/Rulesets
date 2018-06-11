@@ -6,7 +6,7 @@ import java.util.stream.Collectors;
 
 import com.ymcmp.rset.Ruleset;
 
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public final class RulesetGroup extends ParseTree {
 

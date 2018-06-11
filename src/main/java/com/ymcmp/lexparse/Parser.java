@@ -1,19 +1,15 @@
-package com.ymcmp.engine;
+package com.ymcmp.lexparse;
 
 import java.util.List;
 import java.util.ArrayList;
 
 import java.util.function.Supplier;
 
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.function.TriFunction;
+
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public interface Parser<T extends Enum<T>, R extends ParseTree> {
-
-    @FunctionalInterface
-    public static interface TriFunction<A, B, C, R> {
-
-        public R apply(A a, B b, C c);
-    }
 
     public Lexer<T> getLexer();
 

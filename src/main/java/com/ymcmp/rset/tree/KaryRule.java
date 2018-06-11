@@ -6,8 +6,8 @@ import java.util.stream.Collectors;
 
 import com.ymcmp.rset.Type;
 
-import com.ymcmp.engine.Token;
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.lexparse.Token;
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public final class KaryRule extends ParseTree {
 

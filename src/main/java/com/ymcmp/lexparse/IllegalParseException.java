@@ -1,4 +1,4 @@
-package com.ymcmp.engine;
+package com.ymcmp.lexparse;
 
 public class IllegalParseException extends RuntimeException {
 

@@ -4,10 +4,8 @@ import java.io.Reader;
 import java.io.Closeable;
 import java.io.IOException;
 
-import com.ymcmp.engine.Lexer;
-import com.ymcmp.engine.Token;
-
-import static com.ymcmp.engine.Lexer.*;
+import com.ymcmp.lexparse.Lexer;
+import com.ymcmp.lexparse.Token;
 
 public class RsetLexer implements Lexer<Type>, Closeable {
 

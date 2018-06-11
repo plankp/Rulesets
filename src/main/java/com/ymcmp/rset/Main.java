@@ -13,9 +13,6 @@ import java.util.stream.Collectors;
 import com.ymcmp.rset.lib.Extensions;
 import com.ymcmp.rset.tree.RulesetGroup;
 
-import com.ymcmp.engine.Parser;
-import com.ymcmp.engine.tree.ParseTree;
-
 public class Main {
 
     public static void main(String[] args) {
@@ -34,7 +31,7 @@ public class Main {
             // "rule number   = n:('0' (x &alhex)? | '1'-'9' &digit?) { 'Yes: ' ~ (?_concat ?n) }"
         );
         try (final RsetLexer lexer = new RsetLexer(reader)) {
-            final Parser<Type, RulesetGroup> parser = new RsetParser(lexer);
+            final RsetParser parser = new RsetParser(lexer);
             final RulesetGroup tree = parser.parse();
             final Map<String, Ruleset> env = Ruleset.toEvalMap(tree.toRulesetStream());
             final Extensions ext = new Extensions();

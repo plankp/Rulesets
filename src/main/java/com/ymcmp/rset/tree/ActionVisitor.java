@@ -13,8 +13,8 @@ import com.ymcmp.rset.ExprAction;
 import com.ymcmp.rset.lib.Stdlib;
 import com.ymcmp.rset.lib.Mathlib;
 
-import com.ymcmp.engine.tree.Visitor;
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.lexparse.tree.Visitor;
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public class ActionVisitor extends Visitor<ExprAction> {
 

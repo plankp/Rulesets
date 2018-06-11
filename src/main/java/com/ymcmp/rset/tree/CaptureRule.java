@@ -5,8 +5,8 @@ import java.util.HashMap;
 
 import com.ymcmp.rset.Type;
 
-import com.ymcmp.engine.Token;
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.lexparse.Token;
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public final class CaptureRule extends ParseTree {
 

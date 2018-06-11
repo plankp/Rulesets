@@ -2,7 +2,7 @@ package com.ymcmp.rset.tree;
 
 import com.ymcmp.rset.Ruleset;
 
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public final class RulesetNode extends ParseTree {
 

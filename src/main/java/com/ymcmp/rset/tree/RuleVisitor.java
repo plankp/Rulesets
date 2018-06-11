@@ -5,8 +5,8 @@ import java.util.HashMap;
 
 import com.ymcmp.rset.EvalRule;
 
-import com.ymcmp.engine.tree.Visitor;
-import com.ymcmp.engine.tree.ParseTree;
+import com.ymcmp.lexparse.tree.Visitor;
+import com.ymcmp.lexparse.tree.ParseTree;
 
 public class RuleVisitor extends Visitor<EvalRule> {
 
