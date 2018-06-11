@@ -13,8 +13,8 @@ import java.lang.reflect.InvocationTargetException;
 
 public final class Extensions {
 
-    public static final int EXT_STDLIB = 1 << 1;
-    public static final int EXT_MATH   = 1 << 2;
+    public static final int EXT_STDLIB = 1 << 0;
+    public static final int EXT_MATH   = 1 << 1;
 
     public static final int ENABLE_ALL = EXT_STDLIB | EXT_MATH;
 

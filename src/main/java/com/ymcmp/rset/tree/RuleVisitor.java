@@ -129,7 +129,6 @@ public class RuleVisitor extends Visitor<EvalRule> {
                 }
                 self.captures.putAll(rule.captures);
                 self.captures.put(dest, m);
-                // System.out.println(" -- DEBUG" + self.captures);
             }
             return ret;
         });

@@ -5,3 +5,11 @@ sourceCompatibility = '1.8'
 targetCompatibility = '1.8'
 
 mainClassName = 'com.ymcmp.rset.Main'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+}
