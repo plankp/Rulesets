@@ -7,9 +7,6 @@ import java.util.HashMap;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
 
-import java.util.function.Function;
-import java.util.function.Supplier;
-
 import com.ymcmp.rset.lib.Stdlib;
 import com.ymcmp.rset.lib.Mathlib;
 

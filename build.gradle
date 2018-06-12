@@ -11,5 +11,6 @@ repositories {
 }
 
 dependencies {
+    compile 'org.ow2.asm:asm:6.2'
     testCompile 'junit:junit:4.12'
 }
