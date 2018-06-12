@@ -24,6 +24,7 @@ public class Main {
             "rule inc   = &beta abc,\n" +
             "rule abc   = a b c { 'rule abc is matched' },\n" +
             "rule a2f   = r:&abc d e f:f { ?_join You can count from ?r:0 to ?f }"
+            // "rule k = 1+ 2* 3 | j:~(5-6)? { Yes ~ ?j }"
         );
         try (final RsetLexer lexer = new RsetLexer(reader)) {
             final RsetParser parser = new RsetParser(lexer);
@@ -37,6 +38,7 @@ public class Main {
                 { 0, 1, "abc" },
                 { "a", "b", "c", },
                 { "a", "b", "c", "d", "e", "f" },
+                // { 0, 2, 3, 4 }
             };
             for (final Object[] test : tests) {
                 Ruleset.evalute(env, ext, test).forEach((name, u) -> {
@@ -49,6 +51,9 @@ public class Main {
                     });
                 });
             }
+
+            System.out.println("Compiled as:");
+            System.out.println(tree.toJavaCode("CompiledRules"));
         } catch (IOException ex) {
             //
         }

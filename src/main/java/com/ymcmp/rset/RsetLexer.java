@@ -58,20 +58,24 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                                 switch (e) {
                                     case '\\':
                                     case '\'':
-                                    case '"': sb.append((char) e);
-                                    case 'a': sb.append('\u0007');
-                                    case 'b': sb.append('\b');
-                                    case 't': sb.append('\t');
-                                    case 'n': sb.append('\n');
-                                    case 'v': sb.append('\u000b');
-                                    case 'f': sb.append('\f');
-                                    case 'r': sb.append('\r');
-                                    default: sb.append((char) k).append((char) e);
+                                    case '"':
+                                    case 'a':
+                                    case 'b':
+                                    case 't':
+                                    case 'n':
+                                    case 'v':
+                                    case 'f':
+                                    case 'r':
+                                        sb.append('\\').append((char) e);
+                                        break;
+                                    default:
+                                        sb.append('\\').append('\\').append((char) e);
                                 }
                                 break;
-                            } 
+                            }
                             default:
                                 if (k == c) break feedback; // Terminating mark
+                                if (k == '"') sb.append('\\'); // escape it, avoids problems
                                 sb.append((char) k);
                         }
                     }

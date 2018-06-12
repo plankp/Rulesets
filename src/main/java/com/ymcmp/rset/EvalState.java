@@ -65,10 +65,18 @@ public class EvalState {
     }
 
     public void pop() {
-        indexes.pop();
+        unsave();
     }
 
     public void push() {
+        save();
+    }
+
+    public void unsave() {
+        indexes.pop();
+    }
+
+    public void save() {
         indexes.push(getIndex());
     }
 
