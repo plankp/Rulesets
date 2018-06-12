@@ -9,9 +9,9 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
 public class JavaRuleWriter extends Visitor<String> {
 
-    private int varloop;
-    private int varmerge;
-    private int label;
+    private long varloop;
+    private long varmerge;
+    private long label;
 
     private int indent;
 
@@ -27,13 +27,19 @@ public class JavaRuleWriter extends Visitor<String> {
 
     public String visitRefRule(final RefRule n) {
         final String txt = n.node.getText();
-        return fillIndent() + "{ result = test" + txt + "(); }";
+        final String keep = (this.varmerge - 1) > 0 ? "m" + (this.varmerge - 1) : "captures";
+        final StringBuilder sb = new StringBuilder();
+        sb.append(fillIndent()).append("{\n"); ++indent;
+        sb.append(fillIndent()).append("result = test").append(txt).append("(").append(keep).append(");\n");
+        --indent;
+        sb.append(fillIndent()).append('}');
+        return sb.toString();
     }
 
     public String visitValueNode(final ValueNode n) {
         switch (n.token.type) {
             case S_ST:  return fillIndent() + "{ result = state.testSlotOccupied(); }";
-            case S_EX:  return fillIndent() + "{ result = state.testEnd()); }";
+            case S_EX:  return fillIndent() + "{ result = state.testEnd(); }";
             default:    return fillIndent() + "{ result = state.testEquality(" + n.toJavaLiteral() + "); }";
         }
     }
@@ -59,7 +65,7 @@ public class JavaRuleWriter extends Visitor<String> {
                 return sb.toString();
             }
             case S_AD: {
-                final int label = this.label++;
+                final long label = this.label++;
                 final String varloop = "i" + this.varloop++;
                 final StringBuilder sb = new StringBuilder();
                 sb.append(fillIndent()).append('$').append(label)
@@ -73,10 +79,11 @@ public class JavaRuleWriter extends Visitor<String> {
                 sb.append(fillIndent()).append("}\n"); --indent;
                 sb.append("// Deal with captures\n")
                   .append(fillIndent()).append('}');
+                this.varloop--;
                 return sb.toString();
             }
             case S_ST: {
-                final int label = this.label++;
+                final long label = this.label++;
                 final String varloop = "i" + this.varloop++;
                 final StringBuilder sb = new StringBuilder();
                 sb.append(fillIndent()).append('$').append(label)
@@ -90,6 +97,7 @@ public class JavaRuleWriter extends Visitor<String> {
                 sb.append("// Deal with captures\n")
                   .append(fillIndent()).append("}\n")
                   .append(fillIndent()).append("result = true;");
+                this.varloop--;
                 return sb.toString();
             }
             default:
@@ -112,7 +120,7 @@ public class JavaRuleWriter extends Visitor<String> {
     public String visitKaryRule(final KaryRule n) {
         switch (n.type) {
             case SEQ: {
-                final int label = this.label++;
+                final long label = this.label++;
                 final String varmerge = "m" + this.varmerge++;
                 final StringBuilder sb = new StringBuilder();
                 sb.append(fillIndent()).append('$').append(label)
@@ -127,10 +135,11 @@ public class JavaRuleWriter extends Visitor<String> {
                   .append(fillIndent()).append("result = true;\n")
                   .append(fillIndent()).append("break;\n"); --indent;
                 sb.append(fillIndent()).append('}');
+                this.varmerge--;
                 return sb.toString();
             }
             case SWITCH: {
-                final int label = this.label++;
+                final long label = this.label++;
                 final StringBuilder sb = new StringBuilder();
                 sb.append(fillIndent()).append('$').append(label)
                   .append(": while (true) {\n"); ++indent;
