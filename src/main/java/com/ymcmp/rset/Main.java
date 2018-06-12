@@ -61,20 +61,20 @@ public class Main {
             //     fos.write(bytes);
             //     fos.flush();
             // }
-            // System.out.println("As compiled code:");
-            // final CompiledRules rules = new CompiledRules();
-            // for (final Object[] test : tests) {
-            //     rules.rules.forEach((name, rule) -> {
-            //         final Object obj = rule.apply(test);
-            //         if (obj != null) {
-            //             if (obj.getClass().isArray()) {
-            //                 System.out.println("rule " + name + " --> " + Arrays.deepToString((Object[]) obj));
-            //             } else {
-            //                 System.out.println("rule " + name + " --> " + obj);
-            //             }
-            //         }
-            //     });
-            // }
+            System.out.println("As compiled code:");
+            final CompiledRules rules = new CompiledRules();
+            for (final Object[] test : tests) {
+                rules.rules.forEach((name, rule) -> {
+                    final Object obj = rule.apply(test);
+                    if (obj != null) {
+                        if (obj.getClass().isArray()) {
+                            System.out.println("rule " + name + " --> " + Arrays.deepToString((Object[]) obj));
+                        } else {
+                            System.out.println("rule " + name + " --> " + obj);
+                        }
+                    }
+                });
+            }
         } catch (IOException ex) {
             //
         }

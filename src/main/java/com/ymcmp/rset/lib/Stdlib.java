@@ -102,7 +102,7 @@ public final class Stdlib {
 
     @Export("_concat")
     @Varargs
-    public static String concat(final Object[] args) {
+    public static String concat(final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, "");
         return sb.toString();
@@ -136,7 +136,7 @@ public final class Stdlib {
 
     @Export("_")
     @Varargs
-    public static Object ignore(final Object[] args) {
+    public static Object ignore(final Object... args) {
         if (args.length == 0) return null;
         return args[args.length - 1];
     }
