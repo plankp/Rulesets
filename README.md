@@ -8,6 +8,31 @@ Install jdk 8 or higher, Use `gradlew`
 
 ## What is this?
 
+You could use the compiler provided by the program, or interface this project as a library:
+
+#### Invoking compiler:
+
+After you built the project and copied out the `.jar` files and the `.bat` or shell script files:
+
+```
+% rulesets -h
+Rulesets compiler:
+  compiler [options] [ruleset file]
+options:
+  -h | --help              Prints this message
+  -n | --class-name <name> Changes generated class name
+                           default: 'CompiledRulesets'
+  -d | --directory <name>  Places generated file in specifed directory
+                           default: current directory
+If no ruleset file is specified, the compiler will read from stdin:
+  cat foo.rset bar.rset | compiler -n demo/JointRules -d demo
+
+Link to copyright notices of used libraries:
+  https://github.com/plankp/Rulesets/blob/master/COPYING
+```
+
+#### Interfacing:
+
 Rulesets:
 
 ```

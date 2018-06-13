@@ -1,76 +1,96 @@
 package com.ymcmp.rset;
 
+import java.io.Reader;
 import java.io.IOException;
-import java.io.StringReader;
+import java.io.InputStreamReader;
 
-import java.lang.reflect.InvocationTargetException;
+import java.nio.file.Paths;
+import java.nio.file.Files;
 
-import java.util.Map;
-import java.util.List;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Optional;
-import java.util.stream.Collectors;
+// import java.lang.reflect.InvocationTargetException;
 
-import com.ymcmp.rset.rt.Rulesets;
-import com.ymcmp.rset.lib.Extensions;
+// import java.util.Map;
+// import java.util.List;
+// import java.util.Arrays;
+// import java.util.HashMap;
+// import java.util.stream.Collectors;
+
+// import com.ymcmp.rset.rt.Rulesets;
+// import com.ymcmp.rset.lib.Extensions;
 import com.ymcmp.rset.tree.RulesetGroup;
 
 public class Main {
 
-    public static void main(String[] args) {
-        final StringReader reader = new StringReader(
-            "# A bunch of rule clauses follow...\n" +
-            "rule alpha = 0 abc | (1!) { ?_ ((1 + 2 + 3) & abc | def) },\n" +
-            "rule beta  = 00 (abc | 1),\n" +
-            "rule all   = ((*) (*) | (*))! { 'Kleen AF' },\n" +
-            "rule inc   = &beta abc,\n" +
-            "rule abc   = a b c { 'rule abc is matched' },\n" +
-            "rule a2f   = r:&abc d e f:f { ?_join You can count from ?r:0 to ?f }"
-        );
-        try (final RsetLexer lexer = new RsetLexer(reader)) {
-            final RsetParser parser = new RsetParser(lexer);
-            final RulesetGroup tree = parser.parse();
-            final byte[] bytes = tree.toBytecode("CompiledRules");
+    private static final String DEFAULT_CLASS_NAME = "CompiledRulesets";
 
-            final Object[][] tests = {
-                { 0, "abc" },
-                { 0, 1 },
-                { 1 },
-                { 0, 1, "abc" },
-                { "a", "b", "c", },
-                { "a", "b", "c", "d", "e", "f" },
-            };
+    public static void main(final String[] args) throws IOException {
+        String generatedClassName = DEFAULT_CLASS_NAME;
+        String generatedPathName  = ".";
+        String inputFile = null;
+        for (int i = 0; i < args.length; ++i) {
+            final String arg = args[i];
+            switch (arg) {
+                case "-h":
+                case "--help":
+                    System.out.println(
+                            "Rulesets compiler:\n" +
+                            "  compiler [options] [ruleset file]" +
+                            "options:\n" +
+                            "  -h | --help              Prints this message\n" +
+                            "  -n | --class-name <name> Changes generated class name\n" +
+                            "                           default: 'CompiledRulesets'\n" +
+                            "  -d | --directory <name>  Places generated file in specifed directory\n" +
+                            "                           default: current directory\n" +
+                            "If no ruleset file is specified, the compiler will read from stdin:\n" +
+                            "  cat foo.rset bar.rset | compiler -n demo/JointRules -d demo\n" +
+                            "\n" +
+                            "Link to copyright notices of used libraries:\n" +
+                            "  https://github.com/plankp/Rulesets/blob/master/COPYING");
+                    break;
+                case "-n":
+                case "--class-name":
+                    // User will provide something like com/ymcmp/Crules
+                    // Change generatedClassName here
+                    generatedClassName = args[++i].replace('.', '/');
+                    break;
+                case "-d":
+                case "--directory":
+                    // This only affects where the compiled file is placed
+                    // I guess technically you could specify -d /dev/null !?
+                    generatedPathName = args[++i];
+                    break;
+                default:
+                    inputFile = arg;
+                    break;
+            }
+        }
 
-            // // Uncomment out these lines to check the class file!
-            // try (java.io.FileOutputStream fos = new java.io.FileOutputStream("CompiledRules.class")) {
-            //     fos.write(bytes);
-            //     fos.flush();
-            // }
+        try {
+            final Reader reader = inputFile == null
+                    ? new InputStreamReader(System.in)
+                    : Files.newBufferedReader(Paths.get(inputFile));
+            try (final RsetLexer lexer = new RsetLexer(reader)) {
+                final RsetParser parser = new RsetParser(lexer);
+                final RulesetGroup tree = parser.parse();
 
-            final ByteClassLoader bcl = new ByteClassLoader();
-            final Class<?> cl = bcl.loadFromBytes("CompiledRules", bytes);
-            if (Rulesets.class.isAssignableFrom(cl)) {
-                final Rulesets rulesets = (Rulesets) cl.getConstructor().newInstance();
-                for (final Object[] test : tests) {
-                    rulesets.forEachRule((name, rule) -> {
-                        final Object obj = rule.apply(test);
-                        if (obj != null) {
-                            if (obj.getClass().isArray()) {
-                                System.out.println("rule " + name + " --> " + Arrays.deepToString((Object[]) obj));
-                            } else {
-                                System.out.println("rule " + name + " --> " + obj);
-                            }
-                        }
-                    });
+                final String[] arr = generatedClassName.split(".*/", 2);
+                String fileName = DEFAULT_CLASS_NAME;
+                switch (arr.length) {
+                    case 1: fileName = arr[0]; break;
+                    case 2: fileName = arr[1]; break;
+                    default:
+                        System.out.println("Unreadable class name, using default name instead");
+                        generatedClassName = DEFAULT_CLASS_NAME;
+                        break;
                 }
-            } else {
-                System.out.println("Wtf!??? Class must inherit rt.Rulesets");
+
+                final byte[] bytes = tree.toBytecode(generatedClassName, inputFile);
+
+                // Create directories
+                Files.write(Files.createDirectories(Paths.get(generatedPathName)).resolve(fileName + ".class"), bytes);
             }
         } catch (IOException ex) {
-            //
-        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
-            System.out.println("Welp... " + ex);
+            throw ex;
         }
     }
 }

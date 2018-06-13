@@ -6,6 +6,8 @@ targetCompatibility = '1.8'
 
 mainClassName = 'com.ymcmp.rset.Main'
 
+run.standardInput = System.in
+
 repositories {
     jcenter()
 }

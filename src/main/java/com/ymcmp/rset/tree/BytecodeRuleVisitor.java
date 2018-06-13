@@ -239,9 +239,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                     mv.visitVarInsn(ALOAD, 3);
                     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "putAll", "(Ljava/util/Map;)V", true);
                 });
-                mv.visitVarInsn(ALOAD, mergerMap);
-                mv.visitVarInsn(ALOAD, 3);
-                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "putAll", "(Ljava/util/Map;)V", true);
                 mv.visitVarInsn(ALOAD, 3);
                 mv.visitVarInsn(ALOAD, mergerMap);
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "putAll", "(Ljava/util/Map;)V", true);

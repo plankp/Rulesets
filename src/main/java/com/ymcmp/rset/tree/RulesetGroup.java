@@ -40,6 +40,10 @@ public final class RulesetGroup extends ParseTree {
     }
 
     public byte[] toBytecode(final String className) {
+        return toBytecode(className, null);
+    }
+
+    public byte[] toBytecode(final String className, final String sourceFile) {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
         // TODO: Add BytecodeActionWriter
@@ -50,6 +54,8 @@ public final class RulesetGroup extends ParseTree {
         cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, "java/lang/Object", new String[]{
             "com/ymcmp/rset/rt/Rulesets"
         });
+
+        if (sourceFile != null) cw.visitSource(sourceFile, null);
         {
             FieldVisitor fv;
             fv = cw.visitField(ACC_PRIVATE | ACC_FINAL, "rules", "Ljava/util/Map;", "Ljava/util/Map<Ljava/lang/String;Lcom/ymcmp/rset/rt/Rule;>;", null);
