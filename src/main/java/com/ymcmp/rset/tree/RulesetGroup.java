@@ -11,8 +11,6 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import com.ymcmp.rset.Ruleset;
-
 import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;
@@ -41,73 +39,23 @@ public final class RulesetGroup extends ParseTree {
                 .collect(Collectors.joining(" ")) + ')';
     }
 
-    public Stream<Ruleset> toRulesetStream() {
-        return rsets.stream().map(RulesetNode::toRuleset);
-    }
-
-    public String toJavaCode(final String className) {
-
-        final JavaRuleWriter rw = new JavaRuleWriter();
-        final JavaActionWriter aw = new JavaActionWriter();
-
-        final StringBuilder sb = new StringBuilder();
-        sb.append("import java.util.Map;\n")
-          .append("import java.util.HashMap;\n")
-          .append("import java.util.stream.Stream;\n")
-          .append("import java.util.function.Function;\n\n")
-          .append("import com.ymcmp.rset.EvalState;\n")
-          .append("import com.ymcmp.rset.rt.*;\n")
-          .append("import com.ymcmp.rset.lib.Stdlib;\n")
-          .append("import com.ymcmp.rset.lib.Mathlib;\n")
-          .append("import com.ymcmp.rset.lib.Extensions;\n\n")
-          .append("public class ").append(className).append("\n{\n")
-          .append("public final Map<String, Rule> rules;\n")
-          .append("public EvalState state = new EvalState();\n")
-          .append("public Extensions ext = new Extensions();\n");
-        final StringBuilder ruleList = new StringBuilder();
-        rsets.forEach(r -> {
-            final String ruleName = "rule" + r.name.getText();
-            final String testName = "test" + r.name.getText();
-            final String actnName = "act" + r.name.getText();
-
-            sb.append(rw.visit(r)).append('\n') // test{Name}
-              .append(aw.visit(r)).append('\n') // act{Name}
-            // Create rule method
-              .append("public Object ").append(ruleName).append("(Object... data) {\n")
-              .append("  state.reset(); state.setData(data);\n")
-              .append("  final Map<String, Object> env = ext.export();\n")
-              .append("  if (").append(testName).append("(env)) {\n")
-              .append("    return ").append(actnName).append("(env);\n")
-              .append("  }\n")
-              .append("  return null;\n")
-              .append("}\n\n");
-
-            // Map method to rule table
-            ruleList
-                .append("  rules.put(\"").append(r.name.getText()).append("\", ")
-                .append(className).append(".this::").append(ruleName).append(");\n");
-        });
-        sb.append("public ").append(className).append("() {\n  rules = new HashMap<String, Rule>();\n").append(ruleList).append("}\n");
-        sb.append("}");
-
-        return sb.toString();
-    }
-
     public byte[] toBytecode(final String className) {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
         // TODO: Add BytecodeActionWriter
         final BytecodeRuleVisitor rw = new BytecodeRuleVisitor(cw, className);
+        final BytecodeActionVisitor aw = new BytecodeActionVisitor(cw, className);
 
         // Generating code for Java 8
-        cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, "java/lang/Object", null);
-        cw.visitSource(className + ".java", null);
+        cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, "java/lang/Object", new String[]{
+            "com/ymcmp/rset/rt/Rulesets"
+        });
         {
             FieldVisitor fv;
-            fv = cw.visitField(ACC_PUBLIC | ACC_FINAL, "rules", "Ljava/util/Map;", "Ljava/util/Map<Ljava/lang/String;Lcom/ymcmp/rset/rt/Rule;>;", null);
+            fv = cw.visitField(ACC_PRIVATE | ACC_FINAL, "rules", "Ljava/util/Map;", "Ljava/util/Map<Ljava/lang/String;Lcom/ymcmp/rset/rt/Rule;>;", null);
             fv.visitEnd();
 
-            fv = cw.visitField(ACC_PUBLIC, "state", "Lcom/ymcmp/rset/EvalState;", null, null);
+            fv = cw.visitField(ACC_PUBLIC, "state", "Lcom/ymcmp/rset/rt/EvalState;", null, null);
             fv.visitEnd();
 
             fv = cw.visitField(ACC_PUBLIC, "ext", "Lcom/ymcmp/rset/lib/Extensions;", null, null);
@@ -121,12 +69,12 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
         // state = new EvalState(new Object[0]);
         ctor.visitVarInsn(ALOAD, 0);
-        ctor.visitTypeInsn(NEW, "com/ymcmp/rset/EvalState");
+        ctor.visitTypeInsn(NEW, "com/ymcmp/rset/rt/EvalState");
         ctor.visitInsn(DUP);
         ctor.visitInsn(ICONST_0);
         ctor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-        ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/EvalState", "<init>", "([Ljava/lang/Object;)V", false);
-        ctor.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/EvalState;");
+        ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/rt/EvalState", "<init>", "([Ljava/lang/Object;)V", false);
+        ctor.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         // ext = new Extensions();
         ctor.visitVarInsn(ALOAD, 0);
         ctor.visitTypeInsn(NEW, "com/ymcmp/rset/lib/Extensions");
@@ -140,23 +88,24 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false);
         ctor.visitFieldInsn(PUTFIELD, className, "rules", "Ljava/util/Map;");
 
-        rsets.forEach(r -> {
+        for (final RulesetNode r : rsets) {
             final String ruleName = "rule" + r.name.getText();
             final String testName = "test" + r.name.getText();
             final String actnName = "act" + r.name.getText();
 
             rw.visit(r);
+            aw.visit(r);
 
             final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_VARARGS, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
             mv.visitCode();
             // state.reset(); state.setData(data@1);
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/EvalState;");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/EvalState", "reset", "()V", false);
+            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "reset", "()V", false);
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/EvalState;");
+            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
             mv.visitVarInsn(ALOAD, 1);
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/EvalState", "setData", "([Ljava/lang/Object;)V", false);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setData", "([Ljava/lang/Object;)V", false);
             // env@2 = ext.export();
             mv.visitVarInsn(ALOAD, 0);
             mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
@@ -184,6 +133,7 @@ public final class RulesetGroup extends ParseTree {
             ctor.visitVarInsn(ALOAD, 0);
             ctor.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
             ctor.visitLdcInsn(r.name.getText());
+            ctor.visitVarInsn(ALOAD, 0);
             ctor.visitInvokeDynamicInsn("apply", "(L" + className + ";)Lcom/ymcmp/rset/rt/Rule;",
                     new Handle(H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
                             new Object[]{Type.getType("(Ljava/lang/Object;)Ljava/lang/Object;"),
@@ -192,12 +142,45 @@ public final class RulesetGroup extends ParseTree {
                             });
             ctor.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
             ctor.visitInsn(POP);
-        });
+        }
 
         // Epilogue for constructor
         ctor.visitInsn(RETURN);
         ctor.visitMaxs(0, 0);
         ctor.visitEnd();
+
+        // Implement the Rulesets interface
+        {
+            MethodVisitor mv;
+            mv = cw.visitMethod(ACC_PUBLIC, "getRuleNames", "()Ljava/util/Set;", "()Ljava/util/Set<Ljava/lang/String;>;", null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "keySet", "()Ljava/util/Set;", true);
+            mv.visitInsn(ARETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+
+            mv = cw.visitMethod(ACC_PUBLIC, "getRule", "(Ljava/lang/String;)Lcom/ymcmp/rset/rt/Rule;", null, null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
+            mv.visitVarInsn(ALOAD, 1);
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Lcom/ymcmp/rset/rt/Rule;", true);
+            mv.visitInsn(ARETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+
+            mv = cw.visitMethod(ACC_PUBLIC, "forEachRule", "(Ljava/util/function/BiConsumer;)V", "(Ljava/util/function/BiConsumer<-Ljava/lang/String;+Lcom/ymcmp/rset/rt/Rule;>;)V", null);
+            mv.visitCode();
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
+            mv.visitVarInsn(ALOAD, 1);
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "forEach", "(Ljava/util/function/BiConsumer;)V", true);
+            mv.visitInsn(RETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
+        }
 
         cw.visitEnd();
         return cw.toByteArray();

@@ -1,4 +1,4 @@
-package com.ymcmp.rset;
+package com.ymcmp.rset.rt;
 
 import java.util.Stack;
 import java.util.Arrays;
@@ -62,14 +62,6 @@ public class EvalState {
 
     public Object[] copyRange(int from, int to) {
         return Arrays.copyOfRange(data, from, to);
-    }
-
-    public void pop() {
-        unsave();
-    }
-
-    public void push() {
-        save();
     }
 
     public void unsave() {

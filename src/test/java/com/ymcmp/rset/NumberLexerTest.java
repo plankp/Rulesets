@@ -3,9 +3,11 @@ package com.ymcmp.rset;
 import java.io.IOException;
 import java.io.StringReader;
 
+import java.lang.reflect.InvocationTargetException;
+
 import java.util.Map;
 
-import com.ymcmp.rset.lib.Extensions;
+import com.ymcmp.rset.rt.Rulesets;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
@@ -14,8 +16,7 @@ import static org.junit.Assert.*;
 
 public class NumberLexerTest {
 
-    private static Map<String, Ruleset> env;
-    private static Extensions ext;
+    private static Class<?> NumberLexer;
 
     @BeforeClass
     public static void compile() {
@@ -30,10 +31,25 @@ public class NumberLexerTest {
             "  | '1'-'9' &digit?)\n" +
             "{ ?_concat ?n }"
         );
+
         final RsetLexer lexer = new RsetLexer(reader);
         final RsetParser parser = new RsetParser(lexer);
-        env = Ruleset.toEvalMap(parser.parse().toRulesetStream());
-        ext = new Extensions(Extensions.EXT_STDLIB);
+        final byte[] bytes = parser.parse().toBytecode("NumberLexer");
+        final ByteClassLoader bcl = new ByteClassLoader();
+        final Class<?> cl = bcl.loadFromBytes("NumberLexer", bytes);
+        if (Rulesets.class.isAssignableFrom(cl)) {
+            NumberLexer = cl;
+        } else {
+            throw new RuntimeException("This should not happen, generated classes must inherit Rulesets");
+        }
+    }
+
+    public static Rulesets newNumberLexer() {
+        try {
+            return (Rulesets) NumberLexer.getConstructor().newInstance();
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
+            throw new RuntimeException(ex);
+        }
     }
 
     @Test
@@ -47,10 +63,11 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            Ruleset.evalute(env, ext, test).forEach((name, u) -> {
-                u.ifPresent(obj -> {
+            newNumberLexer().forEachRule((name, rule) -> {
+                final Object obj = rule.apply(test);
+                if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
-                });
+                }
             });
         }
         assertEquals("n,0b0\nn,0b1\nn,0b10\nn,0b10010\nn,0b01011\n",
@@ -67,10 +84,11 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            Ruleset.evalute(env, ext, test).forEach((name, u) -> {
-                u.ifPresent(obj -> {
+            newNumberLexer().forEachRule((name, rule) -> {
+                final Object obj = rule.apply(test);
+                if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
-                });
+                }
             });
         }
         assertEquals("n,0c0\nn,0c1\nn,0c2\nn,0c5\nn,0c6\nn,0c7\nn,0c10\n",
@@ -87,10 +105,11 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            Ruleset.evalute(env, ext, test).forEach((name, u) -> {
-                u.ifPresent(obj -> {
+            newNumberLexer().forEachRule((name, rule) -> {
+                final Object obj = rule.apply(test);
+                if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
-                });
+                }
             });
         }
         assertEquals("n,0\nn,1\nn,2\nn,3\nn,4\nn,5\nn,6\nn,7\nn,8\nn,9\nn,10\n",
@@ -113,10 +132,11 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            Ruleset.evalute(env, ext, test).forEach((name, u) -> {
-                u.ifPresent(obj -> {
+            newNumberLexer().forEachRule((name, rule) -> {
+                final Object obj = rule.apply(test);
+                if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
-                });
+                }
             });
         }
         assertEquals("n,0xabc\nn,0xDEF\nn,0xf\nn,0xaCf\n",

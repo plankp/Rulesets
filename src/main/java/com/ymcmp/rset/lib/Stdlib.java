@@ -20,7 +20,7 @@ public final class Stdlib {
 
     @Export
     @Varargs
-    public static Object _ord(final Object[] args) {
+    public static Object[] _ord(final Object[] args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Character) {
@@ -31,6 +31,10 @@ public final class Stdlib {
                 } catch (IndexOutOfBoundsException ex) {
                     args[i] = 0;
                 }
+            } else if (k instanceof Number) {
+                args[i] = ((Number) k).intValue();
+            } else {
+                args[i] = null;
             }
         }
         return args;
@@ -38,11 +42,15 @@ public final class Stdlib {
 
     @Export
     @Varargs
-    public static Object _chr(final Object[] args) {
+    public static Object[] _chr(final Object[] args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
-            if (k instanceof Number) {
+            if (k instanceof Character) {
+                // Do nothing, it is already a character
+            } else if (k instanceof Number) {
                 args[i] = (char) ((Number) k).intValue();
+            } else {
+                args[i] = null;
             }
         }
         return args;
@@ -50,7 +58,7 @@ public final class Stdlib {
 
     @Export
     @Varargs
-    public static Object _int(final Object[] args) {
+    public static Object[] _int(final Object[] args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Number) {
@@ -68,7 +76,7 @@ public final class Stdlib {
 
     @Export
     @Varargs
-    public static Object _float(final Object[] args) {
+    public static Object[] _float(final Object[] args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Number) {

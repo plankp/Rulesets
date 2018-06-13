@@ -281,11 +281,26 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         return new KaryRule(KaryRule.Type.ASSIGN, elms);
     }
 
+    public ParseTree parseExprIgnore() {
+        final List<ParseTree> elms = consumeRules(this::parseExprAssign, Type.S_EX);
+
+        if (elms == null) return null;
+        if (elms.size() == 1) return elms.get(0);
+        if (elms.get(elms.size() - 1) == null) {
+            throw new IllegalParseException("Incomplete '!' expression, missing rhs");
+        }
+        return new KaryRule(KaryRule.Type.IGNORE, elms);
+    }
+
     public ParseTree parseExpression() {
-        return parseExprAssign();
+        return parseExprIgnore();
     }
 
     public RulesetGroup parseRulesets() {
-        return new RulesetGroup(consumeRules(this::parseRuleset, Type.S_CM));
+        final List<RulesetNode> list = consumeRules(this::parseRuleset, Type.S_CM);
+        if (list == null) return null;
+        final int k = list.size() - 1;
+        if (list.get(k) == null) list.remove(k);
+        return new RulesetGroup(list);
     }
 }

@@ -56,6 +56,26 @@ public final class Mathlib {
         return k;
     }
 
+    public static Number numAdd(final Number a, final Number b) {
+        return a.doubleValue() + b.doubleValue();
+    }
+
+    public static Number numSub(final Number a, final Number b) {
+        return a.doubleValue() - b.doubleValue();
+    }
+
+    public static Number numMul(final Number a, final Number b) {
+        return a.doubleValue() * b.doubleValue();
+    }
+
+    public static Number numDiv(final Number a, final Number b) {
+        return a.doubleValue() / b.doubleValue();
+    }
+
+    public static Number numMod(final Number a, final Number b) {
+        return a.doubleValue() % b.doubleValue();
+    }
+
     @Export("_pow")
     public static double pow(double a, double b) {
         return Math.pow(a, b);
