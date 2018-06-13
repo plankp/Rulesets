@@ -3,7 +3,6 @@ package com.ymcmp.rset.lib;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Collection;
-import java.util.function.Function;
 
 public final class Stdlib {
 
@@ -195,7 +194,6 @@ public final class Stdlib {
         if (obj instanceof Collection) return !((Collection<?>) obj).isEmpty();
         if (obj instanceof CharSequence) return ((CharSequence) obj).length() != 0;
         if (obj instanceof Map) return !((Map<?, ?>) obj).isEmpty();
-        if (obj instanceof Function) return true;
         if (obj.getClass().isArray()) return ((Object[]) obj).length != 0;
         return true;
     }

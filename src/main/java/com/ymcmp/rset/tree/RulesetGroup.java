@@ -136,10 +136,10 @@ public final class RulesetGroup extends ParseTree {
             ctor.visitVarInsn(ALOAD, 0);
             ctor.visitInvokeDynamicInsn("apply", "(L" + className + ";)Lcom/ymcmp/rset/rt/Rule;",
                     new Handle(H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
-                            new Object[]{Type.getType("(Ljava/lang/Object;)Ljava/lang/Object;"),
-                                    new Handle(H_INVOKEVIRTUAL, className, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", false),
-                                    Type.getType("([Ljava/lang/Object;)Ljava/lang/Object;")
-                            });
+                    new Object[]{Type.getType("(Ljava/lang/Object;)Ljava/lang/Object;"),
+                            new Handle(H_INVOKEVIRTUAL, className, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", false),
+                            Type.getType("([Ljava/lang/Object;)Ljava/lang/Object;")
+                    });
             ctor.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
             ctor.visitInsn(POP);
         }
