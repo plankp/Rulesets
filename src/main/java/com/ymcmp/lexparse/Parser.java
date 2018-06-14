@@ -28,7 +28,7 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
     public default Token<T> consumeToken(T type, String messageWhenUnmatched) {
         final Token<T> token = getToken();
         if (token == null || token.type != type) {
-            throw new IllegalParseException(messageWhenUnmatched);
+            throw new IllegalParseException(messageWhenUnmatched, token);
         }
         return token;
     }
