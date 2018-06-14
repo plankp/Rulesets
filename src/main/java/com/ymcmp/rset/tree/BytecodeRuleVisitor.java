@@ -133,13 +133,9 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
             case S_AD: {
                 final Label loop = new Label();
                 final Label exit = new Label();
-                final int counter = pushNewLocal(VarType.COUNTER);
-
-                // Use this to fix data into captures
-                final int merger = findNearestLocal(VarType.MAP);
-
-                mv.visitInsn(LCONST_0);
-                mv.visitVarInsn(LSTORE, counter);
+                final int flag = pushNewLocal(VarType.BOOL);
+                mv.visitInsn(ICONST_0);
+                mv.visitVarInsn(ISTORE, flag);
                 mv.visitLabel(loop);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
@@ -147,21 +143,14 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, 2);
                 mv.visitJumpInsn(IFEQ, exit);
-                mv.visitVarInsn(LLOAD, counter);
-                mv.visitInsn(LCONST_1);
-                mv.visitInsn(LADD);
-                mv.visitVarInsn(LSTORE, counter);
-
-                // TODO: Capture here
-
+                mv.visitInsn(ICONST_1);
+                mv.visitVarInsn(ISTORE, flag);
                 mv.visitJumpInsn(GOTO, loop);
                 mv.visitLabel(exit);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "unsave", "()V", false);
-                mv.visitVarInsn(LLOAD, counter);
-                mv.visitInsn(LCONST_0);
-                mv.visitInsn(LCMP);
+                mv.visitVarInsn(ILOAD, flag);
                 mv.visitVarInsn(ISTORE, 2);
                 popLocal();
                 return null;
@@ -169,13 +158,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
             case S_ST: {
                 final Label loop = new Label();
                 final Label exit = new Label();
-                final int counter = pushNewLocal(VarType.COUNTER);
-
-                // Use this to fix data into captures
-                final int merger = findNearestLocal(VarType.MAP);
-
-                mv.visitInsn(LCONST_0);
-                mv.visitVarInsn(LSTORE, counter);
                 mv.visitLabel(loop);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
@@ -183,13 +165,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, 2);
                 mv.visitJumpInsn(IFEQ, exit);
-                mv.visitVarInsn(LLOAD, counter);
-                mv.visitInsn(LCONST_1);
-                mv.visitInsn(LADD);
-                mv.visitVarInsn(LSTORE, counter);
-
-                // TODO: Capture here
-
                 mv.visitJumpInsn(GOTO, loop);
                 mv.visitLabel(exit);
                 mv.visitVarInsn(ALOAD, 0);
@@ -197,7 +172,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "unsave", "()V", false);
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, 2);
-                popLocal();
                 return null;
             }
             default:
