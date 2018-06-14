@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.function.Consumer;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.ClassWriter;
@@ -18,22 +19,25 @@ import static org.objectweb.asm.Opcodes.*;
 
 public class BytecodeRuleVisitor extends Visitor<Void> {
 
-    private enum VarType {
+    public enum VarType {
         _COUNTER_RESV, HIDDEN, MAP, COUNTER, NUM, BOOL;
     }
 
     private final Stack<VarType> locals = new Stack<>();
 
-    private ClassWriter cw;
-    private String className;
-    private MethodVisitor mv;
+    private final Map<String, Consumer<BytecodeRuleVisitor>> refs;
+    private final String className;
+    private final ClassWriter cw;
 
-    public BytecodeRuleVisitor(ClassWriter cw, String className) {
+    public MethodVisitor mv;
+
+    public BytecodeRuleVisitor(ClassWriter cw, String className, Map<String, Consumer<BytecodeRuleVisitor>> refs) {
         this.cw = cw;
         this.className = className;
+        this.refs = refs;
     }
 
-    private int pushNewLocal(VarType t) {
+    public int pushNewLocal(VarType t) {
         locals.push(t);
         final int k = locals.size() - 1;
         if (t == VarType.COUNTER) {
@@ -57,12 +61,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     }
 
     public Void visitRefRule(final RefRule n) {
-        final String testName = "test" + n.node.getText();
-        final int map = findNearestLocal(VarType.MAP);
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitVarInsn(ALOAD, map);
-        mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;)Z", false);
-        mv.visitVarInsn(ISTORE, 2);
+        refs.get(n.node.getText()).accept(this);
         return null;
     }
 

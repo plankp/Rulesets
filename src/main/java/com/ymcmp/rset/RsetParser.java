@@ -145,8 +145,24 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
 
     public RulesetNode parseRuleset() {
         final Token<Type> t = getToken();
-        if (t != null) {
-            if (t.type == Type.L_IDENT && "rule".equals(t.text)) {
+        if (t != null && t.type == Type.L_IDENT) {
+            RulesetNode.Type rulesetType = null;
+            switch (t.text) {
+                default:
+                    ungetToken(t);
+                    break;
+                case "rule":        // generates public test(Map)Z, act(Map)Object, rule(Object[])Object
+                    rulesetType = RulesetNode.Type.RULE;
+                    break;
+                case "subrule":     // generates public test(Map)Z, act(Map)Object
+                    rulesetType = RulesetNode.Type.SUBRULE;
+                    break;
+                case "fragment":    // inlines test, will cause error if being mutually referenced
+                    rulesetType = RulesetNode.Type.FRAGMENT;
+                    break;
+            }
+
+            if (rulesetType != null) {
                 final ValueNode name = consumeRule(this::parseValue, "Missing name for ruleset");
 
                 consumeToken(Type.S_EQ, "Expected '=' in ruleset '" + name.getText() + "' before rule");
@@ -154,18 +170,21 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                 final ParseTree rule = consumeRule(this::parseRuleClause,
                         "Expected rule clause after new rule '" + name.getText() + "'");
 
-                final RulesetNode rset = new RulesetNode(name, rule);
+                final RulesetNode rset = new RulesetNode(rulesetType, name, rule);
 
                 final Token<Type> b = getToken();
                 if (b != null && b.type == Type.S_LB) {
                     rset.expr = parseExpression();
                     consumeToken(Type.S_RB, "Unclosed Ruleset expression, missing '}'");
+                    if (rulesetType == RulesetNode.Type.FRAGMENT && rset.expr != null) {
+                        // fragments cannot have non-empty actions, warning
+                        System.err.println("Warning: " + name.getText() + " is fragment type but contains non-empty action block");
+                    }
                 } else {
                     ungetToken(b);
                 }
                 return rset;
             }
-            ungetToken(t);
         }
         return null;
     }

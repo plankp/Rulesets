@@ -24,6 +24,8 @@ public abstract class ParseTree {
         } catch (NoSuchMethodException | IllegalAccessException ex) {
             return vis.visitMethodNotFound(this);
         } catch (InvocationTargetException ex) {
+            final Throwable t = ex.getTargetException();
+            if (t instanceof RuntimeException) throw (RuntimeException) t;
             throw new RuntimeException(ex);
         }
     }

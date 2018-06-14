@@ -4,11 +4,18 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
 public final class RulesetNode extends ParseTree {
 
+    public enum Type {
+        RULE, SUBRULE, FRAGMENT;
+    }
+
+    public final Type type;
     public final ValueNode name;
     public final ParseTree rule;
+
     public ParseTree expr;
 
-    public RulesetNode(ValueNode name, ParseTree rule) {
+    public RulesetNode(Type t, ValueNode name, ParseTree rule) {
+        this.type = t;
         this.name = name;
         this.rule = rule;
     }
@@ -27,7 +34,7 @@ public final class RulesetNode extends ParseTree {
 
     @Override
     public String getText() {
-        return '(' + "rule " + name.getText()
+        return '(' + type.toString() + ' ' + name.getText()
             + ' ' + rule.getText() + ' ' + expr.getText() + ')';
     }
 }

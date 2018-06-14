@@ -23,9 +23,9 @@ public class LegacyClauseTest {
         final StringReader reader = new StringReader(
             "# A bunch of rule clauses follow...\n" +
             "rule alpha = 0 abc | (1!) { ?_ ((1 + 2 + 3) & abc | def) },\n" +
-            "rule beta  = 00 (abc | 1),\n" +
+            "subrule b  = 00 (abc | 1),\n" +
             "rule all   = ((*) (*) | (*))! { 'Kleen AF' },\n" +
-            "rule inc   = &beta abc,\n" +
+            "rule inc   = &b abc,\n" +
             "rule abc   = a b c { 'rule abc is matched' },\n" +
             "rule a2f   = r:&abc d e f:f { ?_join You can count from ?r:0 to ?f }"
         );

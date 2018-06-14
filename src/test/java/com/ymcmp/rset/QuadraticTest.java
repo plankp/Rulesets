@@ -22,7 +22,7 @@ public class QuadraticTest {
     public static void compile() {
         final StringReader reader = new StringReader(
             "# Is this considered a meta-lexer?\n" +
-            "rule ws     = (' ' | '\t' | '\r' | '\n')*,\n" +
+            "fragment ws = (' ' | '\t' | '\r' | '\n')*,\n" +
             "rule number = ('0' | '1'-'9' ('0'-'9')*) ('.' '0'-'9'*)?,\n" +
             "rule calc   = &ws\n" +
             "  t1:(s1:('+'|'-')? &ws n1:&number? &ws x &ws '^' &ws '2')? &ws\n" +
@@ -79,7 +79,7 @@ public class QuadraticTest {
     @Test
     public void testSpotA() {
         final Object[][] tests = {
-            { "2", "x", "^", "2" },
+            { "2", " ", "x", " ", "^", " ", "2" },
             { "3", ".", "1", "4", "x", "^", "2" },
             { "-", "0", ".", "6", "x", "^", "2" },
         };

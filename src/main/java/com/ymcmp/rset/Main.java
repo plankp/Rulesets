@@ -7,16 +7,6 @@ import java.io.InputStreamReader;
 import java.nio.file.Paths;
 import java.nio.file.Files;
 
-// import java.lang.reflect.InvocationTargetException;
-
-// import java.util.Map;
-// import java.util.List;
-// import java.util.Arrays;
-// import java.util.HashMap;
-// import java.util.stream.Collectors;
-
-// import com.ymcmp.rset.rt.Rulesets;
-// import com.ymcmp.rset.lib.Extensions;
 import com.ymcmp.rset.tree.RulesetGroup;
 
 public class Main {

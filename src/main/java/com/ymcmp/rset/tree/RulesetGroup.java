@@ -1,8 +1,11 @@
 package com.ymcmp.rset.tree;
 
+import java.util.Map;
 import java.util.List;
+import java.util.Stack;
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 
 import org.objectweb.asm.Type;
 import org.objectweb.asm.Label;
@@ -10,6 +13,8 @@ import org.objectweb.asm.Handle;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+
+import com.ymcmp.rset.tree.BytecodeRuleVisitor.VarType;
 
 import com.ymcmp.lexparse.tree.ParseTree;
 
@@ -46,9 +51,61 @@ public final class RulesetGroup extends ParseTree {
     public byte[] toBytecode(final String className, final String sourceFile) {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
-        // TODO: Add BytecodeActionWriter
-        final BytecodeRuleVisitor rw = new BytecodeRuleVisitor(cw, className);
+        final Stack<String> fragmentStack = new Stack<>();
+
         final BytecodeActionVisitor aw = new BytecodeActionVisitor(cw, className);
+        final BytecodeRuleVisitor rw = new BytecodeRuleVisitor(cw, className, rsets.stream()
+                .collect(Collectors.toMap(e -> e.name.getText(), e -> {
+                    switch (e.type) {
+                        case RULE:
+                            return vis -> {
+                                final String testName = "test" + e.name.getText();
+                                final int map = vis.findNearestLocal(VarType.MAP);
+                                vis.mv.visitVarInsn(ALOAD, 0);
+                                vis.mv.visitVarInsn(ALOAD, map);
+                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;)Z", false);
+                                vis.mv.visitVarInsn(ISTORE, 2);
+                            };
+                        case SUBRULE:
+                            return vis -> {
+                                final String name = e.name.getText();
+                                final int map = vis.findNearestLocal(VarType.MAP);
+                                final int localEnv = vis.pushNewLocal(VarType.MAP);
+                                final Label exit = new Label();
+                                vis.mv.visitTypeInsn(NEW, "java/util/HashMap");
+                                vis.mv.visitInsn(DUP);
+                                vis.mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false);
+                                vis.mv.visitVarInsn(ASTORE, localEnv);
+                                vis.mv.visitVarInsn(ALOAD, 0);
+                                vis.mv.visitVarInsn(ALOAD, localEnv);
+                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "test" + name, "(Ljava/util/Map;)Z", false);
+                                vis.mv.visitInsn(DUP);
+                                vis.mv.visitJumpInsn(IFEQ, exit);
+                                vis.mv.visitVarInsn(ALOAD, map);
+                                vis.mv.visitLdcInsn(name);
+                                vis.mv.visitVarInsn(ALOAD, 0);
+                                vis.mv.visitVarInsn(ALOAD, localEnv);
+                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
+                                vis.mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                                vis.mv.visitInsn(POP);
+                                vis.mv.visitLabel(exit);
+                                vis.popLocal();
+                                vis.mv.visitVarInsn(ISTORE, 2);
+                            };
+                        case FRAGMENT:
+                            return vis -> {
+                                final String name = e.name.getText();
+                                if (fragmentStack.contains(name)) {
+                                    throw new RuntimeException("Recursive fragment definition via " + fragmentStack + " -> " + name);
+                                }
+                                fragmentStack.push(name);
+                                vis.visit(e.rule);
+                                fragmentStack.pop();
+                            };
+                        default:
+                            throw new RuntimeException("Unhandled ruleset type " + e.type);
+                    }
+                })));
 
         // Generating code for Java 8
         cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, "java/lang/Object", new String[]{
@@ -95,12 +152,34 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitFieldInsn(PUTFIELD, className, "rules", "Ljava/util/Map;");
 
         for (final RulesetNode r : rsets) {
-            final String ruleName = "rule" + r.name.getText();
-            final String testName = "test" + r.name.getText();
-            final String actnName = "act" + r.name.getText();
+            final String ruleName;
+            final String testName;
+            final String actnName;
 
-            rw.visit(r);
-            aw.visit(r);
+            final String name = r.name.getText();
+            switch (r.type) {
+                case RULE:
+                    ruleName = "rule" + name;
+                    testName = "test" + name;
+                    actnName = "act" + name;
+                    break;
+                case SUBRULE:
+                    ruleName = null;
+                    testName = "test" + name;
+                    actnName = "act" + name;
+                    break;
+                case FRAGMENT:
+                default:
+                    ruleName = null;
+                    testName = null;
+                    actnName = null;
+                    break;
+            }
+
+            if (testName != null) rw.visit(r);
+            if (actnName != null) aw.visit(r);
+
+            if (ruleName == null) continue;
 
             final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_VARARGS, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
             mv.visitCode();
@@ -138,7 +217,7 @@ public final class RulesetGroup extends ParseTree {
             // Map method to rule table
             ctor.visitVarInsn(ALOAD, 0);
             ctor.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
-            ctor.visitLdcInsn(r.name.getText());
+            ctor.visitLdcInsn(name);
             ctor.visitVarInsn(ALOAD, 0);
             ctor.visitInvokeDynamicInsn("apply", "(L" + className + ";)Lcom/ymcmp/rset/rt/Rule;",
                     new Handle(H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
