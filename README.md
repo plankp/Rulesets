@@ -70,6 +70,7 @@ try (final RsetLexer lexer = new RsetLexer(/* A Reader that contains the above c
     final Class<?> cl = bcl.loadFromBytes(generatedClassName, bytes);
 
     // cl implements Rulesets, so this cast is safe
+    // You could use cl.getConstructor(Extensions.class).newInstance(ext) for loading custom extensions
     final Rulesets rulesets = (Rulesets) cl.getConstructor().newInstance();
 
     // In this example, we will be testing 0x1234

@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import com.ymcmp.rset.rt.Rulesets;
+import com.ymcmp.rset.lib.Extensions;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
@@ -17,6 +18,7 @@ import static org.junit.Assert.*;
 public class LegacyClauseTest {
 
     private static Class<?> LegacyClause;
+    private static Extensions ext;
 
     @BeforeClass
     public static void compile() {
@@ -40,11 +42,14 @@ public class LegacyClauseTest {
         } else {
             throw new RuntimeException("This should not happen, generated classes must inherit Rulesets");
         }
+
+        ext = new Extensions();
     }
 
     public static Rulesets newLegacyClause() {
         try {
-            return (Rulesets) LegacyClause.getConstructor().newInstance();
+            // Calling soft dependency constructor
+            return (Rulesets) LegacyClause.getConstructor(Extensions.class).newInstance(ext);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
             throw new RuntimeException(ex);
         }

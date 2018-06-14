@@ -125,7 +125,21 @@ public final class RulesetGroup extends ParseTree {
             fv.visitEnd();
         }
 
-        final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+        {
+            // Dependency generating constructor, (when user does not have custom Extension to bundle)
+            final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+            ctor.visitCode();
+            ctor.visitVarInsn(ALOAD, 0);
+            ctor.visitTypeInsn(NEW, "com/ymcmp/rset/lib/Extensions");
+            ctor.visitInsn(DUP);
+            ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/lib/Extensions", "<init>", "()V", false);
+            ctor.visitMethodInsn(INVOKESPECIAL, className, "<init>", "(Lcom/ymcmp/rset/lib/Extensions;)V", false);
+            ctor.visitInsn(RETURN);
+            ctor.visitMaxs(0, 0);
+            ctor.visitEnd();
+        }
+
+        final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "(Lcom/ymcmp/rset/lib/Extensions;)V", null, null);
         ctor.visitCode();
         // super();
         ctor.visitVarInsn(ALOAD, 0);
@@ -138,11 +152,9 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
         ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/rt/EvalState", "<init>", "([Ljava/lang/Object;)V", false);
         ctor.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-        // ext = new Extensions();
+        // ext = %injected through constructor;
         ctor.visitVarInsn(ALOAD, 0);
-        ctor.visitTypeInsn(NEW, "com/ymcmp/rset/lib/Extensions");
-        ctor.visitInsn(DUP);
-        ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/lib/Extensions", "<init>", "()V", false);
+        ctor.visitVarInsn(ALOAD, 1);
         ctor.visitFieldInsn(PUTFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
         // rules = new HashMap<>();
         ctor.visitVarInsn(ALOAD, 0);
