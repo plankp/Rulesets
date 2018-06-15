@@ -3,24 +3,25 @@ package com.ymcmp.rset.rt;
 import java.util.Stack;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Collection;
 import java.util.EmptyStackException;
 
-public class EvalState {
+public class EvalState<T> {
 
     protected final Stack<Integer> indexes = new Stack<>();
 
-    protected Object[] data;
+    protected T[] data;
 
-    public EvalState(Object... data) {
+    public EvalState(T... data) {
         this.data = data;
     }
 
-    public void setData(Object... data) {
+    public void setData(T... data) {
         this.data = data;
     }
 
     public void reset() {
-        data = new Object[0];
+        data = (T[]) new Object[0];
         indexes.clear();
         indexes.push(0);
     }
@@ -72,11 +73,17 @@ public class EvalState {
         indexes.push(getIndex());
     }
 
-    public boolean testEquality(final Object obj) {
+    public boolean testEquality(final T obj) {
+        return testEquality(obj, null);
+    }
+
+    public boolean testEquality(final T obj, final Collection<T> list) {
         try {
-            final Object k = data[next()];
-            if (Objects.equals(obj, k)) return true;
-            if (Objects.equals(obj.toString(), k.toString())) return true;
+            final T k = data[next()];
+            if (Objects.equals(obj, k)) {
+                if (list != null) list.add(k);
+                return true;
+            }
         } catch (IndexOutOfBoundsException ex) {
             prev();
         } catch (NullPointerException ex) {
@@ -85,7 +92,11 @@ public class EvalState {
         return false;
     }
 
-    public boolean testRange(final Comparable a, final Comparable b) {
+    public boolean testRange(final Comparable<T> a, final Comparable<T> b) {
+        return testRange(a, b, null);
+    }
+
+    public boolean testRange(final Comparable<T> a, final Comparable<T> b, final Collection<T> list) {
         try {
             // To be in range, either:
             //    a <= k and b >= k
@@ -95,19 +106,13 @@ public class EvalState {
             //    u <= 0 and v >= 0
             // or v <= 0 and u >= 0
 
-            final Object ko = data[next()];
-            try {
-                final int u = a.compareTo(ko);
-                final int v = b.compareTo(ko);
-                if (u <= 0 && v >= 0 || v <= 0 && u >= 0) return true;
-            } catch (ClassCastException ex) {
-                //
+            final T ko = data[next()];
+            final int u = a.compareTo(ko);
+            final int v = b.compareTo(ko);
+            if (u <= 0 && v >= 0 || v <= 0 && u >= 0) {
+                if (list != null) list.add(ko);
+                return true;
             }
-
-            final String ks = ko.toString();
-            final int u = a.toString().compareTo(ks);
-            final int v = b.toString().compareTo(ks);
-            if (u <= 0 && v >= 0 || v <= 0 && u >= 0) return true;
         } catch (IndexOutOfBoundsException ex) {
             prev();
         } catch (NullPointerException | ClassCastException ex) {
@@ -117,8 +122,13 @@ public class EvalState {
     }
 
     public boolean testSlotOccupied() {
+        return testSlotOccupied(null);
+    }
+
+    public boolean testSlotOccupied(final Collection<T> list) {
         try {
-            ignore(data[next()]);
+            final T t = data[next()];
+            if (list != null) list.add(t);
             return true;
         } catch (IndexOutOfBoundsException ex) {
             prev();
@@ -127,10 +137,15 @@ public class EvalState {
     }
 
     public boolean testEnd() {
+        return testEnd(null);
+    }
+
+    public boolean testEnd(final Collection<T> list) {
         try {
             ignore(data[next()]);
         } catch (IndexOutOfBoundsException ex) {
             prev();
+            if (list != null) list.add(null);
             return true;
         }
         return false;
