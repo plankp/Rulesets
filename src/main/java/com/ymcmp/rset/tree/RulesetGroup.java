@@ -58,39 +58,43 @@ public final class RulesetGroup extends ParseTree {
                 .collect(Collectors.toMap(e -> e.name.getText(), e -> {
                     switch (e.type) {
                         case RULE:
-                            return vis -> {
-                                final String testName = "test" + e.name.getText();
-                                final int map = vis.findNearestLocal(VarType.MAP);
-                                vis.mv.visitVarInsn(ALOAD, 0);
-                                vis.mv.visitVarInsn(ALOAD, map);
-                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;)Z", false);
-                                vis.mv.visitVarInsn(ISTORE, 2);
-                            };
                         case SUBRULE:
                             return vis -> {
                                 final String name = e.name.getText();
-                                final int map = vis.findNearestLocal(VarType.MAP);
+                                final int lst = vis.findNearestLocal(VarType.LIST);
                                 final int localEnv = vis.pushNewLocal(VarType.MAP);
+                                final int parseLst = vis.pushNewLocal(VarType.LIST);
                                 final Label exit = new Label();
+                                final Label br0 = new Label();
                                 vis.mv.visitTypeInsn(NEW, "java/util/HashMap");
                                 vis.mv.visitInsn(DUP);
                                 vis.mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false);
                                 vis.mv.visitVarInsn(ASTORE, localEnv);
+                                vis.mv.visitTypeInsn(NEW, "java/util/ArrayList");
+                                vis.mv.visitInsn(DUP);
+                                vis.mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false);
+                                vis.mv.visitVarInsn(ASTORE, parseLst);
                                 vis.mv.visitVarInsn(ALOAD, 0);
                                 vis.mv.visitVarInsn(ALOAD, localEnv);
-                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "test" + name, "(Ljava/util/Map;)Z", false);
+                                vis.mv.visitVarInsn(ALOAD, parseLst);
+                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "test" + name, "(Ljava/util/Map;Ljava/util/List;)Z", false);
                                 vis.mv.visitInsn(DUP);
                                 vis.mv.visitJumpInsn(IFEQ, exit);
-                                vis.mv.visitVarInsn(ALOAD, map);
-                                vis.mv.visitLdcInsn(name);
+                                vis.mv.visitVarInsn(ALOAD, lst);
                                 vis.mv.visitVarInsn(ALOAD, 0);
                                 vis.mv.visitVarInsn(ALOAD, localEnv);
                                 vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
-                                vis.mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                                vis.mv.visitInsn(DUP);
+                                vis.mv.visitJumpInsn(IFNONNULL, br0);
+                                vis.mv.visitInsn(POP);
+                                vis.mv.visitVarInsn(ALOAD, parseLst);
+                                vis.mv.visitLabel(br0);
+                                vis.mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
                                 vis.mv.visitInsn(POP);
                                 vis.mv.visitLabel(exit);
+                                vis.mv.visitVarInsn(ISTORE, vis.RESULT);
                                 vis.popLocal();
-                                vis.mv.visitVarInsn(ISTORE, 2);
+                                vis.popLocal();
                             };
                         case FRAGMENT:
                             return vis -> {
@@ -208,10 +212,13 @@ public final class RulesetGroup extends ParseTree {
             mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
             mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
             mv.visitVarInsn(ASTORE, 2);
-            // if (%test(env@2)) %if-block else %else-block
+            // if (%test(env@2, new ArrayList<>())) %if-block else %else-block
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 2);
-            mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;)Z", false);
+            mv.visitTypeInsn(NEW, "java/util/ArrayList");
+            mv.visitInsn(DUP);
+            mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false);
+            mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;Ljava/util/List;)Z", false);
             final Label label = new Label();
             mv.visitJumpInsn(IFEQ, label);
             // %if-block -> return (%act(env@2))

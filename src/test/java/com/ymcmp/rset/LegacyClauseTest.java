@@ -28,8 +28,9 @@ public class LegacyClauseTest {
             "subrule b  = 00 (abc | 1),\n" +
             "rule all   = ((*) (*) | (*))! { 'Kleen AF' },\n" +
             "rule inc   = &b abc,\n" +
-            "rule abc   = a b c { 'rule abc is matched' },\n" +
-            "rule a2f   = r:&abc d e f:f { ?_join You can count from ?r:0 to ?f }"
+            "fragment f = a b c,\n" +
+            "rule abc   = &f { 'rule abc is matched' },\n" +
+            "rule a2f   = r:&f d e f:f { ?_join You can count from ?r:0 to ?f }"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);

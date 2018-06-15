@@ -23,7 +23,7 @@ public class CapturesTest {
     @BeforeClass
     public static void compile() {
         final StringReader reader = new StringReader(
-            "rule xs = xs:(x+) { ?xs },\n" +
+            "rule xs = (xs:(x+)) u* { ?xs },\n" +
             "rule ys = ys:(y*) { ?ys },\n" +
             "rule xy = xy:((&xs | y+)+) { ?xy },\n"
         );
@@ -128,13 +128,13 @@ public class CapturesTest {
             }
         }
         assertEquals(
-                "[y]\n" +
-                "[y, x]\n" +
-                "[x, y, y]\n" +
-                "[x, y, x, y]\n" +
-                "[y, y, y, y]\n" +
-                "[x, x, x, x]\n" +
-                "[y, x, x, y]\n",
+                "[[y]]\n" +
+                "[[y], [x]]\n" +
+                "[[x], [y, y]]\n" +
+                "[[x], [y], [x], [y]]\n" +
+                "[[y, y, y, y]]\n" +
+                "[[x, x, x, x]]\n" +
+                "[[y], [x, x], [y]]\n",
                 sb.toString());
     }
 }
