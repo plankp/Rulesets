@@ -3,6 +3,7 @@ package com.ymcmp.rset.rt;
 import java.util.Stack;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Collection;
 import java.util.EmptyStackException;
 
 public class EvalState {
@@ -73,10 +74,16 @@ public class EvalState {
     }
 
     public boolean testEquality(final Object obj) {
+        return testEquality(obj, null);
+    }
+
+    public boolean testEquality(final Object obj, final Collection<Object> col) {
         try {
             final Object k = data[next()];
-            if (Objects.equals(obj, k)) return true;
-            if (Objects.equals(obj.toString(), k.toString())) return true;
+            if (Objects.equals(obj, k)) {
+                if (col != null) col.add(k);
+                return true;
+            }
         } catch (IndexOutOfBoundsException ex) {
             prev();
         } catch (NullPointerException ex) {
@@ -86,6 +93,10 @@ public class EvalState {
     }
 
     public boolean testRange(final Comparable a, final Comparable b) {
+        return testRange(a, b, null);
+    }
+
+    public boolean testRange(final Comparable a, final Comparable b, final Collection<Object> col) {
         try {
             // To be in range, either:
             //    a <= k and b >= k
@@ -96,18 +107,12 @@ public class EvalState {
             // or v <= 0 and u >= 0
 
             final Object ko = data[next()];
-            try {
-                final int u = a.compareTo(ko);
-                final int v = b.compareTo(ko);
-                if (u <= 0 && v >= 0 || v <= 0 && u >= 0) return true;
-            } catch (ClassCastException ex) {
-                //
+            final int u = a.compareTo(ko);
+            final int v = b.compareTo(ko);
+            if (u <= 0 && v >= 0 || v <= 0 && u >= 0) {
+                if (col != null) col.add(ko);
+                return true;
             }
-
-            final String ks = ko.toString();
-            final int u = a.toString().compareTo(ks);
-            final int v = b.toString().compareTo(ks);
-            if (u <= 0 && v >= 0 || v <= 0 && u >= 0) return true;
         } catch (IndexOutOfBoundsException ex) {
             prev();
         } catch (NullPointerException | ClassCastException ex) {
@@ -117,8 +122,13 @@ public class EvalState {
     }
 
     public boolean testSlotOccupied() {
+        return testSlotOccupied(null);
+    }
+
+    public boolean testSlotOccupied(Collection<Object> col) {
         try {
-            ignore(data[next()]);
+            final Object k = data[next()];
+            if (col != null) col.add(k);
             return true;
         } catch (IndexOutOfBoundsException ex) {
             prev();
@@ -127,10 +137,15 @@ public class EvalState {
     }
 
     public boolean testEnd() {
+        return testEnd(null);
+    }
+
+    public boolean testEnd(Collection<Object> col) {
         try {
             ignore(data[next()]);
         } catch (IndexOutOfBoundsException ex) {
             prev();
+            if (col != null) col.add(Epsilon.INSTANCE);
             return true;
         }
         return false;
