@@ -28,23 +28,23 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                 case '\r':
                 case '\t': continue;
 // NOTE: Above cases abuses fallthroughs! Careful when re-ordering
-                case ',':  return new Token(Type.S_CM, ",");
-                case '=':  return new Token(Type.S_EQ, "=");
-                case '-':  return new Token(Type.S_MN, "-");
-                case '+':  return new Token(Type.S_AD, "+");
-                case '?':  return new Token(Type.S_QM, "?");
-                case ':':  return new Token(Type.S_CO, ":");
-                case '|':  return new Token(Type.S_OR, "|");
-                case '~':  return new Token(Type.S_TD, "~");
-                case '*':  return new Token(Type.S_ST, "*");
-                case '/':  return new Token(Type.S_DV, "/");
-                case '%':  return new Token(Type.S_MD, "&");
-                case '!':  return new Token(Type.S_EX, "!");
-                case '&':  return new Token(Type.S_AM, "&");
-                case '(':  return new Token(Type.S_LP, "(");
-                case ')':  return new Token(Type.S_RP, ")");
-                case '{':  return new Token(Type.S_LB, "{");
-                case '}':  return new Token(Type.S_RB, "}");
+                case ',':  return new Token<>(Type.S_CM, ",");
+                case '=':  return new Token<>(Type.S_EQ, "=");
+                case '-':  return new Token<>(Type.S_MN, "-");
+                case '+':  return new Token<>(Type.S_AD, "+");
+                case '?':  return new Token<>(Type.S_QM, "?");
+                case ':':  return new Token<>(Type.S_CO, ":");
+                case '|':  return new Token<>(Type.S_OR, "|");
+                case '~':  return new Token<>(Type.S_TD, "~");
+                case '*':  return new Token<>(Type.S_ST, "*");
+                case '/':  return new Token<>(Type.S_DV, "/");
+                case '%':  return new Token<>(Type.S_MD, "&");
+                case '!':  return new Token<>(Type.S_EX, "!");
+                case '&':  return new Token<>(Type.S_AM, "&");
+                case '(':  return new Token<>(Type.S_LP, "(");
+                case ')':  return new Token<>(Type.S_RP, ")");
+                case '{':  return new Token<>(Type.S_LB, "{");
+                case '}':  return new Token<>(Type.S_RB, "}");
                 case '\'':
                 case '"': {
                     final StringBuilder sb = new StringBuilder();
@@ -79,19 +79,19 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                                 sb.append((char) k);
                         }
                     }
-                    return new Token(Type.L_IDENT, sb.toString());
+                    return new Token<>(Type.L_IDENT, sb.toString());
                 }
                 default: {
                     unread(c);
 
                     final String t = readWhile(Character::isDigit);
                     if (!t.isEmpty()) {
-                        return new Token(Type.L_NUMBER, t);
+                        return new Token<>(Type.L_NUMBER, t);
                     }
 
                     final String i = readWhile(RsetLexer::isIdent);
                     if (!i.isEmpty()) {
-                        return new Token(Type.L_IDENT, i);
+                        return new Token<>(Type.L_IDENT, i);
                     }
 
                     throw new RuntimeException("Unknown char " + (char) c);

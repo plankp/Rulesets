@@ -15,7 +15,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 public class RsetParser implements Parser<Type, RulesetGroup> {
 
     private Lexer<Type> lexer;
-    private Token buf;
+    private Token<Type> buf;
 
     public RsetParser(final Lexer<Type> lexer) {
         this.lexer = lexer;
