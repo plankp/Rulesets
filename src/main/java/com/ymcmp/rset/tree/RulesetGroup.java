@@ -64,34 +64,26 @@ public final class RulesetGroup extends ParseTree {
                                 final int lst = vis.findNearestLocal(VarType.LIST);
                                 final int localEnv = vis.pushNewLocal(VarType.MAP);
                                 final int parseLst = vis.pushNewLocal(VarType.LIST);
-                                final Label exit = new Label();
-                                final Label br0 = new Label();
-                                vis.mv.visitTypeInsn(NEW, "java/util/HashMap");
-                                vis.mv.visitInsn(DUP);
-                                vis.mv.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false);
-                                vis.mv.visitVarInsn(ASTORE, localEnv);
-                                vis.mv.visitTypeInsn(NEW, "java/util/ArrayList");
-                                vis.mv.visitInsn(DUP);
-                                vis.mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false);
-                                vis.mv.visitVarInsn(ASTORE, parseLst);
+                                ASMUtils.newObjectNoArgs(vis.mv, "java/util/HashMap", localEnv);
+                                ASMUtils.newObjectNoArgs(vis.mv, "java/util/ArrayList", parseLst);
                                 vis.mv.visitVarInsn(ALOAD, 0);
                                 vis.mv.visitVarInsn(ALOAD, localEnv);
                                 vis.mv.visitVarInsn(ALOAD, parseLst);
                                 vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "test" + name, "(Ljava/util/Map;Ljava/util/List;)Z", false);
                                 vis.mv.visitInsn(DUP);
-                                vis.mv.visitJumpInsn(IFEQ, exit);
-                                vis.mv.visitVarInsn(ALOAD, lst);
-                                vis.mv.visitVarInsn(ALOAD, 0);
-                                vis.mv.visitVarInsn(ALOAD, localEnv);
-                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
-                                vis.mv.visitInsn(DUP);
-                                vis.mv.visitJumpInsn(IFNONNULL, br0);
-                                vis.mv.visitInsn(POP);
-                                vis.mv.visitVarInsn(ALOAD, parseLst);
-                                vis.mv.visitLabel(br0);
-                                vis.mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
-                                vis.mv.visitInsn(POP);
-                                vis.mv.visitLabel(exit);
+                                ASMUtils.testIf(vis.mv, IFEQ, () -> {
+                                    vis.mv.visitVarInsn(ALOAD, lst);
+                                    vis.mv.visitVarInsn(ALOAD, 0);
+                                    vis.mv.visitVarInsn(ALOAD, localEnv);
+                                    vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
+                                    vis.mv.visitInsn(DUP);
+                                    ASMUtils.testIf(vis.mv, IFNONNULL, () -> {
+                                        vis.mv.visitInsn(POP);
+                                        vis.mv.visitVarInsn(ALOAD, parseLst);
+                                    });
+                                    vis.mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
+                                    vis.mv.visitInsn(POP);
+                                });
                                 vis.mv.visitVarInsn(ISTORE, vis.RESULT);
                                 vis.popLocal();
                                 vis.popLocal();
@@ -134,9 +126,7 @@ public final class RulesetGroup extends ParseTree {
             final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
             ctor.visitCode();
             ctor.visitVarInsn(ALOAD, 0);
-            ctor.visitTypeInsn(NEW, "com/ymcmp/rset/lib/Extensions");
-            ctor.visitInsn(DUP);
-            ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/lib/Extensions", "<init>", "()V", false);
+            ASMUtils.newObjectNoArgs(ctor, "com/ymcmp/rset/lib/Extensions", -1);
             ctor.visitMethodInsn(INVOKESPECIAL, className, "<init>", "(Lcom/ymcmp/rset/lib/Extensions;)V", false);
             ctor.visitInsn(RETURN);
             ctor.visitMaxs(0, 0);
@@ -162,9 +152,7 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitFieldInsn(PUTFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
         // rules = new HashMap<>();
         ctor.visitVarInsn(ALOAD, 0);
-        ctor.visitTypeInsn(NEW, "java/util/HashMap");
-        ctor.visitInsn(DUP);
-        ctor.visitMethodInsn(INVOKESPECIAL, "java/util/HashMap", "<init>", "()V", false);
+        ASMUtils.newObjectNoArgs(ctor, "java/util/HashMap", -1);
         ctor.visitFieldInsn(PUTFIELD, className, "rules", "Ljava/util/Map;");
 
         for (final RulesetNode r : rsets) {
@@ -212,23 +200,16 @@ public final class RulesetGroup extends ParseTree {
             mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
             mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
             mv.visitVarInsn(ASTORE, 2);
-            // if (%test(env@2, new ArrayList<>())) %if-block else %else-block
+            // return (%test(env@2, new ArrayList<>())) ? act(env@2) : null;
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 2);
-            mv.visitTypeInsn(NEW, "java/util/ArrayList");
-            mv.visitInsn(DUP);
-            mv.visitMethodInsn(INVOKESPECIAL, "java/util/ArrayList", "<init>", "()V", false);
+            ASMUtils.newObjectNoArgs(mv, "java/util/ArrayList", -1);
             mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;Ljava/util/List;)Z", false);
-            final Label label = new Label();
-            mv.visitJumpInsn(IFEQ, label);
-            // %if-block -> return (%act(env@2))
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitVarInsn(ALOAD, 2);
-            mv.visitMethodInsn(INVOKEVIRTUAL, className, actnName, "(Ljava/util/Map;)Ljava/lang/Object;", false);
-            mv.visitInsn(ARETURN);
-            // %else-block
-            mv.visitLabel(label);
-            mv.visitInsn(ACONST_NULL);
+            ASMUtils.testIfElse(mv, IFEQ, () -> {
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitVarInsn(ALOAD, 2);
+                mv.visitMethodInsn(INVOKEVIRTUAL, className, actnName, "(Ljava/util/Map;)Ljava/lang/Object;", false);
+            }, () -> mv.visitInsn(ACONST_NULL));
             mv.visitInsn(ARETURN);
             mv.visitMaxs(0, 0);
             mv.visitEnd();
