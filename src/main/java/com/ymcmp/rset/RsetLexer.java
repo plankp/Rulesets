@@ -85,8 +85,17 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                     unread(c);
 
                     final String t = readWhile(Character::isDigit);
+                    final int k = read();
+                    if (k == '.') {
+                        final String frac = readWhile(Character::isDigit);
+                        if (!frac.isEmpty()) {
+                            return new Token<>(Type.L_REAL, t + '.' + frac);
+                        }
+                    } else {
+                        unread(k);
+                    }
                     if (!t.isEmpty()) {
-                        return new Token<>(Type.L_NUMBER, t);
+                        return new Token<>(Type.L_INT, t);
                     }
 
                     final String i = readWhile(RsetLexer::isIdent);

@@ -32,8 +32,10 @@ public final class ValueNode extends ParseTree {
         switch (token.type) {
             case L_IDENT:
                 return escape(token.text);
-            case L_NUMBER:
+            case L_INT:
                 return Integer.parseInt(token.text);
+            case L_REAL:
+                return Double.parseDouble(token.text);
             default:
                 throw new RuntimeException("Unknown value type " + token.type);
         }
@@ -43,7 +45,8 @@ public final class ValueNode extends ParseTree {
         switch (token.type) {
             case L_IDENT:
                 return '"' + escape(token.text) + '"';
-            case L_NUMBER:
+            case L_INT:
+            case L_REAL:
                 return token.text;
             default:
                 throw new RuntimeException("Unknown value type " + token.type);

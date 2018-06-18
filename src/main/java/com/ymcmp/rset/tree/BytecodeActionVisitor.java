@@ -35,9 +35,14 @@ public class BytecodeActionVisitor extends Visitor<Void> {
 
     public Void visitValueNode(final ValueNode n) {
         mv.visitLdcInsn(n.toObject());
-        if (n.token.type == Type.L_NUMBER) {
-            // Box the integer
-            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+        // Make sure the item on stack is an object, not a primitive
+        switch (n.token.type) {
+            case L_INT:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                break;
+            case L_REAL:
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+                break;
         }
         return null;
     }

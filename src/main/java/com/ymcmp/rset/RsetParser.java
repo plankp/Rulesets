@@ -51,7 +51,8 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         if (t != null) {
             switch (t.type) {
                 case L_IDENT:
-                case L_NUMBER:
+                case L_INT:
+                case L_REAL:
                     return new ValueNode(t);
                 default:
                     ungetToken(t);
