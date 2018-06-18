@@ -184,6 +184,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 return null;
             }
             case S_QM: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("[0, 1] next clause");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final Label label = new Label();
                 final int list = findNearestLocal(VarType.LIST);
                 final int rwnd = pushNewLocal(VarType.NUM);
@@ -197,6 +204,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 return null;
             }
             case S_AD: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("[1, n] next clause");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final Label loop = new Label();
                 final int plst = findNearestLocal(VarType.LIST);
                 final int flag = pushNewLocal(VarType.BOOL);
@@ -227,6 +241,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 return null;
             }
             case S_ST: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("[0, n] next clause");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final Label loop = new Label();
                 final int plst = findNearestLocal(VarType.LIST);
                 final int list = pushNewLocal(VarType.LIST);
@@ -256,11 +277,20 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     public Void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
             case S_MN: {
+                final ValueNode node1 = (ValueNode) n.rule1;
+                final ValueNode node2 = (ValueNode) n.rule2;
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Test range of [" + node1.getText() + ", " + node2.getText() + "]");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final int plst = findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                mv.visitLdcInsn(((ValueNode) n.rule1).toObject());
-                mv.visitLdcInsn(((ValueNode) n.rule2).toObject());
+                mv.visitLdcInsn(node1.toObject());
+                mv.visitLdcInsn(node2.toObject());
                 mv.visitVarInsn(ALOAD, plst);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testRange", "(Ljava/lang/Comparable;Ljava/lang/Comparable;Ljava/util/Collection;)Z", false);
                 mv.visitVarInsn(ISTORE, RESULT);
@@ -274,15 +304,30 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     public Void visitKaryRule(final KaryRule n) {
         switch (n.type) {
             case SEQ: {
+                final int ruleCount = n.rules.size();
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Sequential clauses (" + ruleCount + " total):");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final Label exit = new Label();
                 final int out = findNearestLocal(VarType.LIST);
                 final int lst = pushNewLocal(VarType.LIST);
                 newObjectNoArgs(lst, "java/util/ArrayList");
-                n.rules.forEach(k -> {
-                    visit(k);
+                for (int i = 0; i < ruleCount; ++i) {
+                    if (genDebugInfo) {
+                        mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                        mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+                        mv.visitLdcInsn("Sequential clause " + (i + 1) + " out of " + ruleCount + ":");
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                    }
+
+                    visit(n.rules.get(i));
                     mv.visitVarInsn(ILOAD, RESULT);
                     mv.visitJumpInsn(IFEQ, exit);
-                });
+                }
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
                 mv.visitLabel(exit);
@@ -294,16 +339,31 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 return null;
             }
             case SWITCH: {
+                final int ruleCount = n.rules.size();
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Switch clauses (" + ruleCount + " total):");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final Label exit = new Label();
                 final int list = findNearestLocal(VarType.LIST);
                 final int rwnd = pushNewLocal(VarType.NUM);
-                n.rules.forEach(k -> {
+                for (int i = 0; i < ruleCount; ++i) {
+                    if (genDebugInfo) {
+                        mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                        mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+                        mv.visitLdcInsn("Switch clause " + (i + 1) + " out of " + ruleCount + ":");
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                    }
+
                     saveRoutine(list, rwnd);
-                    visit(k);
+                    visit(n.rules.get(i));
                     mv.visitVarInsn(ILOAD, RESULT);
                     mv.visitJumpInsn(IFNE, exit);
                     unsaveRoutine(list, rwnd);
-                });
+                };
                 mv.visitInsn(ICONST_0);
                 mv.visitVarInsn(ISTORE, RESULT);
                 mv.visitLabel(exit);
@@ -322,6 +382,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         final String dest = n.dest.getText();
         final int plst = findNearestLocal(VarType.LIST);
         final int map = findNearestLocal(VarType.MAP);
+        if (genDebugInfo) {
+            mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+            mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+            mv.visitLdcInsn("Capturing next clause as " + dest);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+        }
+
         visit(n.rule);
         mv.visitVarInsn(ALOAD, map);    // Setting up stack for map.put
         mv.visitLdcInsn(dest);          // Setting up stack for map.put(dest
