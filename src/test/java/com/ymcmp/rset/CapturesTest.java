@@ -25,12 +25,13 @@ public class CapturesTest {
         final StringReader reader = new StringReader(
             "rule xs = (xs:(x+)) u* { ?xs },\n" +
             "rule ys = ys:(y*) { ?ys },\n" +
-            "rule xy = xy:((&xs | y+)+) { ?xy },\n"
+            "rule xy = xy:((&xs | y+)+) { ?xy },\n" +
+            "rule ms = ms:((a b c)?) { ?ms },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
         final RsetParser parser = new RsetParser(lexer);
-        final byte[] bytes = parser.parse().toBytecode("Captures");
+        final byte[] bytes = parser.parse().toBytecode("Captures", null, false);
         final ByteClassLoader bcl = new ByteClassLoader();
         final Class<?> cl = bcl.loadFromBytes("Captures", bytes);
         if (Rulesets.class.isAssignableFrom(cl)) {
@@ -51,10 +52,11 @@ public class CapturesTest {
     @Test
     public void testGetRuleNames() {
         final Set<String> rsets = newCaptures().getRuleNames();
-        assertEquals(3, rsets.size());
+        assertEquals(4, rsets.size());
         assertTrue(rsets.contains("xs"));
         assertTrue(rsets.contains("ys"));
         assertTrue(rsets.contains("xy"));
+        assertTrue(rsets.contains("ms"));
     }
 
     @Test
@@ -135,6 +137,31 @@ public class CapturesTest {
                 "[[y, y, y, y]]\n" +
                 "[[x, x, x, x]]\n" +
                 "[[y], [x, x], [y]]\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testMS() {
+        final Object[][] tests = {
+            { },
+            { "a" },
+            { "a", "b" },
+            { "a", "b", "c" },  // This should be enough...
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newCaptures();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("ms").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "[]\n" +
+                "[]\n" +
+                "[]\n" +
+                "[a, b, c]\n",
                 sb.toString());
     }
 }

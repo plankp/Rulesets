@@ -29,13 +29,16 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     private final String className;
     private final ClassWriter cw;
 
+    public final boolean genDebugInfo;
+
     public MethodVisitor mv;
 
     public int RESULT;
 
-    public BytecodeRuleVisitor(ClassWriter cw, String className, Map<String, Consumer<BytecodeRuleVisitor>> refs) {
+    public BytecodeRuleVisitor(ClassWriter cw, String className, boolean genDebugInfo, Map<String, Consumer<BytecodeRuleVisitor>> refs) {
         this.cw = cw;
         this.className = className;
+        this.genDebugInfo = genDebugInfo;
         this.refs = refs;
     }
 
@@ -70,6 +73,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     public Void visitValueNode(final ValueNode n) {
         switch (n.token.type) {
             case S_ST: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Test wildcard slot");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final int plst = findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
@@ -79,6 +89,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 return null;
             }
             case S_EX: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Test end of data");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final int plst = findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
@@ -88,6 +105,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 return null;
             }
             default: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Test for " + n.getText());
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 final int plst = findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
@@ -109,6 +133,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     }
 
     private void saveRoutine(int listSlot, int rewindSlot) {
+        if (genDebugInfo) {
+            mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+            mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+            mv.visitLdcInsn("Save parse stack");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+        }
+
         mv.visitVarInsn(ALOAD, listSlot);
         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
         mv.visitVarInsn(ISTORE, rewindSlot);
@@ -118,6 +149,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     }
 
     private void unsaveRoutine(int listSlot, int rewindSlot) {
+        if (genDebugInfo) {
+            mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+            mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+            mv.visitLdcInsn("Restore parse stack");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+        }
+
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "unsave", "()V", false);
@@ -132,6 +170,13 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     public Void visitUnaryRule(final UnaryRule n) {
         switch (n.op.type) {
             case S_TD: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Negate next clause");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, RESULT);
                 ASMUtils.testIfElse(mv, IFNE, () -> mv.visitInsn(ICONST_1), () -> mv.visitInsn(ICONST_0));
@@ -140,18 +185,15 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
             }
             case S_QM: {
                 final Label label = new Label();
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "save", "()V", false);
+                final int list = findNearestLocal(VarType.LIST);
+                final int rwnd = pushNewLocal(VarType.NUM);
+                saveRoutine(list, rwnd);
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, RESULT);
-                ASMUtils.testIf(mv, IFNE, () -> {
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "unsave", "()V", false);
-                });
+                ASMUtils.testIf(mv, IFNE, () -> unsaveRoutine(list, rwnd));
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
+                popLocal();
                 return null;
             }
             case S_AD: {
@@ -186,7 +228,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
             }
             case S_ST: {
                 final Label loop = new Label();
-                // final Label exit = new Label();
                 final int plst = findNearestLocal(VarType.LIST);
                 final int list = pushNewLocal(VarType.LIST);
                 final int rwnd = pushNewLocal(VarType.NUM);
@@ -275,6 +316,9 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     }
 
     public Void visitCaptureRule(final CaptureRule n) {
+        final Label br0 = new Label();
+        final Label br1 = new Label();
+        final Label br2 = new Label();
         final String dest = n.dest.getText();
         final int plst = findNearestLocal(VarType.LIST);
         final int map = findNearestLocal(VarType.MAP);
@@ -282,24 +326,31 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         mv.visitVarInsn(ALOAD, map);    // Setting up stack for map.put
         mv.visitLdcInsn(dest);          // Setting up stack for map.put(dest
         mv.visitVarInsn(ILOAD, RESULT);
-        ASMUtils.testIfElse(mv, IFEQ, () -> {
-            mv.visitVarInsn(ALOAD, plst);
-            mv.visitInsn(DUP);
-            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
-            mv.visitInsn(ICONST_1);
-            mv.visitInsn(ISUB);
-            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "get", "(I)Ljava/lang/Object;", true);
-        }, () -> {
-            mv.visitInsn(ICONST_0);
-            mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-        });
+        mv.visitJumpInsn(IFEQ, br0);
+        mv.visitVarInsn(ALOAD, plst);
+        mv.visitInsn(DUP);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+        mv.visitInsn(ICONST_1);
+        mv.visitInsn(ISUB);
+        mv.visitInsn(DUP);
+        mv.visitInsn(ICONST_0);
+        mv.visitJumpInsn(IF_ICMPLT, br2);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "get", "(I)Ljava/lang/Object;", true);
+        mv.visitJumpInsn(GOTO, br1);
+        mv.visitLabel(br2);
+        mv.visitInsn(POP2);
+        mv.visitLabel(br0);
+        mv.visitInsn(ICONST_0);
+        mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+        mv.visitLabel(br1);
         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
         mv.visitInsn(POP);
         return null;
     }
 
     public Void visitRulesetNode(final RulesetNode n) {
-        final String testName = "test" + n.name.getText();
+        final String name = n.name.getText();
+        final String testName = "test" + name;
         mv = cw.visitMethod(ACC_PUBLIC, testName, "(Ljava/util/Map;Ljava/util/List;)Z", "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/Object;>;Ljava/util/List<Ljava/lang/Object;>;)Z", null);
         mv.visitCode();
 
@@ -311,6 +362,14 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
 
         // Initialize objects
         newObjectNoArgs(map, "java/util/HashMap");
+
+        if (genDebugInfo) {
+            mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+            mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+            mv.visitLdcInsn("Entering rule " + name);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+        }
+
         // Fill in the actual clauses here!
         visit(n.rule);
         // if (env@1 != null) %additional
@@ -321,6 +380,14 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
             mv.visitVarInsn(ALOAD, map);
             mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "putAll", "(Ljava/util/Map;)V", true);
         });
+
+        if (genDebugInfo) {
+            mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+            mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+            mv.visitLdcInsn("Exiting rule " + name);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+        }
+
         // return result@2
         mv.visitVarInsn(ILOAD, RESULT);
         mv.visitInsn(IRETURN);

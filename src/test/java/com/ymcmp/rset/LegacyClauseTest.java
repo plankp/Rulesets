@@ -35,7 +35,7 @@ public class LegacyClauseTest {
 
         final RsetLexer lexer = new RsetLexer(reader);
         final RsetParser parser = new RsetParser(lexer);
-        final byte[] bytes = parser.parse().toBytecode("LegacyClause");
+        final byte[] bytes = parser.parse().toBytecode("LegacyClause", null, true);
         final ByteClassLoader bcl = new ByteClassLoader();
         final Class<?> cl = bcl.loadFromBytes("LegacyClause", bytes);
         if (Rulesets.class.isAssignableFrom(cl)) {

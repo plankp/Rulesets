@@ -24,6 +24,8 @@ options:
                            default: 'CompiledRulesets'
   -d | --directory <name>  Places generated file in specifed directory
                            default: current directory
+  -l | --with-logger       Generated class has logging built-in
+                           default: without logger
 If no ruleset file is specified, the compiler will read from stdin:
   cat foo.rset bar.rset | compiler -n demo/JointRules -d demo
 

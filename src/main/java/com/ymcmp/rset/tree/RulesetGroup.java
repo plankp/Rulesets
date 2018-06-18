@@ -45,16 +45,16 @@ public final class RulesetGroup extends ParseTree {
     }
 
     public byte[] toBytecode(final String className) {
-        return toBytecode(className, null);
+        return toBytecode(className, null, false);
     }
 
-    public byte[] toBytecode(final String className, final String sourceFile) {
+    public byte[] toBytecode(final String className, final String sourceFile, final boolean genDebugInfo) {
         final ClassWriter cw = new ClassWriter(ClassWriter.COMPUTE_FRAMES);
 
         final Stack<String> fragmentStack = new Stack<>();
 
         final BytecodeActionVisitor aw = new BytecodeActionVisitor(cw, className);
-        final BytecodeRuleVisitor rw = new BytecodeRuleVisitor(cw, className, rsets.stream()
+        final BytecodeRuleVisitor rw = new BytecodeRuleVisitor(cw, className, genDebugInfo, rsets.stream()
                 .collect(Collectors.toMap(e -> e.name.getText(), e -> {
                     switch (e.type) {
                         case RULE:
@@ -75,9 +75,21 @@ public final class RulesetGroup extends ParseTree {
                                     vis.mv.visitVarInsn(ALOAD, lst);
                                     vis.mv.visitVarInsn(ALOAD, 0);
                                     vis.mv.visitVarInsn(ALOAD, localEnv);
+                                    if (vis.genDebugInfo) {
+                                        vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                                        vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+                                        vis.mv.visitLdcInsn("Executing action of " + name);
+                                        vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                                    }
                                     vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
                                     vis.mv.visitInsn(DUP);
                                     ASMUtils.testIf(vis.mv, IFNONNULL, () -> {
+                                        if (vis.genDebugInfo) {
+                                            vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                                            vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+                                            vis.mv.visitLdcInsn("Using parse stack as result of action");
+                                            vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                                        }
                                         vis.mv.visitInsn(POP);
                                         vis.mv.visitVarInsn(ALOAD, parseLst);
                                     });
@@ -95,7 +107,19 @@ public final class RulesetGroup extends ParseTree {
                                     throw new RuntimeException("Recursive fragment definition via " + fragmentStack + " -> " + name);
                                 }
                                 fragmentStack.push(name);
+                                if (vis.genDebugInfo) {
+                                    vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                                    vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                                    vis.mv.visitLdcInsn("Entering rule fragment " + name);
+                                    vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                                }
                                 vis.visit(e.rule);
+                                if (vis.genDebugInfo) {
+                                    vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                                    vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                                    vis.mv.visitLdcInsn("Exiting rule fragment " + name);
+                                    vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                                }
                                 fragmentStack.pop();
                             };
                         default:
@@ -109,6 +133,7 @@ public final class RulesetGroup extends ParseTree {
         });
 
         if (sourceFile != null) cw.visitSource(sourceFile, null);
+
         {
             FieldVisitor fv;
             fv = cw.visitField(ACC_PRIVATE | ACC_FINAL, "rules", "Ljava/util/Map;", "Ljava/util/Map<Ljava/lang/String;Lcom/ymcmp/rset/rt/Rule;>;", null);
@@ -119,6 +144,21 @@ public final class RulesetGroup extends ParseTree {
 
             fv = cw.visitField(ACC_PUBLIC, "ext", "Lcom/ymcmp/rset/lib/Extensions;", null, null);
             fv.visitEnd();
+        }
+
+        if (genDebugInfo) {
+            // Constructor logger object
+            final FieldVisitor fv = cw.visitField(ACC_PRIVATE | ACC_STATIC | ACC_FINAL, "LOGGER", "Ljava/util/logging/Logger;", null, null);
+            fv.visitEnd();
+
+            final MethodVisitor mv = cw.visitMethod(ACC_STATIC, "<clinit>", "()V", null, null);
+            mv.visitLdcInsn(Type.getType("L" + className + ";"));
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "getName", "()Ljava/lang/String;", false);
+            mv.visitMethodInsn(INVOKESTATIC, "java/util/logging/Logger", "getLogger", "(Ljava/lang/String;)Ljava/util/logging/Logger;", false);
+            mv.visitFieldInsn(PUTSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+            mv.visitInsn(RETURN);
+            mv.visitMaxs(0, 0);
+            mv.visitEnd();
         }
 
         {

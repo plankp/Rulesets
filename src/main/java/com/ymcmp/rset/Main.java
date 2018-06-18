@@ -17,6 +17,7 @@ public class Main {
         String generatedClassName = DEFAULT_CLASS_NAME;
         String generatedPathName  = ".";
         String inputFile = null;
+        boolean genWithLogger = false;
         for (int i = 0; i < args.length; ++i) {
             final String arg = args[i];
             switch (arg) {
@@ -31,6 +32,8 @@ public class Main {
                             "                           default: 'CompiledRulesets'\n" +
                             "  -d | --directory <name>  Places generated file in specifed directory\n" +
                             "                           default: current directory\n" +
+                            "  -l | --with-logger       Generated class has logging built-in\n" +
+                            "                           default: without logger\n" +
                             "If no ruleset file is specified, the compiler will read from stdin:\n" +
                             "  cat foo.rset bar.rset | compiler -n demo/JointRules -d demo\n" +
                             "\n" +
@@ -48,6 +51,10 @@ public class Main {
                     // This only affects where the compiled file is placed
                     // I guess technically you could specify -d /dev/null !?
                     generatedPathName = args[++i];
+                    break;
+                case "-l":
+                case "--with-logger":
+                    genWithLogger = true;
                     break;
                 default:
                     inputFile = arg;
@@ -74,7 +81,7 @@ public class Main {
                         break;
                 }
 
-                final byte[] bytes = tree.toBytecode(generatedClassName, inputFile);
+                final byte[] bytes = tree.toBytecode(generatedClassName, inputFile, genWithLogger);
 
                 // Create directories
                 Files.write(Files.createDirectories(Paths.get(generatedPathName)).resolve(fileName + ".class"), bytes);
