@@ -50,6 +50,13 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         final Token<Type> t = getToken();
         if (t != null) {
             switch (t.type) {
+                case S_MN: {
+                    final Token<Type> inner = getToken();
+                    if (inner != null && inner.type.isNumeric()) {
+                        return new ValueNode(new Token<>(inner.type, '-' + inner.text));
+                    }
+                    throw new IllegalParseException("Expected numerical value after negative sign, found " + inner);
+                }
                 case L_IDENT:
                 case L_INT:
                 case L_REAL:

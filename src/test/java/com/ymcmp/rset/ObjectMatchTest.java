@@ -23,8 +23,8 @@ public class ObjectMatchTest {
     @BeforeClass
     public static void compile() {
         final StringReader reader = new StringReader(
-            "rule i123 = k:(1 2 3) { ?k },\n" +
-            "rule f123 = k:(1.0 2.0 3.0) { ?k },\n"
+            "rule i123 = k:(1 2 3 | (-1) (-2) (-3)) { ?k },\n" +
+            "rule f123 = k:(1.0 2.0 3.0 | (-1.0) (-2.0) (-3.0)) { ?k },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -51,6 +51,8 @@ public class ObjectMatchTest {
     public void testI123() {
         final Object[][] tests = {
             { 1, 2, 3 },
+            { 1, -2, 3 },
+            { -1, -2, -3 },
             { 1.0, 2.0, 3.0 },
         };
 
@@ -63,7 +65,8 @@ public class ObjectMatchTest {
             }
         }
         assertEquals(
-                "[1, 2, 3]\n",
+                "[1, 2, 3]\n" +
+                "[-1, -2, -3]\n",
                 sb.toString());
     }
 
@@ -72,6 +75,8 @@ public class ObjectMatchTest {
         final Object[][] tests = {
             { 1, 2, 3 },
             { 1.0, 2.0, 3.0 },
+            { 1.0, -2.0, 3.0 },
+            { -1.0, -2.0, -3.0 },
         };
 
         final StringBuilder sb = new StringBuilder();
@@ -83,7 +88,8 @@ public class ObjectMatchTest {
             }
         }
         assertEquals(
-                "[1.0, 2.0, 3.0]\n",
+                "[1.0, 2.0, 3.0]\n" +
+                "[-1.0, -2.0, -3.0]\n",
                 sb.toString());
     }
 }

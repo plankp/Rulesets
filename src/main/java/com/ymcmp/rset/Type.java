@@ -10,4 +10,14 @@ public enum Type {
     S_AM, S_EX,
     S_LP, S_RP,
     S_LB, S_RB;
+
+    public boolean isNumeric() {
+        switch (this) {
+            case L_INT:
+            case L_REAL:
+                return true;
+            default:
+                return false;
+        }
+    }
 }
