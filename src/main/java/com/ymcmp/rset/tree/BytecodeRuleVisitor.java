@@ -137,6 +137,12 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         ASMUtils.newObjectNoArgs(mv, className, slot);
     }
 
+    private void saveStack(int listSlot, int rewindSlot) {
+        mv.visitVarInsn(ALOAD, listSlot);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+        mv.visitVarInsn(ISTORE, rewindSlot);
+    }
+
     private void saveRoutine(int listSlot, int rewindSlot) {
         if (genDebugInfo) {
             mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
@@ -145,12 +151,19 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
             mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
         }
 
-        mv.visitVarInsn(ALOAD, listSlot);
-        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
-        mv.visitVarInsn(ISTORE, rewindSlot);
+        saveStack(listSlot, rewindSlot);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "save", "()V", false);
+    }
+
+    private void unsaveStack(int listSlot, int rewindSlot) {
+        mv.visitVarInsn(ALOAD, listSlot);
+        mv.visitVarInsn(ILOAD, rewindSlot);
+        mv.visitVarInsn(ALOAD, listSlot);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "subList", "(II)Ljava/util/List;", true);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "clear", "()V", true);
     }
 
     private void unsaveRoutine(int listSlot, int rewindSlot) {
@@ -164,12 +177,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "unsave", "()V", false);
-        mv.visitVarInsn(ALOAD, listSlot);
-        mv.visitVarInsn(ILOAD, rewindSlot);
-        mv.visitVarInsn(ALOAD, listSlot);
-        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
-        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "subList", "(II)Ljava/util/List;", true);
-        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "clear", "()V", true);
+        unsaveStack(listSlot, rewindSlot);
     }
 
     public Void visitUnaryRule(final UnaryRule n) {
@@ -375,6 +383,62 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 popLocal();
                 return null;
             }
+            case GROUP: {
+                final int ruleCount = n.rules.size();
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Grouping clauses (" + ruleCount + " total):");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
+                final Label br0 = new Label();
+                final Label br1 = new Label();
+                final int plst = findNearestLocal(VarType.LIST);
+                final int list = pushNewLocal(VarType.LIST);
+                final int rwnd = pushNewLocal(VarType.NUM);
+                newObjectNoArgs(list, "java/util/ArrayList");
+                saveStack(plst, rwnd);
+                for (int i = 0; i < ruleCount; ++i) {
+                    if (genDebugInfo) {
+                        mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                        mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+                        mv.visitLdcInsn("Group clause " + (i + 1) + " out of " + ruleCount + ":");
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                    }
+
+                    visit(n.rules.get(i));
+                    mv.visitVarInsn(ILOAD, RESULT);
+                    mv.visitJumpInsn(IFEQ, br0);
+                    mv.visitVarInsn(ALOAD, list);
+                    mv.visitVarInsn(ALOAD, plst);
+                    mv.visitInsn(DUP);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
+                    mv.visitInsn(ICONST_1);
+                    mv.visitInsn(ISUB);
+                    mv.visitInsn(DUP);
+                    mv.visitInsn(ICONST_0);
+                    ASMUtils.testIfElse(mv, IF_ICMPLT, () -> {
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "remove", "(I)Ljava/lang/Object;", true);
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
+                        mv.visitInsn(POP);
+                    }, () -> {
+                        mv.visitInsn(POP2);
+                        mv.visitInsn(POP);
+                    });
+                }
+                mv.visitVarInsn(ALOAD, plst);
+                mv.visitVarInsn(ALOAD, list);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
+                mv.visitInsn(POP);
+                mv.visitJumpInsn(GOTO, br1);
+                mv.visitLabel(br0);
+                unsaveStack(plst, rwnd);
+                mv.visitLabel(br1);
+                popLocal();
+                popLocal();
+                return null;
+            }
             default:
                 throw new RuntimeException("Unknown rule block " + n.type);
         }
@@ -412,8 +476,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         mv.visitLabel(br2);
         mv.visitInsn(POP2);
         mv.visitLabel(br0);
-        mv.visitInsn(ICONST_0);
-        mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+        mv.visitFieldInsn(GETSTATIC, "java/util/Collections", "EMPTY_LIST", "Ljava/util/List;");
         mv.visitLabel(br1);
         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
         mv.visitInsn(POP);

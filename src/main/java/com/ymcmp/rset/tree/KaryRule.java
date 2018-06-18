@@ -12,7 +12,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 public final class KaryRule extends ParseTree {
 
     public enum Type {
-        SEQ, SWITCH,
+        SEQ, GROUP, SWITCH,
         SUBSCRIPT, JOIN, ARRAY,
         CALL, AND, OR, ASSIGN,
         IGNORE;

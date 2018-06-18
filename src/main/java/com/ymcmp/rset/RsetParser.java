@@ -80,9 +80,15 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                 case S_AM:
                     return new RefRule(parseValue());
                 case S_LP: {
-                    final ParseTree r = parseRuleClause();
+                    final List<ParseTree> rules = consumeRules(this::parseRuleClause, Type.S_CM);
                     consumeToken(Type.S_RP, "Unclosed clause, missing ')'");
-                    return r;
+
+                    if (rules.isEmpty()) throw new IllegalParseException("Expected rule clauses in ( )");
+                    if (rules.size() == 1) return rules.get(0);
+
+                    final int k = rules.size() - 1;
+                    if (rules.get(k) == null) rules.remove(k);
+                    return new KaryRule(KaryRule.Type.GROUP, rules);
                 }
                 default:
                     ungetToken(t);
@@ -144,6 +150,9 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
 
         if (rules.isEmpty()) return null;
         if (rules.size() == 1) return rules.get(0);
+        if (rules.get(rules.size() - 1) == null) {
+            throw new IllegalParseException("Incomplete '|' clause, missing rhs");
+        }
         return new KaryRule(KaryRule.Type.SWITCH, rules);
     }
 
