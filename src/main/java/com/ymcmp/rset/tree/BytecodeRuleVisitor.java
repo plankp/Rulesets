@@ -124,10 +124,57 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                     case L_REAL:
                         mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
                         break;
+                    case L_CHARS: {
+                        // convert to char[], use a different testEquality...
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toCharArray", "()[C", false);
+
+                        final Label loop = new Label();
+                        final Label exit = new Label();
+                        final int len = n.toObject().toString().length(); // Strings are immutable, compute length at compile time
+                        final int lst = pushNewLocal(VarType.LIST);
+                        final int arr = pushNewLocal(VarType.LIST);
+                        final int idx = pushNewLocal(VarType.NUM);
+                        newObjectNoArgs(lst, "java/util/ArrayList");
+                        mv.visitVarInsn(ASTORE, arr);
+                        mv.visitInsn(ICONST_0);
+                        mv.visitVarInsn(ISTORE, idx);
+                        mv.visitInsn(ICONST_0);
+                        mv.visitVarInsn(ISTORE, RESULT);
+                        mv.visitLabel(loop);
+                        mv.visitVarInsn(ILOAD, idx);
+                        mv.visitLdcInsn(len);
+                        mv.visitJumpInsn(IF_ICMPGE, exit);
+                        mv.visitVarInsn(ALOAD, 0);
+                        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                        mv.visitVarInsn(ALOAD, arr);
+                        mv.visitVarInsn(ILOAD, idx);
+                        mv.visitInsn(CALOAD);
+                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                        mv.visitVarInsn(ALOAD, lst);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
+                        mv.visitInsn(DUP);
+                        mv.visitVarInsn(ISTORE, RESULT);
+                        mv.visitJumpInsn(IFEQ, exit);
+                        mv.visitIincInsn(idx, 1);
+                        mv.visitJumpInsn(GOTO, loop);
+                        mv.visitLabel(exit);
+                        mv.visitInsn(POP);
+                        mv.visitVarInsn(ALOAD, plst);
+                        mv.visitVarInsn(ALOAD, lst);
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
+                        mv.visitInsn(POP);
+                        popLocal();
+                        popLocal();
+                        popLocal();
+                        break;
+                    }
                 }
-                mv.visitVarInsn(ALOAD, plst);
-                mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
-                mv.visitVarInsn(ISTORE, RESULT);
+
+                if (n.token.type != Type.L_CHARS) {
+                    mv.visitVarInsn(ALOAD, plst);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
+                    mv.visitVarInsn(ISTORE, RESULT);
+                }
                 return null;
             }
         }

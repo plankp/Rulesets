@@ -57,6 +57,13 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                     }
                     throw new IllegalParseException("Expected numerical value after negative sign, found " + inner);
                 }
+                case S_MD: {
+                    final Token<Type> inner = getToken();
+                    if (inner != null && inner.type == Type.L_IDENT) {
+                        return new ValueNode(new Token<>(Type.L_CHARS, '%' + inner.text));
+                    }
+                    throw new IllegalParseException("Expected identifier (or string) after '%', found " + inner);
+                }
                 case L_IDENT:
                 case L_INT:
                 case L_REAL:
@@ -148,7 +155,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
     public ParseTree parseRuleSwitch() {
         final List<ParseTree> rules = consumeRules(this::parseRuleSequence, Type.S_OR);
 
-        if (rules.isEmpty()) return null;
+        if (rules == null) return null;
         if (rules.size() == 1) return rules.get(0);
         if (rules.get(rules.size() - 1) == null) {
             throw new IllegalParseException("Incomplete '|' clause, missing rhs");

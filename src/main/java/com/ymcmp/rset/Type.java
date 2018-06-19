@@ -1,7 +1,7 @@
 package com.ymcmp.rset;
 
 public enum Type {
-    L_INT, L_REAL, L_IDENT,
+    L_INT, L_REAL, L_CHARS, L_IDENT,
     S_CM,
     S_MN, S_AD,
     S_DV, S_MD,

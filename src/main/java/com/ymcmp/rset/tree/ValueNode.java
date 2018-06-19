@@ -32,6 +32,8 @@ public final class ValueNode extends ParseTree {
         switch (token.type) {
             case L_IDENT:
                 return escape(token.text);
+            case L_CHARS:
+                return escape(token.text.substring(1));
             case L_INT:
                 return Integer.parseInt(token.text);
             case L_REAL:
@@ -44,7 +46,9 @@ public final class ValueNode extends ParseTree {
     public String toJavaLiteral() {
         switch (token.type) {
             case L_IDENT:
-                return '"' + escape(token.text) + '"';
+                return '"' + token.text + '"';
+            case L_CHARS:
+                return '"' + token.text.substring(1) + "\".toCharArray()";
             case L_INT:
             case L_REAL:
                 return token.text;

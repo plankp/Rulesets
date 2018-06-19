@@ -43,6 +43,9 @@ public class BytecodeActionVisitor extends Visitor<Void> {
             case L_REAL:
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
                 break;
+            case L_CHARS:
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toCharArray", "()[C", false);
+                break;
         }
         return null;
     }

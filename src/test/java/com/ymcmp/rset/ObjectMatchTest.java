@@ -25,8 +25,8 @@ public class ObjectMatchTest {
         final StringReader reader = new StringReader(
             "rule i123 = k:(1 2 3 | (-1) (-2) (-3)) { ?k },\n" +
             "rule f123 = k:(1.0 2.0 3.0 | (-1.0) (-2.0) (-3.0)) { ?k },\n" +
-            // "rule group = k:(1 2, 3 4, 5 6) { ?k },\n"
-            "rule group = k:(1 2 3, 4 5 6) { ?k },\n"
+            "rule group = k:(1 2 3, 4 5 6) { ?k },\n" +
+            "rule chars = k:%abc { ?k }\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -106,15 +106,34 @@ public class ObjectMatchTest {
         final StringBuilder sb = new StringBuilder();
         final Rulesets rsets = newObjectMatch();
         for (final Object[] test : tests) {
-            System.err.println("Testing against " + Arrays.toString(test));
             final Object obj = rsets.getRule("group").apply(test);
             if (obj != null) {
                 sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
             }
         }
-        System.err.println(sb);
         assertEquals(
                 "[[1, 2, 3], [4, 5, 6]]\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testChars() {
+        final Object[][] tests = {
+            { 'a', 'b' },
+            { 'a', 'c' },
+            { 'a', 'b', 'c' },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newObjectMatch();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("chars").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "[a, b, c]\n",
                 sb.toString());
     }
 }
