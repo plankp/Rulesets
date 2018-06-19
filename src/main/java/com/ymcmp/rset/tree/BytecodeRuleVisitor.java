@@ -410,22 +410,21 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                     visit(n.rules.get(i));
                     mv.visitVarInsn(ILOAD, RESULT);
                     mv.visitJumpInsn(IFEQ, br0);
-                    mv.visitVarInsn(ALOAD, list);
                     mv.visitVarInsn(ALOAD, plst);
-                    mv.visitInsn(DUP);
                     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
                     mv.visitInsn(ICONST_1);
                     mv.visitInsn(ISUB);
                     mv.visitInsn(DUP);
                     mv.visitInsn(ICONST_0);
-                    ASMUtils.testIfElse(mv, IF_ICMPLT, () -> {
+                    ASMUtils.testIf(mv, IF_ICMPLT, () -> {
+                        mv.visitVarInsn(ALOAD, list);
+                        mv.visitInsn(SWAP);
+                        mv.visitVarInsn(ALOAD, plst);
+                        mv.visitInsn(SWAP);
                         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "remove", "(I)Ljava/lang/Object;", true);
                         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
-                        mv.visitInsn(POP);
-                    }, () -> {
-                        mv.visitInsn(POP2);
-                        mv.visitInsn(POP);
                     });
+                    mv.visitInsn(POP);
                 }
                 mv.visitVarInsn(ALOAD, plst);
                 mv.visitVarInsn(ALOAD, list);
