@@ -16,3 +16,22 @@ dependencies {
     compile 'org.ow2.asm:asm:6.2'
     testCompile 'junit:junit:4.12'
 }
+
+task copyLicense {
+    outputs.file new File("$buildDir/LICENSE")
+    outputs.file new File("$buildDir/COPYING")
+    doLast {
+        copy {
+            from "LICENSE"
+            into "$buildDir"
+        }
+        copy {
+            from "COPYING"
+            into "$buildDir"
+        }
+    }
+}
+
+applicationDistribution.from(copyLicense) {
+    into ""
+}
