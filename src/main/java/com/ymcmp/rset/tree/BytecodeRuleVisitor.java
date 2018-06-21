@@ -71,7 +71,10 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
     }
 
     public Void visitRefRule(final RefRule n) {
-        refs.get(n.node.getText()).accept(this);
+        final String name = n.node.getText();
+        final Consumer<BytecodeRuleVisitor> cons = refs.get(name);
+        if (cons == null) throw new RuntimeException("Attempt to reference undeclared rule " + name);
+        cons.accept(this);
         return null;
     }
 
@@ -354,8 +357,24 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 final int plst = findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                mv.visitLdcInsn(node1.toObject());
-                mv.visitLdcInsn(node2.toObject());
+
+                try {
+                    if (node1.token.type == Type.L_CHARS) {
+                        mv.visitLdcInsn(node1.toObject().toString().charAt(0));
+                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                    } else {
+                        mv.visitLdcInsn(node1.toObject());
+                    }
+                    if (node2.token.type == Type.L_CHARS) {
+                        mv.visitLdcInsn(node2.toObject().toString().charAt(0));
+                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                    } else {
+                        mv.visitLdcInsn(node2.toObject());
+                    }
+                } catch (IndexOutOfBoundsException ex) {
+                    throw new RuntimeException("Broken char range on empty char sequence: " + node1.getText() + ", " + node2.getText());
+                }
+
                 mv.visitVarInsn(ALOAD, plst);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testRange", "(Ljava/lang/Comparable;Ljava/lang/Comparable;Ljava/util/Collection;)Z", false);
                 mv.visitVarInsn(ISTORE, RESULT);
