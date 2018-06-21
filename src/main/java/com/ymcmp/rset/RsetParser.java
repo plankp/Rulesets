@@ -64,10 +64,16 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                 }
                 case S_MD: {
                     final Token<Type> inner = getToken();
-                    if (inner != null && inner.type == Type.L_IDENT) {
-                        return new ValueNode(new Token<>(Type.L_CHARS, '%' + inner.text));
+                    if (inner != null) {
+                        switch (inner.type) {
+                            case L_IDENT:
+                            case L_INT:
+                            case L_REAL:
+                                return new ValueNode(new Token<>(Type.L_CHARS, '%' + inner.text));
+                            default:
+                                throw new IllegalParseException("Expected constant after '%', found " + inner);
+                        }
                     }
-                    throw new IllegalParseException("Expected identifier (or string) after '%', found " + inner);
                 }
                 case L_IDENT:
                 case L_INT:
