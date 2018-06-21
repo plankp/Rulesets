@@ -69,7 +69,10 @@ public final class RulesetGroup extends ParseTree {
                                 final int lst = vis.findNearestLocal(VarType.LIST);
                                 final int localEnv = vis.pushNewLocal(VarType.MAP);
                                 final int parseLst = vis.pushNewLocal(VarType.LIST);
-                                ASMUtils.newObjectNoArgs(vis.mv, "java/util/HashMap", localEnv);
+                                vis.mv.visitVarInsn(ALOAD, 0);
+                                vis.mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
+                                vis.mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
+                                vis.mv.visitVarInsn(ASTORE, localEnv);
                                 ASMUtils.newObjectNoArgs(vis.mv, "java/util/ArrayList", parseLst);
                                 vis.mv.visitVarInsn(ALOAD, 0);
                                 vis.mv.visitVarInsn(ALOAD, localEnv);
