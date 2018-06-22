@@ -25,4 +25,17 @@ public enum Type {
                 return false;
         }
     }
+
+    public boolean isNumberOp() {
+        switch (this) {
+            case S_AD:
+            case S_MN:
+            case S_ST:
+            case S_DV:
+            case S_MD:
+                return true;
+            default:
+                return false;
+        }
+    }
 }

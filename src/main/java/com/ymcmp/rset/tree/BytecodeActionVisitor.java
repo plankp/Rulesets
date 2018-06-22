@@ -71,29 +71,31 @@ public class BytecodeActionVisitor extends Visitor<Void> {
     public Void visitBinaryRule(final BinaryRule n) {
         // This requires all subsequent rules to be numbers crunching
         visit(n.rule1);
-        mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+        if (n.op.type.isNumberOp()) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+        }
         visit(n.rule2);
-        mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+        if (n.op.type.isNumberOp()) {
+            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+        }
 
         switch (n.op.type) {
-            case S_AD:
-                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", "numAdd", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;", false);
-                return null;
-            case S_MN:
-                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", "numSub", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;", false);
-                return null;
-            case S_ST:
-                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", "numMul", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;", false);
-                return null;
-            case S_DV:
-                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", "numDiv", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;", false);
-                return null;
-            case S_MD:
-                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", "numMod", "(Ljava/lang/Number;Ljava/lang/Number;)Ljava/lang/Number;", false);
-                return null;
+            case S_AD: mv.visitInsn(DADD); break;
+            case S_MN: mv.visitInsn(DSUB); break;
+            case S_ST: mv.visitInsn(DMUL); break;
+            case S_DV: mv.visitInsn(DDIV); break;
+            case S_MD: mv.visitInsn(DREM); break;
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);
         }
+
+        if (n.op.type.isNumberOp()) {
+            // Box value again
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+        }
+        return null;
     }
 
     public Void visitKaryRule(final KaryRule n) {
