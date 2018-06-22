@@ -12,7 +12,6 @@ public final class Mathlib {
     }
 
     @Export("_add")
-    @Varargs(2)
     public static double add(double a, double b, Object... c) {
         double k = a + b;
         for (final Object i : c) {
@@ -22,7 +21,6 @@ public final class Mathlib {
     }
 
     @Export("_sub")
-    @Varargs(2)
     public static double sub(double a, double b, Object... c) {
         double k = a - b;
         for (final Object i : c) {
@@ -32,7 +30,6 @@ public final class Mathlib {
     }
 
     @Export("_mul")
-    @Varargs(2)
     public static double mul(double a, double b, Object... c) {
         double k = a * b;
         for (final Object i : c) {
@@ -42,7 +39,6 @@ public final class Mathlib {
     }
 
     @Export("_div")
-    @Varargs(2)
     public static double div(double a, double b, Object... c) {
         double k = a / b;
         for (final Object i : c) {
@@ -52,7 +48,6 @@ public final class Mathlib {
     }
 
     @Export("_mod")
-    @Varargs(2)
     public static double mod(double a, double b, Object... c) {
         double k = a % b;
         for (final Object i : c) {
@@ -72,8 +67,7 @@ public final class Mathlib {
     }
 
     @Export
-    @Varargs(2)
-    public static int _and(int a, int b, Object[] c) {
+    public static int _and(int a, int b, Object... c) {
         int k = a & b;
         for (final Object i : c) {
             k &= ((Number) i).intValue();
@@ -82,8 +76,7 @@ public final class Mathlib {
     }
 
     @Export
-    @Varargs(2)
-    public static int _or(int a, int b, Object[] c) {
+    public static int _or(int a, int b, Object... c) {
         int k = a | b;
         for (final Object i : c) {
             k |= ((Number) i).intValue();
@@ -92,8 +85,7 @@ public final class Mathlib {
     }
 
     @Export
-    @Varargs(2)
-    public static int _xor(int a, int b, Object[] c) {
+    public static int _xor(int a, int b, Object... c) {
         int k = a ^ b;
         for (final Object i : c) {
             k ^= ((Number) i).intValue();

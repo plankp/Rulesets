@@ -23,8 +23,7 @@ public final class Stdlib {
     }
 
     @Export
-    @Varargs
-    public static Object[] _ord(final Object[] args) {
+    public static Object[] _ord(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Character) {
@@ -45,8 +44,7 @@ public final class Stdlib {
     }
 
     @Export
-    @Varargs
-    public static Object[] _chr(final Object[] args) {
+    public static Object[] _chr(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Character) {
@@ -61,8 +59,7 @@ public final class Stdlib {
     }
 
     @Export
-    @Varargs
-    public static Object[] _int(final Object[] args) {
+    public static Object[] _int(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Number) {
@@ -79,8 +76,7 @@ public final class Stdlib {
     }
 
     @Export
-    @Varargs
-    public static Object[] _float(final Object[] args) {
+    public static Object[] _float(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Number) {
@@ -97,23 +93,20 @@ public final class Stdlib {
     }
 
     @Export
-    @Varargs
-    public static String _join(final Object[] args) {
+    public static String _join(final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, " ");
         return sb.toString();
     }
 
     @Export
-    @Varargs(1)
-    public static String _djoin(final Object delim, final Object[] args) {
+    public static String _djoin(final Object delim, final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, delim.toString());
         return sb.toString();
     }
 
     @Export("_concat")
-    @Varargs
     public static String concat(final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, "");
@@ -121,8 +114,7 @@ public final class Stdlib {
     }
 
     @Export
-    @Varargs
-    public static String _lines(final Object[] args) {
+    public static String _lines(final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, "\n");
         return sb.toString();
@@ -147,14 +139,12 @@ public final class Stdlib {
     }
 
     @Export("_p")
-    @Varargs
     public static Object print(final Object... k) {
         System.out.println(_join(k));
         return null;
     }
 
     @Export("_")
-    @Varargs
     public static Object ignore(final Object... args) {
         if (args.length == 0) return null;
         return args[args.length - 1];
@@ -192,7 +182,6 @@ public final class Stdlib {
     }
 
     @Export("_eqls")
-    @Varargs(2)
     public static boolean equals(final Object a, final Object b, final Object... c) {
         if (Objects.equals(a, b)) {
             for (final Object k : c) {

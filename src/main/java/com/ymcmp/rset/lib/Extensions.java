@@ -98,7 +98,6 @@ public final class Extensions {
             String name = method.getAnnotation(Export.class).value();
             if (name == null || name.isEmpty()) name = method.getName();
 
-
             module.put(name, new Function<Object[], Object>() {
                 @Override
                 public Object apply(final Object[] rargs) {
@@ -113,8 +112,11 @@ public final class Extensions {
                             args = Arrays.copyOfRange(rargs, 1, rargs.length);
                         }
 
-                        if (method.isAnnotationPresent(Varargs.class)) {
-                            final int spec = method.getAnnotation(Varargs.class).value();
+                        if (method.isVarArgs()) {
+                            final int spec = method.getParameterCount() - 1;
+                            if (spec < 0) {
+                                throw new RuntimeException("Wtf? Varargs method without parameter slot?");
+                            }
                             if (spec == 0) {
                                 return method.invoke(self, (Object) args);
                             } else {
