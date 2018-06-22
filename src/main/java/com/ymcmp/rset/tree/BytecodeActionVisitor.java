@@ -186,7 +186,7 @@ public class BytecodeActionVisitor extends Visitor<Void> {
                     if (!flag) {
                         flag = true;
                     } else {
-                        mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "subscript", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
+                        mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Arraylib", "subscript", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
                     }
                 }
                 return null;

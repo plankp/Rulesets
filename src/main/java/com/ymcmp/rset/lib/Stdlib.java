@@ -150,37 +150,6 @@ public final class Stdlib {
         return args[args.length - 1];
     }
 
-    @Export("_subs")
-    public static Object subscript(final Object base, final Object offset) {
-        if (base == null) return null;
-        try {
-            if (base.getClass().isArray()) {
-                return ((Object[]) base)[(Integer) offset];
-            }
-            if (base instanceof CharSequence) {
-                return ((CharSequence) base).charAt((Integer) offset);
-            }
-            if (base instanceof Collection) {
-                return ((Collection<?>) base).toArray()[(Integer) offset];
-            }
-            if (base instanceof Map) {
-                return ((Map<?, ?>) base).get(offset);
-            }
-            if (base instanceof Map.Entry) {
-                final Map.Entry<?, ?> ent = (Map.Entry<?, ?>) base;
-                switch ((Integer) offset) {
-                    case 0:     return ent.getKey();
-                    case 1:     return ent.getValue();
-                    default:    return null;
-                }
-            }
-
-            throw new RuntimeException("Type '" + base.getClass().getSimpleName() + "' cannot be indexed!");
-        } catch (IndexOutOfBoundsException | ClassCastException ex) {
-            return null;
-        }
-    }
-
     @Export("_eqls")
     public static boolean equals(final Object a, final Object b, final Object... c) {
         if (Objects.equals(a, b)) {

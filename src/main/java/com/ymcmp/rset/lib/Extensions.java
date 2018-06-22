@@ -20,8 +20,9 @@ public final class Extensions {
 
     public static final int EXT_STDLIB = 1 << 0;
     public static final int EXT_MATH   = 1 << 1;
+    public static final int EXT_ARRAY  = 1 << 2;
 
-    public static final int ENABLE_ALL = EXT_STDLIB | EXT_MATH;
+    public static final int ENABLE_ALL = EXT_STDLIB | EXT_MATH | EXT_ARRAY;
 
     private final int featureMask;
     private final Map<String, Object> imported;
