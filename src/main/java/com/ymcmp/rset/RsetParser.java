@@ -302,8 +302,23 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         return new KaryRule(KaryRule.Type.CALL, elms);
     }
 
+    public ParseTree parseLoop() {
+        final ParseTree tree = parseCall();
+        if (tree != null) {
+            final Token<Type> tok = getToken();
+            if (tok != null && tok.type == Type.S_LB) {
+                final ParseTree inner = parseExpression();
+                consumeToken(Type.S_RB, "Unclosed loop block, missing '}'");
+                if (inner != null) return new BinaryRule(tok, tree, inner);
+            } else {
+                ungetToken(tok);
+            }
+        }
+        return tree;
+    }
+
     public ParseTree parseExprAnd() {
-        final List<ParseTree> elms = consumeRules(this::parseCall, Type.S_AM);
+        final List<ParseTree> elms = consumeRules(this::parseLoop, Type.S_AM);
 
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);

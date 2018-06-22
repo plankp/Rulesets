@@ -28,6 +28,7 @@ public class BytecodeActionVisitor extends Visitor<Void> {
     private ClassWriter cw;
     private String className;
     private MethodVisitor mv;
+    private int locals;
 
     public BytecodeActionVisitor(ClassWriter cw, String className) {
         this.cw = cw;
@@ -69,24 +70,102 @@ public class BytecodeActionVisitor extends Visitor<Void> {
     }
 
     public Void visitBinaryRule(final BinaryRule n) {
-        // This requires all subsequent rules to be numbers crunching
-        visit(n.rule1);
-        if (n.op.type.isNumberOp()) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-        }
-        visit(n.rule2);
-        if (n.op.type.isNumberOp()) {
-            mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-            mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-        }
-
         switch (n.op.type) {
-            case S_AD: mv.visitInsn(DADD); break;
-            case S_MN: mv.visitInsn(DSUB); break;
-            case S_ST: mv.visitInsn(DMUL); break;
-            case S_DV: mv.visitInsn(DDIV); break;
-            case S_MD: mv.visitInsn(DREM); break;
+            case S_LB: {
+                // (a, b, c) { ?_it }
+                final Label loop = new Label();
+                final Label exit = new Label();
+                final int original = ++locals;
+                visit(n.rule1);
+                mv.visitInsn(DUP);
+                mv.visitVarInsn(ASTORE, original);
+                ASMUtils.testIf(mv, IFNULL, () -> {
+                    mv.visitVarInsn(ALOAD, original);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "isArray", "()Z", false);
+                    ASMUtils.testIfElse(mv, IFEQ, () -> {
+                        mv.visitVarInsn(ALOAD, original);
+                        mv.visitTypeInsn(CHECKCAST, "[Ljava/lang/Object;");
+                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;", false);
+                    }, () -> {
+                        mv.visitVarInsn(ALOAD, original);
+                        mv.visitInsn(DUP);
+                        mv.visitTypeInsn(INSTANCEOF, "java/util/Map");
+                        ASMUtils.testIfElse(mv, IFEQ, () -> {
+                            mv.visitTypeInsn(CHECKCAST, "java/util/Map");
+                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "entrySet", "()Ljava/util/Set;", true);
+                        }, () -> mv.visitTypeInsn(CHECKCAST, "java/lang/Iterable"));
+                    });
+
+                    // At this point, the data on stack is an Iterable
+                    final int local = ++locals;
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/lang/Iterable", "iterator", "()Ljava/util/Iterator;", true);
+                    mv.visitVarInsn(ASTORE, local);
+                    mv.visitLabel(loop);
+                    mv.visitVarInsn(ALOAD, local);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
+                    mv.visitJumpInsn(IFEQ, exit);
+                    mv.visitVarInsn(ALOAD, 1); // store looping value as _it
+                    mv.visitLdcInsn("_it");
+                    mv.visitVarInsn(ALOAD, local);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
+                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                    mv.visitInsn(POP);
+                    visit(n.rule2);
+                    mv.visitInsn(POP);
+                    mv.visitJumpInsn(GOTO, loop);
+                    mv.visitLabel(exit);
+                    --locals;
+                });
+                mv.visitVarInsn(ALOAD, original);
+                --locals;
+                return null;
+            }
+            case S_AD:
+                visit(n.rule1);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                visit(n.rule2);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                mv.visitInsn(DADD);
+                break;
+            case S_MN:
+                visit(n.rule1);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                visit(n.rule2);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                mv.visitInsn(DSUB);
+                break;
+            case S_ST:
+                visit(n.rule1);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                visit(n.rule2);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                mv.visitInsn(DMUL);
+                break;
+            case S_DV:
+                visit(n.rule1);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                visit(n.rule2);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                mv.visitInsn(DDIV);
+                break;
+            case S_MD:
+                visit(n.rule1);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                visit(n.rule2);
+                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+                mv.visitInsn(DREM);
+                break;
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);
         }
@@ -179,20 +258,19 @@ public class BytecodeActionVisitor extends Visitor<Void> {
             case ASSIGN: {
                 // NOTE: This implementation does not mutate maps or arrays
                 final int k = n.rules.size() - 1;
+                final int local = ++locals;
                 visit(n.rules.get(k));
-                mv.visitInsn(DUP);
-                mv.visitVarInsn(ALOAD, 1);
-                mv.visitInsn(SWAP);
-                for (int i = 1; i <= k; ++i) {
-                    mv.visitInsn(DUP2);
-                }
+                mv.visitVarInsn(ASTORE, local);
                 // a = b = c = d --> a, b, c will be d
                 for (int i = k - 1; i >= 0; --i) {
+                    mv.visitVarInsn(ALOAD, 1);
                     visit(n.rules.get(i));
-                    mv.visitInsn(SWAP);
+                    mv.visitVarInsn(ALOAD, local);
                     mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
                     mv.visitInsn(POP);
                 }
+                mv.visitVarInsn(ALOAD, local);
+                --locals;
                 return null;
             }
             case IGNORE: {
@@ -217,6 +295,7 @@ public class BytecodeActionVisitor extends Visitor<Void> {
         if (n.expr == null) {
             mv.visitInsn(ACONST_NULL);
         } else {
+            locals = 1;
             visit(n.expr);
         }
         mv.visitInsn(ARETURN);

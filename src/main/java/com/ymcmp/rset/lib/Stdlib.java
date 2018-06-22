@@ -146,6 +146,13 @@ public final class Stdlib {
         }
     }
 
+    @Export("_p")
+    @Varargs
+    public static Object print(final Object... k) {
+        System.out.println(_join(k));
+        return null;
+    }
+
     @Export("_")
     @Varargs
     public static Object ignore(final Object... args) {
@@ -169,9 +176,17 @@ public final class Stdlib {
             if (base instanceof Map) {
                 return ((Map<?, ?>) base).get(offset);
             }
+            if (base instanceof Map.Entry) {
+                final Map.Entry<?, ?> ent = (Map.Entry<?, ?>) base;
+                switch ((Integer) offset) {
+                    case 0:     return ent.getKey();
+                    case 1:     return ent.getValue();
+                    default:    return null;
+                }
+            }
 
             throw new RuntimeException("Type '" + base.getClass().getSimpleName() + "' cannot be indexed!");
-        } catch (IndexOutOfBoundsException ex) {
+        } catch (IndexOutOfBoundsException | ClassCastException ex) {
             return null;
         }
     }
