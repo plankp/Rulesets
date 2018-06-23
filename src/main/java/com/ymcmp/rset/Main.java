@@ -75,6 +75,8 @@ public class Main {
                 final RsetParser parser = new RsetParser(lexer);
                 final RulesetGroup tree = parser.parse();
 
+                if (tree == null) return;
+
                 final String[] arr = generatedClassName.split(".*/", 2);
                 String fileName = DEFAULT_CLASS_NAME;
                 switch (arr.length) {
