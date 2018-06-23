@@ -48,20 +48,20 @@ public final class Arraylib {
         if (base == null) return null;
         try {
             if (base.getClass().isArray()) {
-                return ((Object[]) base)[(Integer) offset];
+                return ((Object[]) base)[((Number) offset).intValue()];
             }
             if (base instanceof CharSequence) {
-                return ((CharSequence) base).charAt((Integer) offset);
+                return ((CharSequence) base).charAt(((Number) offset).intValue());
             }
             if (base instanceof Collection) {
-                return ((Collection<?>) base).toArray()[(Integer) offset];
+                return ((Collection<?>) base).toArray()[((Number) offset).intValue()];
             }
             if (base instanceof Map) {
                 return ((Map<?, ?>) base).get(offset);
             }
             if (base instanceof Map.Entry) {
                 final Map.Entry<?, ?> ent = (Map.Entry<?, ?>) base;
-                switch ((Integer) offset) {
+                switch (((Number) offset).intValue()) {
                     case 0:     return ent.getKey();
                     case 1:     return ent.getValue();
                     default:    return null;
@@ -69,7 +69,7 @@ public final class Arraylib {
             }
             if (base instanceof Iterable) {
                 return StreamSupport.stream(((Iterable<?>) base).spliterator(), false)
-                        .skip((Integer) offset)
+                        .skip(((Number) offset).intValue())
                         .findFirst()
                         .orElse(null);
             }
