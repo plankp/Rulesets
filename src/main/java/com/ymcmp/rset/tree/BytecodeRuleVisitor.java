@@ -237,20 +237,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
 
     public Void visitUnaryRule(final UnaryRule n) {
         switch (n.op.type) {
-            case S_TD: {
-                if (genDebugInfo) {
-                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
-                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
-                    mv.visitLdcInsn("Negate next clause");
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
-                }
-
-                visit(n.rule);
-                mv.visitVarInsn(ILOAD, RESULT);
-                ASMUtils.testIfElse(mv, IFNE, () -> mv.visitInsn(ICONST_1), () -> mv.visitInsn(ICONST_0));
-                mv.visitVarInsn(ISTORE, RESULT);
-                return null;
-            }
             case S_QM: {
                 if (genDebugInfo) {
                     mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");

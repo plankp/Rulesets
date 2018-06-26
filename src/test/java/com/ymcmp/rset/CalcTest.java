@@ -46,7 +46,6 @@ public class CalcTest {
             "rule expr = k:&add { ?k },"
         );
 
-
         final RsetLexer lexer = new RsetLexer(reader);
         final RsetParser parser = new RsetParser(lexer);
         final byte[] bytes = parser.parse().toBytecode("Calc", null, false);
