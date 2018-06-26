@@ -9,12 +9,20 @@ import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Stream;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 public final class Arraylib {
 
     private Arraylib() {
         //
+    }
+
+    @Export("_iota")
+    public static Integer[] iota(int k) {
+        return IntStream.range(1, k)
+                .mapToObj(e -> e)
+                .toArray(Integer[]::new);
     }
 
     @Export("_flatten")
