@@ -43,6 +43,28 @@ public final class Arraylib {
         }
     }
 
+    @Export("_len")
+    public static Integer length(final Object xs) {
+        if (xs == null) return 0;
+
+        if (xs.getClass().isArray()) {
+            return ((Object[]) xs).length;
+        }
+        if (xs instanceof Collection) {
+            return ((Collection<?>) xs).size();
+        }
+        if (xs instanceof Map) {
+            return ((Map<?, ?>) xs).size();
+        }
+        if (xs instanceof Map.Entry) {
+            return 2;
+        }
+        if (xs instanceof CharSequence) {
+            return ((CharSequence) xs).length();
+        }
+        return -1;
+    }
+
     @Export("_subs")
     public static Object subscript(final Object base, final Object offset) {
         if (base == null) return null;
