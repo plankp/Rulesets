@@ -6,8 +6,11 @@
 package com.ymcmp.rset.lib;
 
 import java.util.Map;
+import java.util.List;
+import java.util.Arrays;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.stream.Stream;
 import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
@@ -16,6 +19,60 @@ public final class Arraylib {
 
     private Arraylib() {
         //
+    }
+
+    @Export("_sort")
+    public static Object sort(Object k) {
+        if (k == null) return null;
+
+        // Do not sort in place
+        if (k.getClass().isArray()) {
+            final Object[] old = (Object[]) k;
+            final Object[] mod = Arrays.copyOf(old, old.length);
+            Arrays.sort(mod);
+            return mod;
+        }
+        if (k instanceof Collection) {
+            final ArrayList list = new ArrayList((Collection<?>) k);
+            Collections.sort(list);
+            return list;
+        }
+        if (k instanceof CharSequence) {
+            final int[] arr = ((CharSequence) k).chars()
+                    .sorted()
+                    .toArray();
+            return new String(arr, 0, arr.length);
+        }
+        if (k instanceof Stream) {
+            return ((Stream<?>) k).sorted();
+        }
+
+        throw new RuntimeException("Type '" + k.getClass().getSimpleName() + "' cannot be sorted!");
+    }
+
+    @Export("_rev")
+    public static Object reverse(Object k) {
+        if (k == null) return null;
+
+        // Do not reverse in place
+        if (k.getClass().isArray()) {
+            final Object[] old = (Object[]) k;
+            final List<Object> mod = Arrays.asList(Arrays.copyOf(old, old.length));
+            Collections.reverse(mod);
+            return mod.toArray();
+        }
+        if (k instanceof Collection) {
+            final ArrayList<?> list = new ArrayList((Collection<?>) k);
+            Collections.reverse(list);
+            return list;
+        }
+        if (k instanceof CharSequence) {
+            return new StringBuilder((CharSequence) k)
+                    .reverse()
+                    .toString();
+        }
+
+        throw new RuntimeException("Type '" + k.getClass().getSimpleName() + "' cannot be reversed!");
     }
 
     @Export("_iota")
