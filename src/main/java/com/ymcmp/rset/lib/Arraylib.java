@@ -8,6 +8,7 @@ package com.ymcmp.rset.lib;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 public final class Arraylib {
@@ -30,8 +31,9 @@ public final class Arraylib {
             final Object[] arr = (Object[]) x;
             for (final Object el : arr) flattenHelper(col, el);
         } else if (x instanceof Iterable) {
-            final Iterable<?> it = (Iterable<?>) x;
-            for (final Object el : it) flattenHelper(col, el);
+            ((Iterable<?>) x).forEach(el -> flattenHelper(col, el));
+        } else if (x instanceof Stream) {
+            ((Stream<?>) x).forEach(el -> flattenHelper(col, el));
         } else if (x instanceof Map) {
             flattenHelper(col, ((Map<?, ?>) x).entrySet());
         } else if (x instanceof Map.Entry) {
@@ -44,7 +46,7 @@ public final class Arraylib {
     }
 
     @Export("_len")
-    public static Integer length(final Object xs) {
+    public static Number length(final Object xs) {
         if (xs == null) return 0;
 
         if (xs.getClass().isArray()) {
@@ -52,6 +54,9 @@ public final class Arraylib {
         }
         if (xs instanceof Collection) {
             return ((Collection<?>) xs).size();
+        }
+        if (xs instanceof Stream) {
+            return ((Stream<?>) xs).count();
         }
         if (xs instanceof Map) {
             return ((Map<?, ?>) xs).size();
@@ -91,7 +96,13 @@ public final class Arraylib {
             }
             if (base instanceof Iterable) {
                 return StreamSupport.stream(((Iterable<?>) base).spliterator(), false)
-                        .skip(((Number) offset).intValue())
+                        .skip(((Number) offset).longValue())
+                        .findFirst()
+                        .orElse(null);
+            }
+            if (base instanceof Stream) {
+                return ((Stream<?>) base)
+                        .skip(((Number) offset).longValue())
                         .findFirst()
                         .orElse(null);
             }
