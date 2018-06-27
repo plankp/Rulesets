@@ -17,12 +17,18 @@ public class EvalState {
 
     protected Object[] data;
 
+    private boolean negateFlag;
+
     public EvalState(Object... data) {
         this.data = data;
     }
 
     public void setData(Object... data) {
         this.data = data;
+    }
+
+    public void setNegateFlag(boolean flag) {
+        this.negateFlag = flag;
     }
 
     public void reset() {
@@ -85,14 +91,13 @@ public class EvalState {
     public boolean testEquality(final Object obj, final Collection<Object> col) {
         try {
             final Object k = data[next()];
-            if (Objects.equals(obj, k)) {
+            final boolean r = Objects.equals(obj, k);
+            if (negateFlag ? !r : r) {
                 if (col != null) col.add(k);
                 return true;
             }
         } catch (IndexOutOfBoundsException ex) {
             prev();
-        } catch (NullPointerException ex) {
-            // return false
         }
         return false;
     }
@@ -102,6 +107,7 @@ public class EvalState {
     }
 
     public boolean testRange(final Comparable a, final Comparable b, final Collection<Object> col) {
+        Object k = Epsilon.INSTANCE;
         try {
             // To be in range, either:
             //    a <= k and b >= k
@@ -111,16 +117,25 @@ public class EvalState {
             //    u <= 0 and v >= 0
             // or v <= 0 and u >= 0
 
-            final Object ko = data[next()];
-            final int u = a.compareTo(ko);
-            final int v = b.compareTo(ko);
-            if (u <= 0 && v >= 0 || v <= 0 && u >= 0) {
-                if (col != null) col.add(ko);
+            k = data[next()];
+            final int u = a.compareTo(k);
+            final int v = b.compareTo(k);
+            final boolean r = u <= 0 && v >= 0 || v <= 0 && u >= 0;
+            if (negateFlag ? !r : r) {
+                if (col != null) col.add(k);
                 return true;
             }
         } catch (IndexOutOfBoundsException ex) {
             prev();
-        } catch (NullPointerException | ClassCastException ex) {
+        } catch (ClassCastException ex) {
+            // current slot value does not belong in set,
+            // which satisfies *not* being in range.
+            // return true if negate flag is on
+            if (negateFlag) {
+                if (col != null) col.add(k);
+                return true;
+            }
+        } catch (NullPointerException ex) {
             // Ignore, return false
         }
         return false;
@@ -133,8 +148,10 @@ public class EvalState {
     public boolean testSlotOccupied(Collection<Object> col) {
         try {
             final Object k = data[next()];
-            if (col != null) col.add(k);
-            return true;
+            if (!negateFlag) {
+                if (col != null) col.add(k);
+                return true;
+            }
         } catch (IndexOutOfBoundsException ex) {
             prev();
         }
@@ -147,16 +164,21 @@ public class EvalState {
 
     public boolean testEnd(Collection<Object> col) {
         try {
-            ignore(data[next()]);
+            final Object k = data[next()];
+            // out of bounds would have happened here if it had to happen
+            // if it reaches beyond this point, that means, it is not the
+            // end. Only happens when negate flag is on
+            if (negateFlag) {
+                if (col != null) col.add(k);
+                return true;
+            }
         } catch (IndexOutOfBoundsException ex) {
             prev();
-            if (col != null) col.add(Epsilon.INSTANCE);
-            return true;
+            if (!negateFlag) {
+                if (col != null) col.add(Epsilon.INSTANCE);
+                return true;
+            }
         }
         return false;
-    }
-
-    public static <T> void ignore(T e) {
-        // Literally do nothing
     }
 }
