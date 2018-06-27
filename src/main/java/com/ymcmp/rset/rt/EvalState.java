@@ -31,6 +31,10 @@ public class EvalState {
         this.negateFlag = flag;
     }
 
+    public boolean getNegateFlag() {
+        return this.negateFlag;
+    }
+
     public void reset() {
         data = new Object[0];
         indexes.clear();
