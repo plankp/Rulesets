@@ -93,6 +93,8 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                 case S_ST:
                 case S_EX:
                     return new ValueNode(t);
+                case S_TD:
+                    return new UnaryRule(t, parseRuleAtomic());
                 case S_AM:
                     return new RefRule(parseValue());
                 case S_LP: {
