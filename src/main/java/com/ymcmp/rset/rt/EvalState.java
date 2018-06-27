@@ -39,6 +39,7 @@ public class EvalState {
         data = new Object[0];
         indexes.clear();
         indexes.push(0);
+        negateFlag = false;
     }
 
     public int next() {
