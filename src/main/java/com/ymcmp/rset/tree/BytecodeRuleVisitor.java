@@ -355,6 +355,33 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         }
     }
 
+    private void ldcRangeConstant(ValueNode node) {
+        switch (node.token.type) {
+            case L_CHARS: {
+                final String str = node.toObject().toString();
+                if (str.length() != 1) {
+                    throw new RuntimeException("Invalid char range on " + str + ", length > 1");
+                }
+                mv.visitLdcInsn(str.charAt(0));
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                break;
+            }
+            case L_INT:
+                mv.visitLdcInsn(node.toObject());
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+                break;
+            case L_REAL:
+                mv.visitLdcInsn(node.toObject());
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+                break;
+            case L_IDENT:
+                mv.visitLdcInsn(node.toObject());
+                break;
+            default:
+                throw new RuntimeException("Illegal load for " + node.token);
+        }
+    }
+
     public Void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
             case S_MN: {
@@ -372,18 +399,8 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
 
                 try {
-                    if (node1.token.type == Type.L_CHARS) {
-                        mv.visitLdcInsn(node1.toObject().toString().charAt(0));
-                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                    } else {
-                        mv.visitLdcInsn(node1.toObject());
-                    }
-                    if (node2.token.type == Type.L_CHARS) {
-                        mv.visitLdcInsn(node2.toObject().toString().charAt(0));
-                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                    } else {
-                        mv.visitLdcInsn(node2.toObject());
-                    }
+                    ldcRangeConstant(node1);
+                    ldcRangeConstant(node2);
                 } catch (IndexOutOfBoundsException ex) {
                     throw new RuntimeException("Broken char range on empty char sequence: " + node1.getText() + ", " + node2.getText());
                 }
