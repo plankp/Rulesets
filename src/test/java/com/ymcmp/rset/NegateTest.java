@@ -30,7 +30,11 @@ public class NegateTest {
         final StringReader reader = new StringReader(
             "rule a   = k:a { ?k }," +
             "rule na  = k:~a { ?k }," +
-            "rule nna = k:~~a { ?k },"
+            "rule nna = k:~~a { ?k }," +
+            "rule r   = k:(5-10) { ?k }," +
+            "rule nr  = k:~(5-10) { ?k }," +
+            "rule or  = k:(a | b) { ?k }," +
+            "rule nor = k:~(a | b) { ?k },"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -113,6 +117,95 @@ public class NegateTest {
         }
         assertEquals(
                 "a\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testR() {
+        final Object[][] tests = {
+            { },
+            { 0 },
+            { 8 },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("r").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "8\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testNR() {
+        final Object[][] tests = {
+            { },
+            { 0 },
+            { 8 },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("nr").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "0\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testOR() {
+        final Object[][] tests = {
+            { },
+            { "a" },
+            { "b" },
+            { "c" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("or").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "a\n" +
+                "b\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testNOR() {
+        final Object[][] tests = {
+            { },
+            { "a" },
+            { "b" },
+            { "c" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("nor").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "a\n" +
+                "b\n" +
+                "c\n",
                 sb.toString());
     }
 }
