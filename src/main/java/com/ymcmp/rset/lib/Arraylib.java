@@ -27,8 +27,8 @@ public final class Arraylib {
     }
 
     @Export("_array_add")
-    public static void arrayAdd(List<Object> l, Object k) {
-        l.add(k);
+    public static void arrayAdd(List<Object> l, Object... k) {
+        l.addAll(Arrays.asList(k));
     }
 
     @Export("_array_fix")
