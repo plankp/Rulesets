@@ -462,9 +462,43 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 }
 
                 final Label exit = new Label();
+                final Label epilogue = new Label();
                 final int list = findNearestLocal(VarType.LIST);
                 final int rwnd = pushNewLocal(VarType.NUM);
-                for (int i = 0; i < ruleCount; ++i) {
+
+                final int negateState = pushNewLocal(VarType.BOOL);
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
+                mv.visitVarInsn(ISTORE, negateState);
+
+                /*
+                ~(a | b) true when input is neither a nor b
+                ~a | ~b  true when input is either not a or not b
+
+                Explaination for generated code:
+                GENERALIZED_SWITCH_CLAUSE (boolean negateState, rule... init, rule last):
+                $FOREACH rule in init
+                    saveRoutine
+                    result = test rule
+                    if negateState {
+                        if !result goto epilogue
+                    } else {
+                        if result goto exit
+                    }
+                    unsaveRoutine
+                $ENDFOR
+
+                    saveRoutine
+                    result = test ~last
+                    if result goto exit
+                epilogue:
+                    unsaveRoutine
+                    result = false
+                exit:
+                */
+
+                for (int i = 0; i < ruleCount - 1; ++i) {
                     if (genDebugInfo) {
                         mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
                         mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
@@ -474,14 +508,39 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
 
                     saveRoutine(list, rwnd);
                     visit(n.rules.get(i));
-                    mv.visitVarInsn(ILOAD, RESULT);
-                    mv.visitJumpInsn(IFNE, exit);
+
+                    mv.visitVarInsn(ILOAD, negateState);
+                    ASMUtils.testIfElse(mv, IFEQ, () -> {
+                        mv.visitVarInsn(ILOAD, RESULT);
+                        mv.visitJumpInsn(IFEQ, epilogue);
+                    }, () -> {
+                        mv.visitVarInsn(ILOAD, RESULT);
+                        mv.visitJumpInsn(IFNE, exit);
+                    });
                     unsaveRoutine(list, rwnd);
                 };
+
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Switch clause " + ruleCount + " out of " + ruleCount + ":");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
+                saveRoutine(list, rwnd);
+                visit(n.rules.get(ruleCount - 1));
+                mv.visitVarInsn(ILOAD, RESULT);
+                mv.visitJumpInsn(IFNE, exit);
+
+                mv.visitLabel(epilogue);
+                unsaveRoutine(list, rwnd);
                 mv.visitInsn(ICONST_0);
                 mv.visitVarInsn(ISTORE, RESULT);
+
                 mv.visitLabel(exit);
                 popLocal();
+                popLocal();
+
                 return null;
             }
             case GROUP: {

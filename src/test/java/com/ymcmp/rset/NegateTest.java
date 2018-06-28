@@ -35,6 +35,7 @@ public class NegateTest {
             "rule nr  = k:~(5-10) { ?k }," +
             "rule or  = k:(a | b) { ?k }," +
             "rule nor = k:~(a | b) { ?k }," +
+            "rule orn = k:(~a | ~b) { ?k }," +
             "rule s   = k:(a b c) { ?k }," +
             "rule ns  = k:~(a b c) { ?k },"
         );
@@ -200,6 +201,28 @@ public class NegateTest {
         final Rulesets rsets = newNegate();
         for (final Object[] test : tests) {
             final Object obj = rsets.getRule("nor").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "c\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testORN() {
+        final Object[][] tests = {
+            { },
+            { "a" },
+            { "b" },
+            { "c" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("orn").apply(test);
             if (obj != null) {
                 sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
             }
