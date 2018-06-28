@@ -21,6 +21,21 @@ public final class Arraylib {
         //
     }
 
+    @Export("_array")
+    public static List<Object> newArray(Object... data) {
+        return new ArrayList<>(Arrays.asList(data));
+    }
+
+    @Export("_array_add")
+    public static void arrayAdd(List<Object> l, Object k) {
+        l.add(k);
+    }
+
+    @Export("_array_fix")
+    public static Object[] arrayFix(List<Object> l) {
+        return l.toArray();
+    }
+
     @Export("_sort")
     public static Object sort(Object k) {
         if (k == null) return null;
