@@ -34,7 +34,9 @@ public class NegateTest {
             "rule r   = k:(5-10) { ?k }," +
             "rule nr  = k:~(5-10) { ?k }," +
             "rule or  = k:(a | b) { ?k }," +
-            "rule nor = k:~(a | b) { ?k },"
+            "rule nor = k:~(a | b) { ?k }," +
+            "rule s   = k:(a b c) { ?k }," +
+            "rule ns  = k:~(a b c) { ?k },"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -206,6 +208,56 @@ public class NegateTest {
                 "a\n" +
                 "b\n" +
                 "c\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testS() {
+        final Object[][] tests = {
+            { },
+            { "a" },
+            { "a", "b" },
+            { "a", "b", "c" },
+            { "d" },
+            { "d", "e" },
+            { "d", "e", "f" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("s").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "[a, b, c]\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testNS() {
+        final Object[][] tests = {
+            { },
+            { "a" },
+            { "a", "b" },
+            { "a", "b", "c" },
+            { "d" },
+            { "d", "e" },
+            { "d", "e", "f" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("ns").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "[d, e, f]\n",
                 sb.toString());
     }
 }
