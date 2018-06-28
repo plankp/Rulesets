@@ -1,0 +1,92 @@
+rule scom
+  = %'%%!' r:&eol
+{
+  scom, ?r
+},
+
+rule mcom
+  = %'%%+' v:(~%'%%-'*)
+{
+  mcom, ?v~
+},
+
+rule eol
+  = a:(~%'\n'*) b:(%'\n' | !)
+{
+  ?a ~ ((?_eqls '\n' ?b~) & '\n' | '')
+},
+
+fragment sws
+  = %' ' | %'\t'
+,
+
+fragment ws
+  = &sws*
+,
+
+rule word
+  = k:(~&sws+)
+{
+  ?k~
+},
+
+rule defn
+  = %'%%defn' &ws name:&word &ws value:&eol
+{
+  defn, '%%'~?name, ?value
+},
+
+rule udef
+  = %'%%udef' &ws name:&word &ws value:&eol
+{
+  udef, '%%'~?name, ?value
+},
+
+rule dexp
+  = %'%%dexp' &ws name:&word &ws value:&expr
+{
+  dexp, '%%'~?name, ?value
+},
+
+rule prnt
+  = %'%%prnt' &ws value:&eol
+{
+  prnt, ?value
+},
+
+rule sbst
+  = %'%%sbst' &ws value:&eol
+{
+  sbst, '%%'~?value
+},
+
+fragment token
+  = %'%%'? &word
+,
+
+subrule struct
+  = a:&token b:&ws
+{
+  (((?_len ?a) - 1 & sbst | prnt), ?a~), (prnt, ?b~)
+},
+
+rule message
+  = a:&ws b:(&struct*) c:&eol
+{
+  ret = ?_array 'prnt', ?a~ !
+  ?b {
+    ?_array_add ?ret ?_it:0 ?_it:1
+  } !
+  ?_array_add ?ret prnt, ?c !
+  seq, (?_array_fix ?ret)
+},
+
+fragment expr
+  = &mcom | &scom | &defn | &dexp | &udef | &prnt | &sbst | &message
+,
+
+rule File
+  = head:&expr (! | tail:&File)
+{
+  ?tail & seq, (?head, ?tail) | ?head
+}
