@@ -55,6 +55,10 @@ public final class Extensions {
             exportClassTo(Mathlib.class, module);
         }
 
+        if ((featureMask & EXT_ARRAY) == EXT_ARRAY) {
+            exportClassTo(Arraylib.class, module);
+        }
+
         module.putAll(imported);
     }
 
@@ -132,7 +136,9 @@ public final class Extensions {
                             return method.invoke(self, args);
                         }
                     } catch (IllegalAccessException | InvocationTargetException ex) {
-                        throw new RuntimeException("Interface to " + cl.getSimpleName() + (self == null ? "." : "#") + method.getName() + "(?) failed", ex);
+                        throw new RuntimeException("Interface to " + cl.getSimpleName() + (self == null ? "." : "#") + method.getName() + "(" + method.getParameterCount() + ") failed", ex);
+                    } catch (RuntimeException ex) {
+                        throw new RuntimeException("Call to " + cl.getSimpleName() + (self == null ? "." : "#") + method.getName() + "(" + method.getParameterCount() + ") failed", ex);
                     }
                 }
             });
