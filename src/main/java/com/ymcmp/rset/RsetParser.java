@@ -90,21 +90,13 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                 }
                 case S_MD: {
                     final Token<Type> inner = getToken();
-                    if (inner != null) {
-                        switch (inner.type) {
-                            case L_IDENT:
-                            case L_INT:
-                            case L_REAL:
-                                return new ValueNode(new Token<>(Type.L_CHARS, '%' + inner.text));
-                        }
+                    if (inner != null && inner.type.isValue()) {
+                        return new ValueNode(new Token<>(Type.L_CHARS, '%' + inner.text));
                     }
                     throw new IllegalParseException("Expected constant after '%'", inner);
                 }
-                case L_IDENT:
-                case L_INT:
-                case L_REAL:
-                    return new ValueNode(t);
                 default:
+                    if (t.type.isValue()) return new ValueNode(t);
                     ungetToken(t);
             }
         }

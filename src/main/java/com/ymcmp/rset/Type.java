@@ -40,4 +40,17 @@ public enum Type {
                 return false;
         }
     }
+
+    public boolean isValue() {
+        switch (this) {
+            case L_INT:
+            case L_REAL:
+            case L_CHARS:
+            case L_IDENT:
+            case L_NULL:
+                return true;
+            default:
+                return false;
+        }
+    }
 }
