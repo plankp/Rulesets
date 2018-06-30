@@ -34,6 +34,15 @@ public class IllegalParseTest {
     }
 
     @Test(expected = IllegalParseException.class)
+    public void parseUnclosedAction() {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = a { "))) {
+            new RsetParser(lexer).parse();
+        } catch (IOException ex) {
+            fail("No manipulating IO?");
+        }
+    }
+
+    @Test(expected = IllegalParseException.class)
     public void parseBadBinaryOperator() {
         try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = a { 10 + 3 - }"))) {
             new RsetParser(lexer).parse();
