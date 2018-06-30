@@ -5,6 +5,11 @@
 
 package com.ymcmp.rset;
 
+import java.util.Map;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.HashMap;
+
 import java.io.Reader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -14,6 +19,22 @@ import com.ymcmp.lexparse.Token;
 
 public class RsetLexer implements Lexer<Type>, Closeable {
 
+    private static final Set<Character> STR_ESC = new HashSet<Character>() {{
+        add('\\'); add('\''); add('"');
+        add('a'); add('b'); add('t'); add('n');
+        add('v'); add('f'); add('r');
+    }};
+
+    private static final Map<Character, Type> MONO_OP = new HashMap<Character, Type>() {{
+        put(',', Type.S_CM); put('=', Type.S_EQ); put('-', Type.S_MN);
+        put('+', Type.S_AD); put('?', Type.S_QM); put(':', Type.S_CO);
+        put('|', Type.S_OR); put('~', Type.S_TD); put('*', Type.S_ST);
+        put('/', Type.S_DV); put('%', Type.S_MD); put('!', Type.S_EX);
+        put('&', Type.S_AM); put('(', Type.S_LP); put(')', Type.S_RP);
+        put('[', Type.S_LS); put(']', Type.S_RS); put('{', Type.S_LB);
+        put('}', Type.S_RB);
+    }};
+ 
     private Reader reader;
     private int buf = -1;
 
@@ -23,74 +44,27 @@ public class RsetLexer implements Lexer<Type>, Closeable {
 
     @Override
     public Token<Type> nextToken() {
-        while (true) {
-            final int c = read();
+        int rc;
+        while ((rc = read()) != -1) {
+            final char c = (char) rc;
             switch (c) {
-                case -1:   return null;
-                case '#':  readWhile(k -> !Lexer.isEOL(k));
+                case '#':
+                    readWhile(k -> !Lexer.isEOL(k));
                 case ' ':
                 case '\n':
                 case '\r':
-                case '\t': continue;
-// NOTE: Above cases abuses fallthroughs! Careful when re-ordering
-                case ',':  return new Token<>(Type.S_CM, ",");
-                case '=':  return new Token<>(Type.S_EQ, "=");
-                case '-':  return new Token<>(Type.S_MN, "-");
-                case '+':  return new Token<>(Type.S_AD, "+");
-                case '?':  return new Token<>(Type.S_QM, "?");
-                case ':':  return new Token<>(Type.S_CO, ":");
-                case '|':  return new Token<>(Type.S_OR, "|");
-                case '~':  return new Token<>(Type.S_TD, "~");
-                case '*':  return new Token<>(Type.S_ST, "*");
-                case '/':  return new Token<>(Type.S_DV, "/");
-                case '%':  return new Token<>(Type.S_MD, "%");
-                case '!':  return new Token<>(Type.S_EX, "!");
-                case '&':  return new Token<>(Type.S_AM, "&");
-                case '(':  return new Token<>(Type.S_LP, "(");
-                case ')':  return new Token<>(Type.S_RP, ")");
-                case '[':  return new Token<>(Type.S_LS, "[");
-                case ']':  return new Token<>(Type.S_RS, "]");
-                case '{':  return new Token<>(Type.S_LB, "{");
-                case '}':  return new Token<>(Type.S_RB, "}");
+                case '\t':
+                    continue;
                 case '\'':
-                case '"': {
-                    final StringBuilder sb = new StringBuilder();
-                feedback: while (true) {
-                        final int k = read();
-                        switch (k) {
-                            case -1:  // Unterminated strings are considered complete
-                                break feedback;
-                            case '\\': {    // Escape sequences
-                                final int e = read();
-                                switch (e) {
-                                    case '\\':
-                                    case '\'':
-                                    case '"':
-                                    case 'a':
-                                    case 'b':
-                                    case 't':
-                                    case 'n':
-                                    case 'v':
-                                    case 'f':
-                                    case 'r':
-                                        sb.append('\\').append((char) e);
-                                        break;
-                                    default:
-                                        sb.append('\\').append('\\').append((char) e);
-                                }
-                                break;
-                            }
-                            default:
-                                if (k == c) break feedback; // Terminating mark
-                                if (k == '"') sb.append('\\'); // escape it, avoids problems
-                                sb.append((char) k);
-                        }
-                    }
-                    return new Token<>(Type.L_IDENT, sb.toString());
-                }
+                case '"':
+                    return lexRawString(c);
                 default: {
-                    unread(c);
+                    final Type type = MONO_OP.get(c);
+                    if (type != null) {
+                        return new Token<>(type, Character.toString(c));
+                    }
 
+                    unread(c);
                     final String t = readWhile(Character::isDigit);
                     final int k = read();
                     if (k == '.') {
@@ -110,10 +84,37 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                         return new Token<>(Type.L_IDENT, i);
                     }
 
-                    throw new RuntimeException("Unknown char " + (char) c);
+                    throw new RuntimeException("Unknown char " + c);
                 }
             }
         }
+        return null;
+    }
+
+    private Token<Type> lexRawString(char quoteMark) {
+        final StringBuilder sb = new StringBuilder();
+        // unterminated strings are considered complete
+        for (int k = read(); k != -1 && k != quoteMark; k = read()) {
+            if (k == '\\') {    // Escape sequences
+                final int e = read();
+                if (e == -1) {
+                    break;
+                }
+
+                final char c = (char) e;
+                if (!STR_ESC.contains(c)) {
+                    sb.append('\\');
+                }
+                sb.append('\\').append(c);
+            } else {
+                if (k == '\'' || k == '\"') {
+                    // escape it, avoids problems
+                    sb.append('\\');
+                }
+                sb.append((char) k);
+            }
+        }
+        return new Token<>(Type.L_IDENT, sb.toString());
     }
 
     @Override
