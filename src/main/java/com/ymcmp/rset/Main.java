@@ -7,6 +7,8 @@ package com.ymcmp.rset;
 
 import java.io.Reader;
 import java.io.IOException;
+// import java.io.StringReader;
+// import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.nio.file.Paths;
@@ -15,6 +17,14 @@ import java.nio.file.Files;
 import com.ymcmp.rset.tree.RulesetGroup;
 
 public class Main {
+
+    public static class Options {
+        public String className;
+        public String pathName;
+        public String outputName;
+        public String inputName;
+        public boolean withLogger;
+    }
 
     private static final String DEFAULT_CLASS_NAME = "CompiledRulesets";
 
@@ -67,32 +77,41 @@ public class Main {
             }
         }
 
-        try {
-            final Reader reader = inputFile == null
-                    ? new InputStreamReader(System.in)
-                    : Files.newBufferedReader(Paths.get(inputFile));
-            try (final RsetLexer lexer = new RsetLexer(reader)) {
-                final RsetParser parser = new RsetParser(lexer);
-                final RulesetGroup tree = parser.parse();
+        final Reader reader = inputFile == null
+                ? new InputStreamReader(System.in)
+                : Files.newBufferedReader(Paths.get(inputFile));
 
-                if (tree == null) return;
+        final String[] arr = generatedClassName.split(".*/", 2);
+        String fileName = DEFAULT_CLASS_NAME;
+        switch (arr.length) {
+            case 1: fileName = arr[0]; break;
+            case 2: fileName = arr[1]; break;
+            default:
+                System.out.println("Unreadable class name, using default name instead");
+                generatedClassName = DEFAULT_CLASS_NAME;
+                break;
+        }
 
-                final String[] arr = generatedClassName.split(".*/", 2);
-                String fileName = DEFAULT_CLASS_NAME;
-                switch (arr.length) {
-                    case 1: fileName = arr[0]; break;
-                    case 2: fileName = arr[1]; break;
-                    default:
-                        System.out.println("Unreadable class name, using default name instead");
-                        generatedClassName = DEFAULT_CLASS_NAME;
-                        break;
-                }
+        Options opt = new Options();
+        opt.className = generatedClassName;
+        opt.pathName = generatedPathName;
+        opt.outputName = fileName + ".class";
+        opt.inputName = inputFile;
+        opt.withLogger = genWithLogger;
+        compile(reader, opt);
+    }
 
-                final byte[] bytes = tree.toBytecode(generatedClassName, inputFile, genWithLogger);
+    public static void compile(final Reader source, final Options opt) throws IOException {
+        try (final RsetLexer lexer = new RsetLexer(source)) {
+            final RsetParser parser = new RsetParser(lexer);
+            final RulesetGroup tree = parser.parse();
 
-                // Create directories
-                Files.write(Files.createDirectories(Paths.get(generatedPathName)).resolve(fileName + ".class"), bytes);
-            }
+            if (tree == null) return;
+
+            final byte[] bytes = tree.toBytecode(opt.className, opt.inputName, opt.withLogger);
+
+            // Create directories
+            Files.write(Files.createDirectories(Paths.get(opt.pathName)).resolve(opt.outputName), bytes);
         } catch (IOException ex) {
             throw ex;
         }
