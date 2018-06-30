@@ -8,6 +8,8 @@ package com.ymcmp.rset;
 import java.util.List;
 import java.util.ArrayList;
 
+import java.util.function.Supplier;
+
 import com.ymcmp.rset.tree.*;
 
 import com.ymcmp.lexparse.Lexer;
@@ -44,6 +46,30 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         if (buf != null) throw new RuntimeException("Buffer is filled");
         if (tok == null) return;
         buf = tok;
+    }
+
+    private ParseTree termNormalizingSequence(KaryRule.Type combineType, Type sep, Supplier<? extends ParseTree> rule) {
+        final List<ParseTree> elms = consumeRules(rule, sep);
+        if (elms == null) return null;
+        if (elms.size() == 1) return elms.get(0);
+
+        if (sep != null) {
+            // Only with non-null separators can null terms be a thing
+            final int k = elms.size() - 1;
+            if (elms.get(k) == null) elms.remove(k);
+        }
+        return new KaryRule(combineType, elms);
+    }
+
+    private ParseTree termPreservingSequence(KaryRule.Type combineType, String exprName, Type sep, Supplier<? extends ParseTree> rule) {
+        final List<ParseTree> elms = consumeRules(rule, sep);
+        if (elms == null) return null;
+        if (elms.size() == 1) return elms.get(0);
+
+        if (elms.get(elms.size() - 1) == null) {
+            throw new IllegalParseException("Incomplete " + exprName + " expression, missing rhs");
+        }
+        return new KaryRule(combineType, elms);
     }
 
     @Override
@@ -103,18 +129,13 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                     return new UnaryRule(t, rule);
                 }
                 case S_LP: {
-                    final List<ParseTree> rules = consumeRules(this::parseRuleClause, Type.S_CM);
+                    final ParseTree rule = termNormalizingSequence(KaryRule.Type.GROUP, Type.S_CM, this::parseRuleClause);
                     consumeToken(Type.S_RP, "Unclosed clause, missing ')'");
-
-                    if (rules == null) {
+                    if (rule == null) {
                         // Synthesize a null token, user wants to test for value NULL
                         return new ValueNode(new Token<>(Type.L_NULL, "()"));
                     }
-                    if (rules.size() == 1) return rules.get(0);
-
-                    final int k = rules.size() - 1;
-                    if (rules.get(k) == null) rules.remove(k);
-                    return new KaryRule(KaryRule.Type.GROUP, rules);
+                    return rule;
                 }
                 default:
                     ungetToken(t);
@@ -163,27 +184,9 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         return base;
     }
 
-    public ParseTree parseRuleSequence() {
-        final List<ParseTree> rules = consumeRules(this::parseInnerLoop, null);
-
-        if (rules == null) return null;
-        if (rules.size() == 1) return rules.get(0);
-        return new KaryRule(KaryRule.Type.SEQ, rules);
-    }
-
-    public ParseTree parseRuleSwitch() {
-        final List<ParseTree> rules = consumeRules(this::parseRuleSequence, Type.S_OR);
-
-        if (rules == null) return null;
-        if (rules.size() == 1) return rules.get(0);
-        if (rules.get(rules.size() - 1) == null) {
-            throw new IllegalParseException("Incomplete '|' clause, missing rhs");
-        }
-        return new KaryRule(KaryRule.Type.SWITCH, rules);
-    }
-
     public ParseTree parseRuleClause() {
-        return parseRuleSwitch();
+        return termPreservingSequence(KaryRule.Type.SWITCH, "'|'", Type.S_OR, () ->
+                termNormalizingSequence(KaryRule.Type.SEQ, null, this::parseInnerLoop));
     }
 
     public RulesetNode parseRuleset() {
@@ -253,17 +256,6 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         return null;
     }
 
-    public ParseTree parseSubscript() {
-        final List<ParseTree> substs = consumeRules(this::parseExprValue, Type.S_CO);
-        if (substs == null) return null;
-        if (substs.size() == 1) return substs.get(0);
-
-        if (substs.get(substs.size() - 1) == null) {
-            throw new IllegalParseException("Incomplete ':' expression, missing rhs");
-        }
-        return new KaryRule(KaryRule.Type.SUBSCRIPT, substs);
-    }
-
     private static final List<Type> TOKS_PARSE_MUL = new ArrayList<Type>() {{
         add(Type.S_ST);
         add(Type.S_DV);
@@ -285,41 +277,17 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
 
     public ParseTree parseMath() {
         return consumeRules(this::delegateBinaryRuleCtor, () ->
-                consumeRules(this::delegateBinaryRuleCtor, this::parseSubscript,
+                consumeRules(this::delegateBinaryRuleCtor, () ->
+                        termPreservingSequence(KaryRule.Type.SUBSCRIPT, "':'", Type.S_CO, this::parseExprValue),
                         TOKS_PARSE_MUL),
                 TOKS_PARSE_ADD);
     }
 
-    public ParseTree parseJoin() {
-        final List<ParseTree> elms = consumeRules(this::parseMath, Type.S_TD);
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-
-        final int k = elms.size() - 1;
-        if (elms.get(k) == null) elms.remove(k);
-        return new KaryRule(KaryRule.Type.JOIN, elms);
-    }
-
-    public ParseTree parseArray() {
-        final List<ParseTree> elms = consumeRules(this::parseJoin, Type.S_CM);
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-
-        final int k = elms.size() - 1;
-        if (elms.get(k) == null) elms.remove(k);
-        return new KaryRule(KaryRule.Type.ARRAY, elms);
-    }
-
-    public ParseTree parseCall() {
-        final List<ParseTree> elms = consumeRules(this::parseArray, null);
-
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-        return new KaryRule(KaryRule.Type.CALL, elms);
-    }
-
     public ParseTree parseLoop() {
-        final ParseTree tree = parseCall();
+        final ParseTree tree =
+                termNormalizingSequence(KaryRule.Type.CALL, null, () ->
+                    termNormalizingSequence(KaryRule.Type.ARRAY, Type.S_CM, () ->
+                        termNormalizingSequence(KaryRule.Type.JOIN, Type.S_TD, this::parseMath)));
         if (tree != null) {
             final Token<Type> tok = getToken();
             if (tok != null && tok.type == Type.S_LB) {
@@ -333,52 +301,11 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         return tree;
     }
 
-    public ParseTree parseExprAnd() {
-        final List<ParseTree> elms = consumeRules(this::parseLoop, Type.S_AM);
-
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-        if (elms.get(elms.size() - 1) == null) {
-            throw new IllegalParseException("Incomplete '&' expression, missing rhs");
-        }
-        return new KaryRule(KaryRule.Type.AND, elms);
-    }
-
-    public ParseTree parseExprOr() {
-        final List<ParseTree> elms = consumeRules(this::parseExprAnd, Type.S_OR);
-
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-        if (elms.get(elms.size() - 1) == null) {
-            throw new IllegalParseException("Incomplete '|' expression, missing rhs");
-        }
-        return new KaryRule(KaryRule.Type.OR, elms);
-    }
-
-    public ParseTree parseExprAssign() {
-        final List<ParseTree> elms = consumeRules(this::parseExprOr, Type.S_EQ);
-
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-        if (elms.get(elms.size() - 1) == null) {
-            throw new IllegalParseException("Incomplete '=' expression, missing rhs");
-        }
-        return new KaryRule(KaryRule.Type.ASSIGN, elms);
-    }
-
-    public ParseTree parseExprIgnore() {
-        final List<ParseTree> elms = consumeRules(this::parseExprAssign, Type.S_EX);
-
-        if (elms == null) return null;
-        if (elms.size() == 1) return elms.get(0);
-        if (elms.get(elms.size() - 1) == null) {
-            throw new IllegalParseException("Incomplete '!' expression, missing rhs");
-        }
-        return new KaryRule(KaryRule.Type.IGNORE, elms);
-    }
-
     public ParseTree parseExpression() {
-        return parseExprIgnore();
+        return termPreservingSequence(KaryRule.Type.IGNORE, "'!'", Type.S_EX, () ->
+                termPreservingSequence(KaryRule.Type.ASSIGN, "'='", Type.S_EQ, () ->
+                        termPreservingSequence(KaryRule.Type.OR, "'|'", Type.S_OR, () ->
+                        termPreservingSequence(KaryRule.Type.AND, "'&'", Type.S_AM, this::parseLoop))));
     }
 
     public RulesetGroup parseRulesets() {
