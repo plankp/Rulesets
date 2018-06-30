@@ -1,4 +1,4 @@
-# Rulesets [![Build Status](https://travis-ci.org/plankp/Rulesets.svg?branch=master)](https://travis-ci.org/plankp/Rulesets)
+# Rulesets [![Build Status](https://travis-ci.org/plankp/Rulesets.svg?branch=master)](https://travis-ci.org/plankp/Rulesets) [![codecov](https://codecov.io/gh/plankp/Rulesets/branch/master/graph/badge.svg)](https://codecov.io/gh/plankp/Rulesets)
 
 Yes, it is called _**Rulesets**_, not _**Ruleset**_
 
