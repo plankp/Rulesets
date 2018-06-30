@@ -49,7 +49,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
     }
 
     private ParseTree termNormalizingSequence(KaryRule.Type combineType, Type sep, Supplier<? extends ParseTree> rule) {
-        final List<ParseTree> elms = consumeRules(rule, sep);
+        final List<ParseTree> elms = consumeRules(sep, rule);
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);
 
@@ -62,7 +62,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
     }
 
     private ParseTree termPreservingSequence(KaryRule.Type combineType, String exprName, Type sep, Supplier<? extends ParseTree> rule) {
-        final List<ParseTree> elms = consumeRules(rule, sep);
+        final List<ParseTree> elms = consumeRules(sep, rule);
         if (elms == null) return null;
         if (elms.size() == 1) return elms.get(0);
 
@@ -268,11 +268,9 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
     }
 
     public ParseTree parseMath() {
-        return consumeRules(this::delegateBinaryRuleCtor, () ->
-                consumeRules(this::delegateBinaryRuleCtor, () ->
-                        termPreservingSequence(KaryRule.Type.SUBSCRIPT, "':'", Type.S_CO, this::parseExprValue),
-                        TOKS_PARSE_MUL),
-                TOKS_PARSE_ADD);
+        return consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_ADD, () ->
+                consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_MUL, () ->
+                        termPreservingSequence(KaryRule.Type.SUBSCRIPT, "':'", Type.S_CO, this::parseExprValue)));
     }
 
     public ParseTree parseLoop() {
@@ -301,7 +299,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
     }
 
     public RulesetGroup parseRulesets() {
-        final List<RulesetNode> list = consumeRules(this::parseRuleset, Type.S_CM);
+        final List<RulesetNode> list = consumeRules(Type.S_CM, this::parseRuleset);
         if (list == null) return null;
         final int k = list.size() - 1;
         if (list.get(k) == null) list.remove(k);

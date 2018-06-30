@@ -47,7 +47,7 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
         return t;
     }
 
-    public default <R> List<R> consumeRules(Supplier<? extends R> rule, T delim) {
+    public default <R> List<R> consumeRules(T delim, Supplier<? extends R> rule) {
         final R head = rule.get();
         if (head == null) return null;
 
@@ -73,7 +73,7 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
     }
 
     public default <R> R consumeRules(TriFunction<? super Token<T>, ? super R, ? super R, ? extends R> fn,
-                                      Supplier<? extends R> rule, Collection<T> delim) {
+                                      Collection<T> delim, Supplier<? extends R> rule) {
         R head = rule.get();
         if (head == null) return null;
 
