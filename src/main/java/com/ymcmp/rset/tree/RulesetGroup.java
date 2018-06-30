@@ -83,21 +83,13 @@ public final class RulesetGroup extends ParseTree {
                                     vis.mv.visitVarInsn(ALOAD, lst);
                                     vis.mv.visitVarInsn(ALOAD, 0);
                                     vis.mv.visitVarInsn(ALOAD, localEnv);
-                                    if (vis.genDebugInfo) {
-                                        vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
-                                        vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
-                                        vis.mv.visitLdcInsn("Executing action of " + name);
-                                        vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
-                                    }
+
+                                    vis.logMessage("FINER", "Executing action of " + name);
+
                                     vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
                                     vis.mv.visitInsn(DUP);
                                     ASMUtils.testIf(vis.mv, IFNONNULL, () -> {
-                                        if (vis.genDebugInfo) {
-                                            vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
-                                            vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINER", "Ljava/util/logging/Level;");
-                                            vis.mv.visitLdcInsn("Using parse stack as result of action");
-                                            vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
-                                        }
+                                        vis.logMessage("FINER", "Using parse stack as result of action");
                                         vis.mv.visitInsn(POP);
                                         vis.mv.visitVarInsn(ALOAD, parseLst);
                                     });
@@ -115,19 +107,11 @@ public final class RulesetGroup extends ParseTree {
                                     throw new RuntimeException("Recursive fragment definition via " + fragmentStack + " -> " + name);
                                 }
                                 fragmentStack.push(name);
-                                if (vis.genDebugInfo) {
-                                    vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
-                                    vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
-                                    vis.mv.visitLdcInsn("Entering rule fragment " + name);
-                                    vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
-                                }
+
+                                vis.logMessage("FINE", "Entering rule fragment " + name);
                                 vis.visit(e.rule);
-                                if (vis.genDebugInfo) {
-                                    vis.mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
-                                    vis.mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
-                                    vis.mv.visitLdcInsn("Exiting rule fragment " + name);
-                                    vis.mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
-                                }
+                                vis.logMessage("FINE", "Exiting rule fragment " + name);
+
                                 fragmentStack.pop();
                             };
                         default:
