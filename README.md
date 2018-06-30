@@ -8,6 +8,21 @@ Install jdk 8 or higher, Use `gradlew`
 
 ## What is this?
 
+It is similar to a lexer and parser generator in many ways,
+except you also use it to match an sequence of (or singular)
+basic Java objects. Currently these objects are limited to:
+
+*  Integers
+*  Doubles
+*  Characters / List of Characters
+*  Strings
+*  Object Array / Collection
+*  Epsilon, a made up object detonating the end of data sequence
+
+Essentially, this is a DSL that matches data in a regex-like syntax
+
+## How do you use this?
+
 You could use the compiler provided by the program, or interface this project as a library:
 
 #### Invoking compiler:
@@ -40,14 +55,16 @@ Rulesets:
 ```
 # Matching numbers (an over-simplified lexer)
 
-rule digit
-  = '0'-'9'+
+fragment digit
+  = %0-%9+
+,
 
-rule alhex
-  = (&digit | a-f | A-F)+
+fragment alhex
+  = (&digit | %a-%f | %A-%F)+
+,
 
 rule number
-  = n:('0' (x &alhex)? | '1'-'9' &digit?)
+  = n:(%0 (%x &alhex)? | %1-%9 &digit?)
 {
     'Yes: ' ~ (?_concat ?n)
 }
@@ -61,7 +78,7 @@ try (final RsetLexer lexer = new RsetLexer(/* A Reader that contains the above c
     final RsetParser parser = new RsetParser(lexer);
 
     // The alternative is to write the bytes to a file
-    // and save it as what ever class name you gave .class
+    // and save it as with class name you gave .class
     //
     // The output file is dependent on
     //   com.ymcmp.rset.rt.*
@@ -76,7 +93,7 @@ try (final RsetLexer lexer = new RsetLexer(/* A Reader that contains the above c
     final Rulesets rulesets = (Rulesets) cl.getConstructor().newInstance();
 
     // In this example, we will be testing 0x1234
-    final Object[] test = new Object[]{ "0", "x", "1", "2", "3", "4" };
+    final Object[] test = new Object[]{ '0', 'x', '1', '2', '3', '4' };
     rulesets.forEachRule((name, rule) -> {
         final Object result = rule.apply(test);
         // name: name of the matching rule
