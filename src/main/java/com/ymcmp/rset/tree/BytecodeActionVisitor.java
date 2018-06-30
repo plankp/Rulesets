@@ -70,6 +70,18 @@ public class BytecodeActionVisitor extends Visitor<Void> {
         }
     }
 
+    private void castRuleToDouble(ParseTree rule) {
+        visit(rule);
+        mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
+        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
+    }
+
+    private void binaryDoubleOp(ParseTree lhs, ParseTree rhs, int op) {
+        castRuleToDouble(lhs);
+        castRuleToDouble(rhs);
+        mv.visitInsn(op);
+    }
+
     public Void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
             case S_LB: {
@@ -123,49 +135,19 @@ public class BytecodeActionVisitor extends Visitor<Void> {
                 return null;
             }
             case S_AD:
-                visit(n.rule1);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                visit(n.rule2);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                mv.visitInsn(DADD);
+                binaryDoubleOp(n.rule1, n.rule2, DADD);
                 break;
             case S_MN:
-                visit(n.rule1);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                visit(n.rule2);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                mv.visitInsn(DSUB);
+                binaryDoubleOp(n.rule1, n.rule2, DSUB);
                 break;
             case S_ST:
-                visit(n.rule1);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                visit(n.rule2);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                mv.visitInsn(DMUL);
+                binaryDoubleOp(n.rule1, n.rule2, DMUL);
                 break;
             case S_DV:
-                visit(n.rule1);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                visit(n.rule2);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                mv.visitInsn(DDIV);
+                binaryDoubleOp(n.rule1, n.rule2, DDIV);
                 break;
             case S_MD:
-                visit(n.rule1);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                visit(n.rule2);
-                mv.visitTypeInsn(CHECKCAST, "java/lang/Number");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Number", "doubleValue", "()D", false);
-                mv.visitInsn(DREM);
+                binaryDoubleOp(n.rule1, n.rule2, DREM);
                 break;
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);
