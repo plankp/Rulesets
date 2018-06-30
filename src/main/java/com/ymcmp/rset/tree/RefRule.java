@@ -20,7 +20,7 @@ public final class RefRule extends ParseTree {
 
     @Override
     public ParseTree getChild(int node) {
-        throw new IndexOutOfBoundsException(node);
+        throw new IndexOutOfBoundsException("RefRule does not have children: " + node);
     }
 
     @Override

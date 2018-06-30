@@ -23,7 +23,7 @@ public final class UnaryRule extends ParseTree {
     @Override
     public ParseTree getChild(int node) {
         if (node == 0) return rule;
-        throw new IndexOutOfBoundsException(node);
+        throw new IndexOutOfBoundsException("UnaryRule only has one child: " + node);
     }
 
     @Override

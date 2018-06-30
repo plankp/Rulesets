@@ -29,7 +29,7 @@ public final class RulesetNode extends ParseTree {
     public ParseTree getChild(int node) {
         if (node == 0) return rule;
         if (node == 1) return expr;
-        throw new IndexOutOfBoundsException(node);
+        throw new IndexOutOfBoundsException("RulesetNode only has two children: " + node);
     }
 
     @Override

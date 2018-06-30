@@ -27,7 +27,7 @@ public final class CaptureRule extends ParseTree {
     public ParseTree getChild(int node) {
         if (node == 0) return dest;
         if (node == 1) return rule;
-        throw new IndexOutOfBoundsException(node);
+        throw new IndexOutOfBoundsException("CaptureRule only has two children: " + node);
     }
 
     @Override

@@ -20,7 +20,7 @@ public final class ValueNode extends ParseTree {
 
     @Override
     public ParseTree getChild(int node) {
-        throw new IndexOutOfBoundsException(node);
+        throw new IndexOutOfBoundsException("ValueNode does not have children: " + node);
     }
 
     @Override

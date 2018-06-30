@@ -25,7 +25,7 @@ public final class BinaryRule extends ParseTree {
     public ParseTree getChild(int node) {
         if (node == 0) return rule1;
         if (node == 1) return rule2;
-        throw new IndexOutOfBoundsException(node);
+        throw new IndexOutOfBoundsException("BinaryRule only has two children: " + node);
     }
 
     @Override
