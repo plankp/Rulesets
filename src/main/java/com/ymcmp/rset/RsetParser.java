@@ -60,7 +60,7 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                     if (inner != null && inner.type.isNumeric()) {
                         return new ValueNode(new Token<>(inner.type, '-' + inner.text));
                     }
-                    throw new IllegalParseException("Expected numerical value after negative sign, found " + inner);
+                    throw new IllegalParseException("Expected numerical value after negative sign", inner);
                 }
                 case S_MD: {
                     final Token<Type> inner = getToken();
@@ -70,10 +70,9 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                             case L_INT:
                             case L_REAL:
                                 return new ValueNode(new Token<>(Type.L_CHARS, '%' + inner.text));
-                            default:
-                                throw new IllegalParseException("Expected constant after '%', found " + inner);
                         }
                     }
+                    throw new IllegalParseException("Expected constant after '%'", inner);
                 }
                 case L_IDENT:
                 case L_INT:
