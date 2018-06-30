@@ -65,28 +65,41 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                     }
 
                     unread(c);
-                    final String t = readWhile(Character::isDigit);
-                    final int k = read();
-                    if (k == '.') {
-                        final String frac = readWhile(Character::isDigit);
-                        if (!frac.isEmpty()) {
-                            return new Token<>(Type.L_REAL, t + '.' + frac);
-                        }
-                    } else {
-                        unread(k);
-                    }
-                    if (!t.isEmpty()) {
-                        return new Token<>(Type.L_INT, t);
-                    }
 
-                    final String i = readWhile(RsetLexer::isIdent);
-                    if (!i.isEmpty()) {
-                        return new Token<>(Type.L_IDENT, i);
-                    }
+                    final Token<Type> numeric = lexNumeric();
+                    if (numeric != null) return numeric;
+
+                    final Token<Type> ident = lexIdent();
+                    if (ident != null) return ident;
 
                     throw new RuntimeException("Unknown char " + c);
                 }
             }
+        }
+        return null;
+    }
+
+    private Token<Type> lexIdent() {
+        final String i = readWhile(RsetLexer::isIdent);
+        if (!i.isEmpty()) {
+            return new Token<>(Type.L_IDENT, i);
+        }
+        return null;
+    }
+
+    private Token<Type> lexNumeric() {
+        final String t = readWhile(Character::isDigit);
+        final int k = read();
+        if (k == '.') {
+            final String frac = readWhile(Character::isDigit);
+            if (!frac.isEmpty()) {
+                return new Token<>(Type.L_REAL, t + '.' + frac);
+            }
+        } else {
+            unread(k);
+        }
+        if (!t.isEmpty()) {
+            return new Token<>(Type.L_INT, t);
         }
         return null;
     }
