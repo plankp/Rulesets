@@ -5,6 +5,9 @@
 
 package com.ymcmp.rset.tree;
 
+import java.util.function.Consumer;
+import java.util.function.BiConsumer;
+
 import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
 
@@ -35,11 +38,25 @@ public interface ASMUtils {
     }
 
     public default void testIf(final int jumpInsn, final Runnable ifTrue) {
+        testIf(jumpInsn, new Label(), ifTrue);
+    }
+
+    public default void testIf(final int jumpInsn, final Label exit, final Runnable ifTrue) {
         final MethodVisitor mv = getMethodVisitor();
-        final Label br0 = new Label();
-        mv.visitJumpInsn(jumpInsn, br0);
+        mv.visitJumpInsn(jumpInsn, exit);
         ifTrue.run();
-        mv.visitLabel(br0);
+        mv.visitLabel(exit);
+    }
+
+    public default void whileLoop(final Consumer<? super Label> test, final BiConsumer<? super Label, ? super Label> body) {
+        final MethodVisitor mv = getMethodVisitor();
+        final Label loop = new Label();
+        final Label exit = new Label();
+        mv.visitLabel(loop);
+        if (test != null) test.accept(exit);
+        if (body != null) body.accept(exit, loop);
+        mv.visitJumpInsn(GOTO, loop);
+        mv.visitLabel(exit);
     }
 
     public static void newObjectNoArgs(final MethodVisitor vis, int slot, final String className) {

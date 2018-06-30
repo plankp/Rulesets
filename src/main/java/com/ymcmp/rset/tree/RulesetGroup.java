@@ -8,8 +8,10 @@ package com.ymcmp.rset.tree;
 import java.util.Map;
 import java.util.List;
 import java.util.Stack;
+
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
+
 import java.util.function.Consumer;
 
 import org.objectweb.asm.Type;
@@ -19,7 +21,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import com.ymcmp.rset.tree.BytecodeRuleVisitor.VarType;
+import com.ymcmp.rset.tree.BaseRuleVisitor.VarType;
 
 import com.ymcmp.lexparse.tree.ParseTree;
 
