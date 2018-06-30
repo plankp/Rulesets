@@ -42,24 +42,22 @@ public class EvalState {
         negateFlag = false;
     }
 
-    public int next() {
-        int i = 0;
+    private int silencedPop() {
         try {
-            i = indexes.pop();
+            return indexes.pop();
         } catch (EmptyStackException ex) {
-            //
+            return 0;
         }
+    }
+
+    public int next() {
+        final int i = silencedPop();
         indexes.push(i + 1);
         return i;
     }
 
     public int prev() {
-        int i = 0;
-        try {
-            i = indexes.pop();
-        } catch (EmptyStackException ex) {
-            //
-        }
+        final int i = silencedPop();
         indexes.push(i - 1);
         return i;
     }
