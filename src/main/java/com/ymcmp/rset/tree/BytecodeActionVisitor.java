@@ -6,6 +6,7 @@
 package com.ymcmp.rset.tree;
 
 import java.util.Map;
+import java.util.List;
 import java.util.Arrays;
 import java.util.HashMap;
 
@@ -177,6 +178,21 @@ public class BytecodeActionVisitor extends Visitor<Void> {
         return null;
     }
 
+    private void generateShortCircuitRoutine(int branchOp, List<ParseTree> body) {
+        final Label exit = new Label();
+        int i = 0;
+        for ( ; i < body.size() - 1; ++i) {
+            visit(body.get(i));
+            mv.visitInsn(DUP);
+            mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "isTruthy", "(Ljava/lang/Object;)Z", false);
+            mv.visitJumpInsn(branchOp, exit);
+            mv.visitInsn(POP);
+        }
+        // The last expression must be returned if all previous ones are false...
+        visit(body.get(i));
+        mv.visitLabel(exit);
+    }
+
     public Void visitKaryRule(final KaryRule n) {
         switch (n.type) {
             case SUBSCRIPT: {
@@ -225,36 +241,12 @@ public class BytecodeActionVisitor extends Visitor<Void> {
                 }
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/function/Function", "apply", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
                 return null;
-            case AND: {
-                final Label exit = new Label();
-                int i = 0;
-                for ( ; i < n.rules.size() - 1; ++i) {
-                    visit(n.rules.get(i));
-                    mv.visitInsn(DUP);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "isTruthy", "(Ljava/lang/Object;)Z", false);
-                    mv.visitJumpInsn(IFEQ, exit);
-                    mv.visitInsn(POP);
-                }
-                // Same logic as OR??? (It works though...)
-                visit(n.rules.get(i));
-                mv.visitLabel(exit);
+            case AND:
+                generateShortCircuitRoutine(IFEQ, n.rules);
                 return null;
-            }
-            case OR: {
-                final Label exit = new Label();
-                int i = 0;
-                for ( ; i < n.rules.size() - 1; ++i) {
-                    visit(n.rules.get(i));
-                    mv.visitInsn(DUP);
-                    mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "isTruthy", "(Ljava/lang/Object;)Z", false);
-                    mv.visitJumpInsn(IFNE, exit);
-                    mv.visitInsn(POP);
-                }
-                // The last expression must be returned if all previous ones are false...
-                visit(n.rules.get(i));
-                mv.visitLabel(exit);
+            case OR:
+                generateShortCircuitRoutine(IFNE, n.rules);
                 return null;
-            }
             case ASSIGN: {
                 // NOTE: This implementation does not mutate maps or arrays
                 final int k = n.rules.size() - 1;
