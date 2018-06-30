@@ -85,4 +85,40 @@ public interface ASMUtils {
             }
         }.testIf(jumpInsn, ifTrue);
     }
+
+    public default void ifBoolTrue(int boolSlot, Runnable body) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ILOAD, boolSlot);
+        testIf(IFEQ, body);
+    }
+
+    public default void ifBoolTrue(int boolSlot, Label lbl, Runnable body) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ILOAD, boolSlot);
+        testIf(IFEQ, lbl, body);
+    }
+
+    public default void ifBoolFalse(int boolSlot, Runnable body) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ILOAD, boolSlot);
+        testIf(IFNE, body);
+    }
+
+    public default void ifBoolFalse(int boolSlot, Label lbl, Runnable body) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ILOAD, boolSlot);
+        testIf(IFNE, lbl, body);
+    }
+
+    public default void jumpIfBoolFalse(int boolSlot, Label dest) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ILOAD, boolSlot);
+        mv.visitJumpInsn(IFEQ, dest);
+    }
+
+    public default void ifBoolElse(int boolSlot, Runnable ifTrue, Runnable ifFalse) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ILOAD, boolSlot);
+        testIfElse(IFEQ, ifTrue, ifFalse);
+    }
 }

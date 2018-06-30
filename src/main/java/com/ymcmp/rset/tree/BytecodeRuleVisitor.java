@@ -97,9 +97,8 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
                             mv.visitVarInsn(ALOAD, lst);
                             mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
-                            mv.visitInsn(DUP);
                             mv.visitVarInsn(ISTORE, RESULT);
-                            mv.visitJumpInsn(IFEQ, exit);
+                            jumpIfBoolFalse(RESULT, exit);
                             mv.visitIincInsn(idx, 1);
                         });
                         mv.visitInsn(POP);
@@ -152,8 +151,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 final int rwnd = pushNewLocal(VarType.NUM);
                 saveRoutine(list, rwnd);
                 visit(n.rule);
-                mv.visitVarInsn(ILOAD, RESULT);
-                testIf(IFNE, () -> unsaveRoutine(list, rwnd));
+                ifBoolFalse(RESULT, () -> unsaveRoutine(list, rwnd));
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
                 popLocal();
@@ -173,8 +171,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 whileLoop(exit -> {
                     saveRoutine(list, rwnd);
                     visit(n.rule);
-                    mv.visitVarInsn(ILOAD, RESULT);
-                    mv.visitJumpInsn(IFEQ, exit);
+                    jumpIfBoolFalse(RESULT, exit);
                 }, (exit, loop) -> {
                     mv.visitInsn(ICONST_1);
                     mv.visitVarInsn(ISTORE, flag);
@@ -322,8 +319,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     logMessage("FINER", "Sequential clause " + (i + 1) + " out of " + ruleCount + ":");
 
                     visit(n.rules.get(i));
-                    mv.visitVarInsn(ILOAD, RESULT);
-                    mv.visitJumpInsn(IFEQ, exit);
+                    jumpIfBoolFalse(RESULT, exit);
                 }
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
@@ -380,8 +376,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     saveRoutine(list, rwnd);
                     visit(n.rules.get(i));
 
-                    mv.visitVarInsn(ILOAD, negateState);
-                    testIfElse(IFEQ, () -> {
+                    ifBoolElse(negateState, () -> {
                         mv.visitVarInsn(ILOAD, RESULT);
                         mv.visitJumpInsn(IFEQ, epilogue);
                     }, () -> {
@@ -395,14 +390,14 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
                 saveRoutine(list, rwnd);
                 visit(n.rules.get(ruleCount - 1));
-                mv.visitVarInsn(ILOAD, RESULT);
 
-                testIf(IFNE, exit, () -> {
+                ifBoolFalse(RESULT, exit, () -> {
                     mv.visitLabel(epilogue);
                     unsaveRoutine(list, rwnd);
                     mv.visitInsn(ICONST_0);
                     mv.visitVarInsn(ISTORE, RESULT);
                 });
+
                 popLocal();
                 popLocal();
 
@@ -423,8 +418,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     logMessage("FINER", "Group clause " + (i + 1) + " out of " + ruleCount + ":");
 
                     visit(n.rules.get(i));
-                    mv.visitVarInsn(ILOAD, RESULT);
-                    mv.visitJumpInsn(IFEQ, br0);
+                    jumpIfBoolFalse(RESULT, br0);
                     decSizeAndDup(plst);
                     testIf(IF_ICMPLT, () -> {
                         mv.visitVarInsn(ALOAD, list);
@@ -461,8 +455,8 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         visit(n.rule);
         mv.visitVarInsn(ALOAD, map);    // Setting up stack for map.put
         mv.visitLdcInsn(dest);          // Setting up stack for map.put(dest
-        mv.visitVarInsn(ILOAD, RESULT);
-        testIf(IFEQ, () -> {
+
+        ifBoolTrue(RESULT, () -> {
             mv.visitVarInsn(ALOAD, plst);
             decSizeAndDup(plst);
             testIf(IF_ICMPLT, () -> {
@@ -471,6 +465,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             });
             mv.visitInsn(POP2);
         });
+
         mv.visitFieldInsn(GETSTATIC, "java/util/Collections", "EMPTY_LIST", "Ljava/util/List;");
         mv.visitLabel(exit);
         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
