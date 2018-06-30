@@ -273,9 +273,17 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
         add(Type.S_MN);
     }};
 
+    private BinaryRule delegateBinaryRuleCtor(Token<Type> tok, ParseTree rule1, ParseTree rule2) {
+        // rule2 has a chance of being null
+        if (rule2 == null) {
+            throw new IllegalParseException("Operator " + tok.text + " expects two terms yet right side value is missing");
+        }
+        return new BinaryRule(tok, rule1, rule2);
+    }
+
     public ParseTree parseMath() {
-        return consumeRules(BinaryRule::new, () ->
-                consumeRules(BinaryRule::new, this::parseSubscript,
+        return consumeRules(this::delegateBinaryRuleCtor, () ->
+                consumeRules(this::delegateBinaryRuleCtor, this::parseSubscript,
                         TOKS_PARSE_MUL),
                 TOKS_PARSE_ADD);
     }
