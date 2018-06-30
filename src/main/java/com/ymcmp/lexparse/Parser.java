@@ -7,6 +7,7 @@ package com.ymcmp.lexparse;
 
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
 
 import java.util.function.Supplier;
 
@@ -72,7 +73,7 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
     }
 
     public default <R> R consumeRules(TriFunction<? super Token<T>, ? super R, ? super R, ? extends R> fn,
-                                      Supplier<? extends R> rule, List<T> delim) {
+                                      Supplier<? extends R> rule, Collection<T> delim) {
         R head = rule.get();
         if (head == null) return null;
 
