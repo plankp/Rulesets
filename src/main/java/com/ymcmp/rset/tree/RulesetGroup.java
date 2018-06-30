@@ -73,13 +73,13 @@ public final class RulesetGroup extends ParseTree {
                                 vis.mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
                                 vis.mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
                                 vis.mv.visitVarInsn(ASTORE, localEnv);
-                                ASMUtils.newObjectNoArgs(vis.mv, "java/util/ArrayList", parseLst);
+                                vis.newObjectNoArgs(parseLst, "java/util/ArrayList");
                                 vis.mv.visitVarInsn(ALOAD, 0);
                                 vis.mv.visitVarInsn(ALOAD, localEnv);
                                 vis.mv.visitVarInsn(ALOAD, parseLst);
                                 vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "test" + name, "(Ljava/util/Map;Ljava/util/List;)Z", false);
                                 vis.mv.visitInsn(DUP);
-                                ASMUtils.testIf(vis.mv, IFEQ, () -> {
+                                vis.testIf(IFEQ, () -> {
                                     vis.mv.visitVarInsn(ALOAD, lst);
                                     vis.mv.visitVarInsn(ALOAD, 0);
                                     vis.mv.visitVarInsn(ALOAD, localEnv);
@@ -88,7 +88,7 @@ public final class RulesetGroup extends ParseTree {
 
                                     vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, "act" + name, "(Ljava/util/Map;)Ljava/lang/Object;", false);
                                     vis.mv.visitInsn(DUP);
-                                    ASMUtils.testIf(vis.mv, IFNONNULL, () -> {
+                                    vis.testIf(IFNONNULL, () -> {
                                         vis.logMessage("FINER", "Using parse stack as result of action");
                                         vis.mv.visitInsn(POP);
                                         vis.mv.visitVarInsn(ALOAD, parseLst);
@@ -158,7 +158,7 @@ public final class RulesetGroup extends ParseTree {
             final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
             ctor.visitCode();
             ctor.visitVarInsn(ALOAD, 0);
-            ASMUtils.newObjectNoArgs(ctor, "com/ymcmp/rset/lib/Extensions", -1);
+            ASMUtils.newObjectNoArgs(ctor, -1, "com/ymcmp/rset/lib/Extensions");
             ctor.visitMethodInsn(INVOKESPECIAL, className, "<init>", "(Lcom/ymcmp/rset/lib/Extensions;)V", false);
             ctor.visitInsn(RETURN);
             ctor.visitMaxs(0, 0);
@@ -184,7 +184,7 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitFieldInsn(PUTFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
         // rules = new HashMap<>();
         ctor.visitVarInsn(ALOAD, 0);
-        ASMUtils.newObjectNoArgs(ctor, "java/util/HashMap", -1);
+        ASMUtils.newObjectNoArgs(ctor, -1, "java/util/HashMap");
         ctor.visitFieldInsn(PUTFIELD, className, "rules", "Ljava/util/Map;");
 
         for (final RulesetNode r : rsets) {
@@ -235,7 +235,7 @@ public final class RulesetGroup extends ParseTree {
             // return (%test(env@2, new ArrayList<>())) ? act(env@2) : null;
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 2);
-            ASMUtils.newObjectNoArgs(mv, "java/util/ArrayList", -1);
+            ASMUtils.newObjectNoArgs(mv, -1, "java/util/ArrayList");
             mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;Ljava/util/List;)Z", false);
             ASMUtils.testIfElse(mv, IFEQ, () -> {
                 mv.visitVarInsn(ALOAD, 0);

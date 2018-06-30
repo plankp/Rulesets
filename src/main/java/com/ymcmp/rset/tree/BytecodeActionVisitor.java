@@ -24,7 +24,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class BytecodeActionVisitor extends Visitor<Void> {
+public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
 
     private ClassWriter cw;
     private String className;
@@ -34,6 +34,11 @@ public class BytecodeActionVisitor extends Visitor<Void> {
     public BytecodeActionVisitor(ClassWriter cw, String className) {
         this.cw = cw;
         this.className = className;
+    }
+
+    @Override
+    public MethodVisitor getMethodVisitor() {
+        return this.mv;
     }
 
     public Void visitMethodNotFound(final ParseTree tree) {
@@ -92,11 +97,11 @@ public class BytecodeActionVisitor extends Visitor<Void> {
                 visit(n.rule1);
                 mv.visitInsn(DUP);
                 mv.visitVarInsn(ASTORE, original);
-                ASMUtils.testIf(mv, IFNULL, () -> {
+                testIf(IFNULL, () -> {
                     mv.visitVarInsn(ALOAD, original);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "isArray", "()Z", false);
-                    ASMUtils.testIfElse(mv, IFEQ, () -> {
+                    testIfElse(IFEQ, () -> {
                         mv.visitVarInsn(ALOAD, original);
                         mv.visitTypeInsn(CHECKCAST, "[Ljava/lang/Object;");
                         mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;", false);
@@ -104,7 +109,7 @@ public class BytecodeActionVisitor extends Visitor<Void> {
                         mv.visitVarInsn(ALOAD, original);
                         mv.visitInsn(DUP);
                         mv.visitTypeInsn(INSTANCEOF, "java/util/Map");
-                        ASMUtils.testIfElse(mv, IFEQ, () -> {
+                        testIfElse(IFEQ, () -> {
                             mv.visitTypeInsn(CHECKCAST, "java/util/Map");
                             mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "entrySet", "()Ljava/util/Set;", true);
                         }, () -> mv.visitTypeInsn(CHECKCAST, "java/lang/Iterable"));

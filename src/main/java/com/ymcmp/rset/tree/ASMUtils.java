@@ -10,20 +10,20 @@ import org.objectweb.asm.MethodVisitor;
 
 import static org.objectweb.asm.Opcodes.*;
 
-final class ASMUtils {
+public interface ASMUtils {
 
-    private ASMUtils() {
-        //
-    }
+    public MethodVisitor getMethodVisitor();
 
-    public static void newObjectNoArgs(final MethodVisitor mv, final String className, int slot) {
+    public default void newObjectNoArgs(int slot, final String className) {
+        final MethodVisitor mv = getMethodVisitor();
         mv.visitTypeInsn(NEW, className);
         mv.visitInsn(DUP);
         mv.visitMethodInsn(INVOKESPECIAL, className, "<init>", "()V", false);
         if (slot > 0) mv.visitVarInsn(ASTORE, slot);
     }
 
-    public static void testIfElse(final MethodVisitor mv, final int jumpInsn, final Runnable ifTrue, final Runnable ifFalse) {
+    public default void testIfElse(final int jumpInsn, final Runnable ifTrue, final Runnable ifFalse) {
+        final MethodVisitor mv = getMethodVisitor();
         final Label br0 = new Label();
         final Label br1 = new Label();
         mv.visitJumpInsn(jumpInsn, br0);
@@ -34,10 +34,38 @@ final class ASMUtils {
         mv.visitLabel(br1);
     }
 
-    public static void testIf(final MethodVisitor mv, final int jumpInsn, final Runnable ifTrue) {
+    public default void testIf(final int jumpInsn, final Runnable ifTrue) {
+        final MethodVisitor mv = getMethodVisitor();
         final Label br0 = new Label();
         mv.visitJumpInsn(jumpInsn, br0);
         ifTrue.run();
         mv.visitLabel(br0);
+    }
+
+    public static void newObjectNoArgs(final MethodVisitor vis, int slot, final String className) {
+        new ASMUtils() {
+            @Override
+            public MethodVisitor getMethodVisitor() {
+                return vis;
+            }
+        }.newObjectNoArgs(slot, className);
+    }
+
+    public static void testIfElse(final MethodVisitor vis, final int jumpInsn, final Runnable ifTrue, final Runnable ifFalse) {
+        new ASMUtils() {
+            @Override
+            public MethodVisitor getMethodVisitor() {
+                return vis;
+            }
+        }.testIfElse(jumpInsn, ifTrue, ifFalse);
+    }
+
+    public static void testIf(final MethodVisitor vis, final int jumpInsn, final Runnable ifTrue) {
+        new ASMUtils() {
+            @Override
+            public MethodVisitor getMethodVisitor() {
+                return vis;
+            }
+        }.testIf(jumpInsn, ifTrue);
     }
 }

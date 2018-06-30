@@ -22,7 +22,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class BytecodeRuleVisitor extends Visitor<Void> {
+public class BytecodeRuleVisitor extends Visitor<Void> implements ASMUtils {
 
     public enum VarType {
         _COUNTER_RESV, HIDDEN, MAP, LIST, COUNTER, NUM, BOOL, EVAL_STATE;
@@ -45,6 +45,11 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         this.className = className;
         this.genDebugInfo = genDebugInfo;
         this.refs = refs;
+    }
+
+    @Override
+    public MethodVisitor getMethodVisitor() {
+        return this.mv;
     }
 
     public int pushNewLocal(VarType t) {
@@ -189,10 +194,6 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         }
     }
 
-    private void newObjectNoArgs(int slot, String className) {
-        ASMUtils.newObjectNoArgs(mv, className, slot);
-    }
-
     private void saveStack(int listSlot, int rewindSlot) {
         mv.visitVarInsn(ALOAD, listSlot);
         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "size", "()I", true);
@@ -240,7 +241,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                 mv.visitVarInsn(ILOAD, negateSave);
-                ASMUtils.testIfElse(mv, IFNE, () -> mv.visitInsn(ICONST_1), () -> mv.visitInsn(ICONST_0));
+                testIfElse(IFNE, () -> mv.visitInsn(ICONST_1), () -> mv.visitInsn(ICONST_0));
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setNegateFlag", "(Z)V", false);
                 visit(n.rule);
                 mv.visitVarInsn(ALOAD, 0);
@@ -259,7 +260,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 saveRoutine(list, rwnd);
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, RESULT);
-                ASMUtils.testIf(mv, IFNE, () -> unsaveRoutine(list, rwnd));
+                testIf(IFNE, () -> unsaveRoutine(list, rwnd));
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
                 popLocal();
@@ -280,7 +281,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 saveRoutine(list, rwnd);
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, RESULT);
-                ASMUtils.testIf(mv, IFEQ, () -> {
+                testIf(IFEQ, () -> {
                     mv.visitInsn(ICONST_1);
                     mv.visitVarInsn(ISTORE, flag);
                     mv.visitJumpInsn(GOTO, loop);
@@ -309,7 +310,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 saveRoutine(list, rwnd);
                 visit(n.rule);
                 mv.visitVarInsn(ILOAD, RESULT);
-                ASMUtils.testIf(mv, IFEQ, () -> mv.visitJumpInsn(GOTO, loop));
+                testIf(IFEQ, () -> mv.visitJumpInsn(GOTO, loop));
                 unsaveRoutine(list, rwnd);
                 mv.visitVarInsn(ALOAD, plst);
                 mv.visitVarInsn(ALOAD, list);
@@ -329,7 +330,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "destructArray", "()Lcom/ymcmp/rset/rt/EvalState;", false);
 
                 mv.visitInsn(DUP);
-                ASMUtils.testIfElse(mv, IFNULL, () -> {
+                testIfElse(IFNULL, () -> {
                     // save this.evalState,
                     final int save = pushNewLocal(VarType.EVAL_STATE);
                     mv.visitVarInsn(ALOAD, 0);
@@ -492,7 +493,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                     visit(n.rules.get(i));
 
                     mv.visitVarInsn(ILOAD, negateState);
-                    ASMUtils.testIfElse(mv, IFEQ, () -> {
+                    testIfElse(IFEQ, () -> {
                         mv.visitVarInsn(ILOAD, RESULT);
                         mv.visitJumpInsn(IFEQ, epilogue);
                     }, () -> {
@@ -543,7 +544,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                     mv.visitInsn(ISUB);
                     mv.visitInsn(DUP);
                     mv.visitInsn(ICONST_0);
-                    ASMUtils.testIf(mv, IF_ICMPLT, () -> {
+                    testIf(IF_ICMPLT, () -> {
                         mv.visitVarInsn(ALOAD, list);
                         mv.visitInsn(SWAP);
                         mv.visitVarInsn(ALOAD, plst);
@@ -625,7 +626,7 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
         visit(n.rule);
         // if (env@1 != null) %additional
         mv.visitVarInsn(ALOAD, env);
-        ASMUtils.testIf(mv, IFNULL, () -> {
+        testIf(IFNULL, () -> {
             // %additional -> env@1.putAll(captures@3)
             mv.visitVarInsn(ALOAD, env);
             mv.visitVarInsn(ALOAD, map);
