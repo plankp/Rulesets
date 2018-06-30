@@ -25,7 +25,7 @@ import static org.objectweb.asm.Opcodes.*;
 public class BytecodeRuleVisitor extends Visitor<Void> {
 
     public enum VarType {
-        _COUNTER_RESV, HIDDEN, MAP, LIST, COUNTER, NUM, BOOL;
+        _COUNTER_RESV, HIDDEN, MAP, LIST, COUNTER, NUM, BOOL, EVAL_STATE;
     }
 
     private final Stack<VarType> locals = new Stack<>();
@@ -348,6 +348,47 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 mv.visitVarInsn(ISTORE, RESULT);
                 popLocal();
                 popLocal();
+                return null;
+            }
+            case S_LS: {
+                if (genDebugInfo) {
+                    mv.visitFieldInsn(GETSTATIC, className, "LOGGER", "Ljava/util/logging/Logger;");
+                    mv.visitFieldInsn(GETSTATIC, "java/util/logging/Level", "FINE", "Ljava/util/logging/Level;");
+                    mv.visitLdcInsn("Destructing Array or Collection:");
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/util/logging/Logger", "log", "(Ljava/util/logging/Level;Ljava/lang/String;)V", false);
+                }
+
+                mv.visitVarInsn(ALOAD, 0);
+                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "destructArray", "()Lcom/ymcmp/rset/rt/EvalState;", false);
+
+                mv.visitInsn(DUP);
+                ASMUtils.testIfElse(mv, IFNULL, () -> {
+                    // save this.evalState,
+                    final int save = pushNewLocal(VarType.EVAL_STATE);
+                    mv.visitVarInsn(ALOAD, 0);
+                    mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    mv.visitVarInsn(ASTORE, save);
+
+                    // update this.state to the newly created state (TOP OF STACK),
+                    mv.visitVarInsn(ALOAD, 0);
+                    mv.visitInsn(SWAP);
+                    mv.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+
+                    // test against the inner rules,
+                    visit(n.rule);
+
+                    // restore this.state
+                    mv.visitVarInsn(ALOAD, 0);
+                    mv.visitVarInsn(ALOAD, save);
+                    mv.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    popLocal();
+                }, () -> {
+                    // evalState is null, result is set to false because item was not destructable
+                    mv.visitInsn(POP);
+                    mv.visitInsn(ICONST_0);
+                    mv.visitVarInsn(ISTORE, RESULT);
+                });
                 return null;
             }
             default:

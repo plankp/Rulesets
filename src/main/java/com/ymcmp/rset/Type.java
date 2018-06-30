@@ -14,6 +14,7 @@ public enum Type {
     S_OR, S_TD, S_ST,
     S_AM, S_EX,
     S_LP, S_RP,
+    S_LS, S_RS,
     S_LB, S_RB;
 
     public boolean isNumeric() {

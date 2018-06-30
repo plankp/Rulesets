@@ -89,6 +89,28 @@ public class EvalState {
         indexes.push(getIndex());
     }
 
+    public EvalState destructArray() {
+        try {
+            final Object k = data[next()];
+            Object[] destruct = null;
+            if (k == null) return null;
+            if (k.getClass().isArray()) {
+                destruct = (Object[]) k;
+            } else if (k instanceof Collection) {
+                destruct = ((Collection<?>) k).toArray();
+            } else {
+                return null;
+            }
+
+            final EvalState destructedState = new EvalState(destruct);
+            destructedState.setNegateFlag(this.negateFlag);
+            return destructedState;
+        } catch (IndexOutOfBoundsException ex) {
+            prev();
+        }
+        return null;
+    }
+
     public boolean testEquality(final Object obj) {
         return testEquality(obj, null);
     }

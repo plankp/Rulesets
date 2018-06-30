@@ -97,6 +97,12 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                     return new UnaryRule(t, parseRuleAtomic());
                 case S_AM:
                     return new RefRule(parseValue());
+                case S_LS: {
+                    final ParseTree rule = consumeRule(this::parseRuleClause,
+                            "Expecting rule to match against destructed list");
+                    consumeToken(Type.S_RS, "Unclosed list destruction, missing ']'");
+                    return new UnaryRule(t, rule);
+                }
                 case S_LP: {
                     final List<ParseTree> rules = consumeRules(this::parseRuleClause, Type.S_CM);
                     consumeToken(Type.S_RP, "Unclosed clause, missing ')'");
