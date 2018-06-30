@@ -175,6 +175,17 @@ public class BytecodeActionVisitor extends Visitor<Void> {
         mv.visitLabel(exit);
     }
 
+    private void storeToArray(List<ParseTree> exprs) {
+        mv.visitLdcInsn(exprs.size());
+        mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
+        for (int i = 0; i < exprs.size(); ++i) {
+            mv.visitInsn(DUP);
+            mv.visitLdcInsn(i);
+            visit(exprs.get(i));
+            mv.visitInsn(AASTORE);
+        }
+    }
+
     public Void visitKaryRule(final KaryRule n) {
         switch (n.type) {
             case SUBSCRIPT: {
@@ -190,37 +201,16 @@ public class BytecodeActionVisitor extends Visitor<Void> {
                 return null;
             }
             case JOIN:
-                mv.visitLdcInsn(n.rules.size());
-                mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-                for (int i = 0; i < n.rules.size(); ++i) {
-                    mv.visitInsn(DUP);
-                    mv.visitLdcInsn(i);
-                    visit(n.rules.get(i));
-                    mv.visitInsn(AASTORE);
-                }
+                storeToArray(n.rules);
                 mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "concat", "([Ljava/lang/Object;)Ljava/lang/String;", false);
                 return null;
             case ARRAY:
-                mv.visitLdcInsn(n.rules.size());
-                mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-                for (int i = 0; i < n.rules.size(); ++i) {
-                    mv.visitInsn(DUP);
-                    mv.visitLdcInsn(i);
-                    visit(n.rules.get(i));
-                    mv.visitInsn(AASTORE);
-                }
+                storeToArray(n.rules);
                 return null;
             case CALL:
                 visit(n.rules.get(0));
                 mv.visitTypeInsn(CHECKCAST, "java/util/function/Function");
-                mv.visitLdcInsn(n.rules.size() - 1);
-                mv.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-                for (int i = 1; i < n.rules.size(); ++i) {
-                    mv.visitInsn(DUP);
-                    mv.visitLdcInsn(i - 1);
-                    visit(n.rules.get(i));
-                    mv.visitInsn(AASTORE);
-                }
+                storeToArray(n.rules.subList(1, n.rules.size()));
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/function/Function", "apply", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
                 return null;
             case AND:
