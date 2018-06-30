@@ -71,10 +71,6 @@ public class EvalState {
         return 0;
     }
 
-    public Object[] copyFromIndex(int from) {
-        return copyRange(from, getIndex());
-    }
-
     public Object[] copyRange(int from, int to) {
         return Arrays.copyOfRange(data, from, to);
     }
@@ -109,10 +105,6 @@ public class EvalState {
         return null;
     }
 
-    public boolean testEquality(final Object obj) {
-        return testEquality(obj, null);
-    }
-
     public boolean testEquality(final Object obj, final Collection<Object> col) {
         try {
             final Object k = data[next()];
@@ -125,10 +117,6 @@ public class EvalState {
             prev();
         }
         return false;
-    }
-
-    public boolean testRange(final Comparable a, final Comparable b) {
-        return testRange(a, b, null);
     }
 
     public boolean testRange(final Comparable a, final Comparable b, final Collection<Object> col) {
@@ -166,10 +154,6 @@ public class EvalState {
         return false;
     }
 
-    public boolean testSlotOccupied() {
-        return testSlotOccupied(null);
-    }
-
     public boolean testSlotOccupied(Collection<Object> col) {
         try {
             final Object k = data[next()];
@@ -181,10 +165,6 @@ public class EvalState {
             prev();
         }
         return false;
-    }
-
-    public boolean testEnd() {
-        return testEnd(null);
     }
 
     public boolean testEnd(Collection<Object> col) {
