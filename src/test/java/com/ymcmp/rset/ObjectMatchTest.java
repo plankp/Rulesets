@@ -32,7 +32,8 @@ public class ObjectMatchTest {
             "rule f123 = k:(1.0 2.0 3.0 | (-1.0) (-2.0) (-3.0)) { ?k },\n" +
             "rule group = k:(1 2 3, 4 5 6) { ?k },\n" +
             "rule chars = k:%abc { ?k },\n" +
-            "rule destr = k:[1 2 3] { ?k },\n"
+            "rule destr = k:[1 2 3] { ?k },\n" +
+            "rule null  = () { 'Found null!' },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -164,5 +165,23 @@ public class ObjectMatchTest {
                 "[1, 2, 3]\n" +
                 "[1, 2, 3]\n",
                 sb.toString());
+    }
+
+    @Test
+    public void testNull() {
+        final Object[][] tests = {
+            { }, // empty is not null
+            { null },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newObjectMatch();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("null").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals("Found null!\n", sb.toString());
     }
 }

@@ -123,7 +123,14 @@ public class BytecodeRuleVisitor extends Visitor<Void> {
                 final int plst = findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                mv.visitLdcInsn(n.toObject());
+
+                final Object obj = n.toObject();
+                if (obj == null) {
+                    // LdcInsn does not handle nulls
+                    mv.visitInsn(ACONST_NULL);
+                } else {
+                    mv.visitLdcInsn(obj);
+                }
                 // Make sure the item on stack is an object, not a primitive
                 switch (n.token.type) {
                     case L_INT:

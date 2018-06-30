@@ -12,6 +12,7 @@ It is similar to a lexer and parser generator in many ways,
 except you also use it to match an sequence of (or singular)
 basic Java objects. Currently these objects are limited to:
 
+*  Null
 *  Integers
 *  Doubles
 *  Characters / List of Characters

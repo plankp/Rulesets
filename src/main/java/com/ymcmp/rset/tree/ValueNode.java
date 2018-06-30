@@ -43,6 +43,8 @@ public final class ValueNode extends ParseTree {
                 return Integer.parseInt(token.text);
             case L_REAL:
                 return Double.parseDouble(token.text);
+            case L_NULL:
+                return null;
             default:
                 throw new RuntimeException("Unknown value type " + token.type);
         }
@@ -57,6 +59,8 @@ public final class ValueNode extends ParseTree {
             case L_INT:
             case L_REAL:
                 return token.text;
+            case L_NULL:
+                return "null";
             default:
                 throw new RuntimeException("Unknown value type " + token.type);
         }

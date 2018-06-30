@@ -106,7 +106,10 @@ public class RsetParser implements Parser<Type, RulesetGroup> {
                     final List<ParseTree> rules = consumeRules(this::parseRuleClause, Type.S_CM);
                     consumeToken(Type.S_RP, "Unclosed clause, missing ')'");
 
-                    if (rules.isEmpty()) throw new IllegalParseException("Expected rule clauses in ( )");
+                    if (rules == null) {
+                        // Synthesize a null token, user wants to test for value NULL
+                        return new ValueNode(new Token<>(Type.L_NULL, "()"));
+                    }
                     if (rules.size() == 1) return rules.get(0);
 
                     final int k = rules.size() - 1;
