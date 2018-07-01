@@ -37,7 +37,9 @@ public class NegateTest {
             "rule nor = k:~(a | b) { ?k }," +
             "rule orn = k:(~a | ~b) { ?k }," +
             "rule s   = k:(a b c) { ?k }," +
-            "rule ns  = k:~(a b c) { ?k },"
+            "rule ns  = k:~(a b c) { ?k }," +
+            "rule range = k:~(1-5) { ?k }," +
+            "rule prop  = k:~!hello { ?k },"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -282,5 +284,31 @@ public class NegateTest {
         assertEquals(
                 "[d, e, f]\n",
                 sb.toString());
+    }
+
+    @Test
+    public void testRange() {
+        final Object[][] tests = {
+            { },
+            { 3 },
+            { "a" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newNegate();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("range").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "a\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testProp() {
+        assertNull(newNegate().getRule("prop").apply(new Object[1]));
     }
 }
