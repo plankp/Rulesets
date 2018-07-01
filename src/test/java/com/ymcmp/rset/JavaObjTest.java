@@ -70,6 +70,7 @@ public class JavaObjTest {
             { new Object[0] }, // matches since arrays do have length as a *hidden* field
             { HasLengthAsField.INSTANCE }, // matches since #length is public
             { "Hello, world!" }, // matches since #length() is public
+            { },
         };
 
         final List<Object> list = new ArrayList<>();
