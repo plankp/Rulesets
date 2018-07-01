@@ -46,7 +46,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
         if (t != null) {
             switch (t.type) {
                 case S_ST:
-                case S_EX:
+                case S_SM:
                     return new ValueNode(t);
                 case S_TD:
                     return new UnaryRule(t, parseRuleAtomic());

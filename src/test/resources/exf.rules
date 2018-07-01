@@ -11,7 +11,7 @@ rule mcom
 },
 
 rule eol
-  = a:(~%'\n'*) b:(%'\n' | !)
+  = a:(~%'\n'*) b:(%'\n' | ;)
 {
   ?a ~ ((?_eqls '\n' ?b~) & '\n' | '')
 },
@@ -73,11 +73,11 @@ subrule struct
 rule message
   = a:&ws b:(&struct*) c:&eol
 {
-  ret = ?_array 'prnt', ?a~ !
+  ret = ?_array 'prnt', ?a~;
   ?b {
     ?_array_add ?ret ?_it:0 ?_it:1
-  } !
-  ?_array_add ?ret prnt, ?c !
+  };
+  ?_array_add ?ret prnt, ?c;
   seq, (?_array_fix ?ret)
 },
 
@@ -86,7 +86,7 @@ fragment expr
 ,
 
 rule File
-  = head:&expr (! | tail:&File)
+  = head:&expr (; | tail:&File)
 {
   ?tail & seq, (?head, ?tail) | ?head
 }

@@ -13,7 +13,7 @@ public enum Type {
     S_DV, S_MD,
     S_QM, S_EQ, S_CO,
     S_OR, S_TD, S_ST,
-    S_AM, S_EX,
+    S_AM, S_EX, S_SM,
     S_LP, S_RP,
     S_LS, S_RS,
     S_LB, S_RB;

@@ -32,16 +32,16 @@ public class CalcTest {
             "rule number = a:(%'+'|%'-')? &ws b:(%0|%1-%9(%0-%9)*) { (?_float?a~?b):0 }," +
             "rule basic = n:&number | %'(' &ws e:&expr &ws %')' { ?e|?n }," +
             "rule mul = head:&basic tail:((&ws (%'*'|%'/') &ws &basic)*) {" +
-            "    ret = ?head!" +
+            "    ret = ?head;" +
             "    ?tail {" +
-            "        p = ?_it:1!" +
-            "        t = ?_it:3!" +
+            "        p = ?_it:1;" +
+            "        t = ?_it:3;" +
             "        ret = ((?_eqls '*' ?p~) & ?ret * ?t, | ?ret / ?t,):0" +
-            "    }!" +
+            "    };" +
             "    ?ret" +
             "}," +
             "rule add = head:&mul tail:((&ws(%'+'|%'-')&ws&mul)*) {" +
-            "    ret=?head!?tail{t=?_it:3!ret=((?_eqls'+'?_it:1~)&?ret+?t,|?ret-?t,):0}!?ret" +
+            "    ret=?head;?tail{t=?_it:3;ret=((?_eqls'+'?_it:1~)&?ret+?t,|?ret-?t,):0};?ret" +
             "}," +
             "rule expr = k:&add { ?k },"
         );

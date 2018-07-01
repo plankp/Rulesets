@@ -41,7 +41,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
     @Override
     public ParseTree parse() {
-        return termPreservingSequence(KaryRule.Type.IGNORE, "'!'", Type.S_EX, () ->
+        return termPreservingSequence(KaryRule.Type.IGNORE, "';'", Type.S_SM, () ->
                 termPreservingSequence(KaryRule.Type.ASSIGN, "'='", Type.S_EQ, () ->
                         termPreservingSequence(KaryRule.Type.OR, "'|'", Type.S_OR, () ->
                         termPreservingSequence(KaryRule.Type.AND, "'&'", Type.S_AM, this::parseLoop))));

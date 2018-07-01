@@ -44,7 +44,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 logMessage("FINE", "Test wildcard slot");
                 invokeEvalStateNoObject(RESULT, "testSlotOccupied");
                 return null;
-            case S_EX:
+            case S_SM:
                 logMessage("FINE", "Test end of data");
                 invokeEvalStateNoObject(RESULT, "testEnd");
                 return null;

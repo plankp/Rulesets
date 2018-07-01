@@ -29,9 +29,9 @@ public class LegacyClauseTest {
     public static void compile() {
         final StringReader reader = new StringReader(
             "# A bunch of rule clauses follow...\n" +
-            "rule alpha = 0 abc | (1!) { ?_ ((1 + 2 + 3) & abc | def) },\n" +
+            "rule alpha = 0 abc | (1;) { ?_ ((1 + 2 + 3) & abc | def) },\n" +
             "subrule b  = 00 (abc | 1),\n" +
-            "rule all   = ((*) (*) | (*))! { 'Kleen AF' },\n" +
+            "rule all   = ((*) (*) | (*)); { 'Kleen AF' },\n" +
             "rule inc   = &b abc,\n" +
             "fragment f = a b c,\n" +
             "rule abc   = &f { 'rule abc is matched' },\n" +
