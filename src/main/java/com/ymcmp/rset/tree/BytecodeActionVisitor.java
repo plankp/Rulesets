@@ -154,6 +154,11 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
             case S_MD:
                 binaryDoubleOp(n.rule1, n.rule2, DREM);
                 break;
+            case S_EX:
+                visit(n.rule1);
+                visit(n.rule2);
+                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Reflectlib", "access", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
+                break;
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);
         }

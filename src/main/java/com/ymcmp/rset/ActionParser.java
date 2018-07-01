@@ -7,6 +7,7 @@ package com.ymcmp.rset;
 
 import java.util.Set;
 import java.util.HashSet;
+import java.util.Collections;
 
 import com.ymcmp.rset.tree.*;
 
@@ -79,6 +80,8 @@ import com.ymcmp.lexparse.tree.ParseTree;
         add(Type.S_MN);
     }};
 
+    private static final Set<Type> TOK_PARSE_ACC = Collections.singleton(Type.S_EX);
+
     private BinaryRule delegateBinaryRuleCtor(Token<Type> tok, ParseTree rule1, ParseTree rule2) {
         // rule2 has a chance of being null
         if (rule2 == null) {
@@ -89,8 +92,9 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
     public ParseTree parseMath() {
         return consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_ADD, () ->
-                consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_MUL, () ->
-                        termPreservingSequence(KaryRule.Type.SUBSCRIPT, "':'", Type.S_CO, this::parseExprValue)));
+            consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_MUL, () ->
+                termPreservingSequence(KaryRule.Type.SUBSCRIPT, "':'", Type.S_CO, () ->
+                    consumeRules(this::delegateBinaryRuleCtor, TOK_PARSE_ACC, this::parseExprValue))));
     }
 
     public ParseTree parseLoop() {

@@ -18,11 +18,12 @@ import java.lang.reflect.InvocationTargetException;
 
 public final class Extensions {
 
-    public static final int EXT_STDLIB = 1 << 0;
-    public static final int EXT_MATH   = 1 << 1;
-    public static final int EXT_ARRAY  = 1 << 2;
+    public static final int EXT_STDLIB  = 1 << 0;
+    public static final int EXT_MATH    = 1 << 1;
+    public static final int EXT_ARRAY   = 1 << 2;
+    public static final int EXT_REFLECT = 1 << 3;
 
-    public static final int ENABLE_ALL = EXT_STDLIB | EXT_MATH | EXT_ARRAY;
+    public static final int ENABLE_ALL = EXT_STDLIB | EXT_MATH | EXT_ARRAY | EXT_REFLECT;
 
     private final int featureMask;
     private final Map<String, Object> imported;
@@ -57,6 +58,10 @@ public final class Extensions {
 
         if ((featureMask & EXT_ARRAY) == EXT_ARRAY) {
             exportClassTo(Arraylib.class, module);
+        }
+
+        if ((featureMask & EXT_REFLECT) == EXT_REFLECT) {
+            exportClassTo(Reflectlib.class, module);
         }
 
         module.putAll(imported);
