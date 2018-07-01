@@ -209,6 +209,21 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 popLocal();
                 return null;
             }
+            case S_EX:
+                try {
+                    final String selector = ((ValueNode) n.rule).toObject().toString();
+                    logMessage("FINE", "Test if object responds to selector '" + selector + "'");
+
+                    mv.visitVarInsn(ALOAD, 0);
+                    mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    mv.visitLdcInsn(selector);
+                    mv.visitVarInsn(ALOAD, findNearestLocal(VarType.LIST));
+                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "hasFieldOrMethod", "(Ljava/lang/String;Ljava/util/Collection;)Z", false);
+                    mv.visitVarInsn(ISTORE, RESULT);
+                    return null;
+                } catch (NullPointerException ex) {
+                    throw new RuntimeException("Selector cannot be ()");
+                }
             case S_LS: {
                 logMessage("FINE", "Destructing Array or Collection:");
 

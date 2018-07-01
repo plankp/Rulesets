@@ -8,9 +8,11 @@ Install jdk 8 or higher, Use `gradlew`
 
 ## What is this?
 
-It is similar to a lexer and parser generator in many ways,
-except you also use it to match an sequence of (or singular)
-basic Java objects. Currently these objects are limited to:
+It is similar to a lexer and parser generator in many ways, except you also
+use it to match an sequence of (or singular) basic Java objects. You can check
+if any object responds to a selector (has field or method with the specified
+name). The objects that support equal or comparator-based matches are limited
+to:
 
 *  Null
 *  Integers

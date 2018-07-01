@@ -52,6 +52,8 @@ import com.ymcmp.lexparse.tree.ParseTree;
                     return new UnaryRule(t, parseRuleAtomic());
                 case S_AM:
                     return new RefRule(parseValue());
+                case S_EX:
+                    return new UnaryRule(t, parseValue());
                 case S_LS: {
                     final ParseTree rule = consumeRule(this::parse,
                             "Expecting rule to match against destructed list");

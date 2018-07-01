@@ -5,6 +5,8 @@
 
 package com.ymcmp.rset.rt;
 
+import java.lang.reflect.Method;
+
 import java.util.Stack;
 import java.util.Arrays;
 import java.util.Objects;
@@ -103,6 +105,58 @@ public class EvalState {
             prev();
         }
         return null;
+    }
+
+    public boolean hasFieldOrMethod(final String selector, final Collection<Object> col) {
+        try {
+            final Object k = data[next()];
+            if (k == null) {
+                // null can not contain any field or method
+                // if negateFlag is on, this must return true
+                if (negateFlag) {
+                    if (col != null) col.add(null);
+                    return true;
+                }
+                return false;
+            }
+
+            final Class<?> cl = k.getClass();
+
+            // Look for field
+            boolean r = false;
+            // Arrays have length as attribute but
+            // it is actually not a field to the class's concern
+            if (cl.isArray()) {
+                r = "length".equals(selector);
+            } else {
+                try {
+                    r = cl.getField(selector) != null;
+                } catch (NoSuchFieldException ex) {
+                    r = false;
+                }
+            }
+
+            if (negateFlag ? !r : r) {
+                if (col != null) col.add(k);
+                return true;
+            }
+
+            // Look for method
+            r = false;
+            // Not using cl.getMethod(selector) because only care if method exists,
+            // whereas getMethod expects us to know the parameter types
+            for (final Method m : cl.getMethods()) {
+                if (r = m.getName().equals(selector)) break;
+            }
+
+            if (negateFlag ? !r : r) {
+                if (col != null) col.add(k);
+                return true;
+            }
+        } catch (IndexOutOfBoundsException ex) {
+            prev();
+        }
+        return false;
     }
 
     public boolean testEquality(final Object obj, final Collection<Object> col) {

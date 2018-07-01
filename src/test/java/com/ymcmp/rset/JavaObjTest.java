@@ -10,10 +10,11 @@ import java.io.StringReader;
 
 import java.lang.reflect.InvocationTargetException;
 
-import java.util.Map;
+import java.util.List;
+import java.util.ArrayList;
 
+import com.ymcmp.rset.rt.Rule;
 import com.ymcmp.rset.rt.Rulesets;
-import com.ymcmp.rset.lib.Extensions;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
@@ -28,7 +29,8 @@ public class JavaObjTest {
     public static void compile() {
         final StringReader reader = new StringReader(
             "rule field  = ; { (a, b, c)!length + 12!SIZE },\n" +
-            "rule method = ; { Hello!(length,) },\n"
+            "rule method = ; { Hello!(length,) },\n" +
+            "rule data   = k:!length { ?k },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -59,5 +61,40 @@ public class JavaObjTest {
     @Test
     public void testMethod() {
         assertEquals("Hello".length(), newJavaObj().getRule("method").apply(new Object[0]));
+    }
+
+    @Test
+    public void testData() {
+        final Object[][] tests = {
+            { null }, // does not match
+            { new Object[0] }, // matches since arrays do have length as a *hidden* field
+            { HasLengthAsField.INSTANCE }, // matches since #length is public
+            { "Hello, world!" }, // matches since #length() is public
+        };
+
+        final List<Object> list = new ArrayList<>();
+        final Rule rule = newJavaObj().getRule("data");
+        for (final Object[] test : tests) {
+            final Object obj = rule.apply(test);
+            if (obj != null) {
+                list.add(obj);
+            }
+        }
+
+        assertEquals(3, list.size());
+        assertSame(tests[1][0], list.get(0));
+        assertSame(tests[2][0], list.get(1));
+        assertSame(tests[3][0], list.get(2));
+    }
+}
+
+final class HasLengthAsField {
+
+    public static final HasLengthAsField INSTANCE = new HasLengthAsField();
+
+    public final int length = 10;
+
+    private HasLengthAsField() {
+        // Singleton
     }
 }
