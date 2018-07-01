@@ -91,8 +91,6 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
         switch (n.op.type) {
             case S_LB: {
                 // (a, b, c) { ?_it }
-                final Label loop = new Label();
-                final Label exit = new Label();
                 final int original = ++locals;
                 visit(n.rule1);
                 mv.visitInsn(DUP);
@@ -119,20 +117,20 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
                     final int local = ++locals;
                     mv.visitMethodInsn(INVOKEINTERFACE, "java/lang/Iterable", "iterator", "()Ljava/util/Iterator;", true);
                     mv.visitVarInsn(ASTORE, local);
-                    mv.visitLabel(loop);
-                    mv.visitVarInsn(ALOAD, local);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
-                    mv.visitJumpInsn(IFEQ, exit);
-                    mv.visitVarInsn(ALOAD, 1); // store looping value as _it
-                    mv.visitLdcInsn("_it");
-                    mv.visitVarInsn(ALOAD, local);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
-                    mv.visitInsn(POP);
-                    visit(n.rule2);
-                    mv.visitInsn(POP);
-                    mv.visitJumpInsn(GOTO, loop);
-                    mv.visitLabel(exit);
+                    whileLoop((exit) -> {
+                        mv.visitVarInsn(ALOAD, local);
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
+                        mv.visitJumpInsn(IFEQ, exit);
+                    }, (exit, loop) -> {
+                        mv.visitVarInsn(ALOAD, 1); // store looping value as _it
+                        mv.visitLdcInsn("_it");
+                        mv.visitVarInsn(ALOAD, local);
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
+                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+                        mv.visitInsn(POP);
+                        visit(n.rule2);
+                        mv.visitInsn(POP);
+                    });
                     --locals;
                 });
                 mv.visitVarInsn(ALOAD, original);
