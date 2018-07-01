@@ -30,9 +30,11 @@ public class RsetLexer implements Lexer<Type>, Closeable {
         put('+', Type.S_AD); put('?', Type.S_QM); put(':', Type.S_CO);
         put('|', Type.S_OR); put('~', Type.S_TD); put('*', Type.S_ST);
         put('/', Type.S_DV); put('%', Type.S_MD); put('!', Type.S_EX);
-        put('&', Type.S_AM); put('(', Type.S_LP); put(')', Type.S_RP);
-        put('[', Type.S_LS); put(']', Type.S_RS); put('{', Type.S_LB);
-        put('}', Type.S_RB); put(';', Type.S_SM);
+        put('&', Type.S_AM); put(';', Type.S_SM);
+        put('<', Type.S_LA); put('>', Type.S_RA);
+        put('(', Type.S_LP); put(')', Type.S_RP);
+        put('[', Type.S_LS); put(']', Type.S_RS);
+        put('{', Type.S_LB); put('}', Type.S_RB);
     }};
  
     private Reader reader;
