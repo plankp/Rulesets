@@ -164,8 +164,18 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
         }
 
         if (n.op.type.isNumberOp()) {
-            // Box value again
-            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+            // Cast to int if value is same, then box value
+            mv.visitInsn(DUP2);
+            mv.visitInsn(DUP2);
+            mv.visitInsn(D2I);
+            mv.visitInsn(I2D);
+            mv.visitInsn(DCMPL);
+            testIfElse(IFEQ, () -> {
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+            }, () -> {
+                mv.visitInsn(D2I);
+                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+            });
         }
         return null;
     }

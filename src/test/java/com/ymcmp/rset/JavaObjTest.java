@@ -53,7 +53,7 @@ public class JavaObjTest {
 
     @Test
     public void testField() {
-        assertEquals(new Object[]{ "a", "b", "c" }.length + Integer.SIZE * 1.0, newJavaObj().getRule("field").apply(new Object[0]));
+        assertEquals(new Object[]{ "a", "b", "c" }.length + Integer.SIZE, newJavaObj().getRule("field").apply(new Object[0]));
     }
 
     @Test

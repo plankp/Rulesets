@@ -89,10 +89,10 @@ public class CalcTest {
             }
         }
         assertEquals(
-                "10.0\n" +
-                "7.0\n" +
-                "-2.0\n" +
-                "24.0\n",
+                "10\n" +
+                "7\n" +
+                "-2\n" +
+                "24\n",
                 sb.toString());
     }
 
@@ -139,8 +139,8 @@ public class CalcTest {
         }
         assertEquals(
                 "0.0\n" +
-                "3.0\n" +
-                "0.0\n",
+                "3\n" +
+                "0\n",
                 sb.toString());
     }
 
@@ -163,8 +163,8 @@ public class CalcTest {
         }
         assertEquals(
                 "0.0\n" +
-                "-2.0\n" +
-                "2.0\n",
+                "-2\n" +
+                "2\n",
                 sb.toString());
     }
 

@@ -98,7 +98,7 @@ public class QuadraticTest {
                 }
             });
         }
-        assertEquals("calc,0.0,0.0\ncalc,0.0,0.0\ncalc,-0.0,-0.0\n",
+        assertEquals("calc,0,0\ncalc,0,0\ncalc,0,0\n",
                 sb.toString());
     }
 
@@ -118,7 +118,7 @@ public class QuadraticTest {
                 }
             });
         }
-        assertEquals("calc,0.4,-0.5\ncalc,7.0,-5.0\n",
+        assertEquals("calc,0.4,-0.5\ncalc,7,-5\n",
                 sb.toString());
     }
 }
