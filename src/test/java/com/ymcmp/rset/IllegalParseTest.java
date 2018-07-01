@@ -15,6 +15,15 @@ import static org.junit.Assert.fail;
 
 public class IllegalParseTest {
 
+    @Test(expected = RuntimeException.class)
+    public void lexIllegalCharacter() {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("\0"))) {
+            new RsetParser(lexer).parse();
+        } catch (IOException ex) {
+            fail("No manipulating IO?");
+        }
+    }
+
     @Test(expected = IllegalParseException.class)
     public void parseRuleWithoutName() {
         try (final RsetLexer lexer = new RsetLexer(new StringReader("rule"))) {
@@ -54,7 +63,7 @@ public class IllegalParseTest {
     @Test(expected = IllegalParseException.class)
     public void parseBadUnaryMinusValue() {
         // Fails because Abc is not numeric
-        try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = -Abc"))) {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = -'\\\"Abc\\\'"))) {
             new RsetParser(lexer).parse();
         } catch (IOException ex) {
             fail("No manipulating IO?");
