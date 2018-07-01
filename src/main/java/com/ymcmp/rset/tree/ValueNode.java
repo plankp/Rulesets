@@ -5,6 +5,9 @@
 
 package com.ymcmp.rset.tree;
 
+import java.util.Map;
+import java.util.HashMap;
+
 import com.ymcmp.rset.Type;
 
 import com.ymcmp.lexparse.Token;
@@ -66,31 +69,27 @@ public final class ValueNode extends ParseTree {
         }
     }
 
+    private static final Map<Character, Character> ESC_MAPPING = new HashMap<Character, Character>() {{
+        put('\\', '\\'); put('\'', '\''); put('"', '"');
+        put('b', '\b'); put('t', '\t'); put('n', '\n');
+        put('f', '\f'); put('r', '\r');
+        put('a', '\u0007'); put('v', '\u000b');
+    }};
+
     private static String escape(String text) {
         final char[] arr = text.toCharArray();
         final StringBuilder sb = new StringBuilder();
         for (int i = 0; i < arr.length; ++i) {
             final char k = arr[i];
-            switch (k) {
-                case '\\': {    // Escape sequences
-                    final char e = arr[++i];
-                    switch (e) {
-                        case '\\':
-                        case '\'':
-                        case '"': sb.append(e); break;
-                        case 'a': sb.append('\u0007'); break;
-                        case 'b': sb.append('\b'); break;
-                        case 't': sb.append('\t'); break;
-                        case 'n': sb.append('\n'); break;
-                        case 'v': sb.append('\u000b'); break;
-                        case 'f': sb.append('\f'); break;
-                        case 'r': sb.append('\r'); break;
-                        default: throw new RuntimeException("Bad string escape \\" + e);
-                    }
-                    break;
-                } 
-                default:
-                    sb.append(k);
+            if (k == '\\') {    // Escape sequences
+                final char e = arr[++i];
+                final Character mapping = ESC_MAPPING.get(e);
+                if (mapping == null) {
+                    throw new RuntimeException("Bad string escape \\" + e);
+                }
+                sb.append(mapping);
+            } else {
+                sb.append(k);
             }
         }
         return sb.toString();
