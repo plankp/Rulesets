@@ -6,13 +6,11 @@
 package com.ymcmp.rset;
 
 import java.util.List;
-import java.util.ArrayList;
 
 import java.util.function.Supplier;
 
 import com.ymcmp.rset.tree.*;
 
-import com.ymcmp.lexparse.Lexer;
 import com.ymcmp.lexparse.Token;
 import com.ymcmp.lexparse.Parser;
 import com.ymcmp.lexparse.IllegalParseException;

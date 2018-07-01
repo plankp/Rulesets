@@ -107,7 +107,12 @@ public class RsetLexer implements Lexer<Type>, Closeable {
     private Token<Type> lexRawString(char quoteMark) {
         final StringBuilder sb = new StringBuilder();
         // unterminated strings are considered complete
-        for (int k = read(); k != -1 && k != quoteMark; k = read()) {
+        while (true) {
+            int k = read();
+            if (k == -1 || k == quoteMark) {
+                break;
+            }
+
             if (k == '\\') {    // Escape sequences
                 final int e = read();
                 if (e == -1) {
