@@ -194,7 +194,7 @@ public class EvalState {
             }
         } catch (IndexOutOfBoundsException ex) {
             prev();
-        } catch (ClassCastException ex) {
+        } catch (ClassCastException | NullPointerException ex) {
             // current slot value does not belong in set,
             // which satisfies *not* being in range.
             // return true if negate flag is on
@@ -202,8 +202,6 @@ public class EvalState {
                 if (col != null) col.add(k);
                 return true;
             }
-        } catch (NullPointerException ex) {
-            // Ignore, return false
         }
         return false;
     }
