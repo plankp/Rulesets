@@ -126,9 +126,4 @@ public abstract class BaseRuleVisitor extends Visitor<Void> implements ASMUtils 
         mv.visitInsn(DUP);
         mv.visitInsn(ICONST_0);
     }
-
-    @Override
-    public Void visitMethodNotFound(final ParseTree tree) {
-        throw new RuntimeException(tree.getClass().getSimpleName() + " cannot be converted to rule");
-    }
 }

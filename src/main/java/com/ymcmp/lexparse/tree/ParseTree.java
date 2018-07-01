@@ -28,7 +28,7 @@ public abstract class ParseTree {
             m.setAccessible(true); // hacks!
             return (T) m.invoke(vis, this);
         } catch (NoSuchMethodException | IllegalAccessException ex) {
-            return vis.visitMethodNotFound(this);
+            return vis.methodNotFound(this);
         } catch (InvocationTargetException ex) {
             final Throwable t = ex.getTargetException();
             if (t instanceof RuntimeException) throw (RuntimeException) t;

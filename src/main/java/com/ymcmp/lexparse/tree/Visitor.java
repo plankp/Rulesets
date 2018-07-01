@@ -7,6 +7,10 @@ package com.ymcmp.lexparse.tree;
 
 public abstract class Visitor<T> {
 
+    public T methodNotFound(final ParseTree tree) {
+        throw new RuntimeException("Visitor method for " + tree.getClass().getSimpleName() + " not found");
+    }
+
     /*
      * Visitor operates through reflection
      * method must be:
@@ -21,10 +25,6 @@ public abstract class Visitor<T> {
 
     public T visit(final ParseTree tree) {
         return tree.accept(this);
-    }
-
-    public T visitMethodNotFound(final ParseTree tree) {
-        throw new RuntimeException("Visitor method for " + tree.getClass().getSimpleName() + " not found");
     }
 
     public T visitChildren(final ParseTree tree) {

@@ -3,7 +3,7 @@
  * Licensed under the BSD-3-Clause License - https://raw.githubusercontent.com/plankp/Rulesets/blob/master/LICENSE
  */
 
-package com.ymcmp.rset;
+package com.ymcmp.lexparse.tree;
 
 import java.io.IOException;
 import java.io.StringReader;
@@ -13,11 +13,10 @@ import com.ymcmp.rset.tree.ValueNode;
 import com.ymcmp.rset.tree.BinaryRule;
 
 import com.ymcmp.lexparse.Token;
-import com.ymcmp.lexparse.tree.Visitor;
-import com.ymcmp.lexparse.tree.ParseTree;
 
 import org.junit.Test;
 import org.junit.Before;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertEquals;
 
 public class VisitorTest {
@@ -38,6 +37,18 @@ public class VisitorTest {
             //
         };
         vis.visit(tree);
+    }
+
+    @Test
+    public void noVisitorBehaviourCanBeOverrided() {
+        final Visitor<?> vis = new Visitor<Object>() {
+
+            @Override
+            public Object methodNotFound(final ParseTree tree) {
+                return tree;
+            }
+        };
+        assertSame(tree, vis.visit(tree));
     }
 
     @Test(expected = IndexOutOfBoundsException.class)
