@@ -53,6 +53,8 @@ import com.ymcmp.lexparse.tree.ParseTree;
                 case S_AM:
                     return new RefRule(parseValue());
                 case S_EX:
+                case S_LA:
+                case S_RA:
                     return new UnaryRule(t, parseValue());
                 case S_LS: {
                     final ParseTree rule = consumeRule(this::parse,
