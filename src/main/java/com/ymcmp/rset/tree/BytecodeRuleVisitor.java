@@ -120,6 +120,26 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         }
     }
 
+    private void testInheritanceRoutine(final ValueNode r, final boolean from) {
+        try {
+            final String cl = r.toObject().toString();
+            logMessage("FINE", from
+                    ? ("Test if class of slot inherits from class '" + cl + "'")
+                    : ("Test if class '" + cl + "' inherits from class of slot"));
+            // load the class at runtime instead of compile time
+            mv.visitVarInsn(ALOAD, 0);
+            mv.visitFieldInsn(GETFIELD, "state", "Lcom/ymcmp/rt/EvalState;");
+            mv.visitLdcInsn(cl);
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+            mv.visitInsn(from ? ICONST_1 : ICONST_0);
+            mv.visitVarInsn(ALOAD, findNearestLocal(VarType.LIST));
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rt/EvalState", "testInheritance", "(Ljava/lang/Class;ZLjava/util/Collection;)Z", false);
+            mv.visitVarInsn(ISTORE, RESULT);
+        } catch (NullPointerException ex) {
+            throw new RuntimeException("() does not name a class");
+        }
+    }
+
     public Void visitUnaryRule(final UnaryRule n) {
         switch (n.op.type) {
             case S_TD: {
@@ -224,6 +244,12 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 } catch (NullPointerException ex) {
                     throw new RuntimeException("Selector cannot be ()");
                 }
+            case S_LA:
+                testInheritanceRoutine((ValueNode) n.rule, true);
+                return null;
+            case S_RA:
+                testInheritanceRoutine((ValueNode) n.rule, false);
+                return null;
             case S_LS: {
                 logMessage("FINE", "Destructing Array or Collection:");
 
