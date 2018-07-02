@@ -109,6 +109,31 @@ public class EvalState {
         return null;
     }
 
+    public boolean testInheritance(final Class<?> cl, final boolean from, final Collection<Object> col) {
+        try {
+            final Object k = data[next()];
+
+            if (k == null) {
+                // null is not a type, without negateFlag, it will always be false
+                if (negateFlag) {
+                   if (col != null) col.add(null);
+                   return true;
+                }
+                return false;
+            }
+
+            final Class<?> ck = k.getClass();
+            final boolean r = from ? cl.isAssignableFrom(ck) : ck.isAasignableFrom(cl);
+            if (negateFlag ? !r : r) {
+                if (col != null) col.add(k);
+                return true;
+            }
+        } catch (IndexOutOfBoundsException ex) {
+            prev();
+        }
+        return false;
+    }
+
     public boolean hasFieldOrMethod(final String selector, final Collection<Object> col) {
         try {
             final Object k = data[next()];
