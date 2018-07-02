@@ -127,7 +127,7 @@ public class JavaObjTest {
         };
 
         final List<Object> list = new ArrayList<>();
-        final Rule rule = newJavaObj().getRule("child");
+        final Rule rule = newJavaObj().getRule("parent");
         for (final Object[] test : tests) {
             final Object obj = rule.apply(test);
             if (obj != null) {
