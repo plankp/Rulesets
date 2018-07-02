@@ -109,7 +109,7 @@ public class EvalState {
         return null;
     }
 
-    public boolean testInheritance(final Class<?> cl, final boolean from, final Collection<Object> col) {
+    public boolean testInheritance(final Class cl, final boolean from, final Collection<Object> col) {
         try {
             final Object k = data[next()];
 
@@ -122,7 +122,7 @@ public class EvalState {
                 return false;
             }
 
-            final Class<?> ck = k.getClass();
+            final Class ck = k.getClass();
             final boolean r = from ? cl.isAssignableFrom(ck) : ck.isAasignableFrom(cl);
             if (negateFlag ? !r : r) {
                 if (col != null) col.add(k);
