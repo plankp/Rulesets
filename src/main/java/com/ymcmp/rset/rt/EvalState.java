@@ -123,7 +123,7 @@ public class EvalState {
             }
 
             final Class ck = k.getClass();
-            final boolean r = from ? cl.isAssignableFrom(ck) : ck.isAasignableFrom(cl);
+            final boolean r = from ? cl.isAssignableFrom(ck) : ck.isAssignableFrom(cl);
             if (negateFlag ? !r : r) {
                 if (col != null) col.add(k);
                 return true;
