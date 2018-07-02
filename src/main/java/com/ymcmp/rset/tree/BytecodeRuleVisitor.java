@@ -128,12 +128,12 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     : ("Test if class '" + cl + "' inherits from class of slot"));
             // load the class at runtime instead of compile time
             mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rt/EvalState;");
+            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
             mv.visitLdcInsn(cl);
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             mv.visitInsn(from ? ICONST_1 : ICONST_0);
             mv.visitVarInsn(ALOAD, findNearestLocal(VarType.LIST));
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rt/EvalState", "testInheritance", "(Ljava/lang/Class;ZLjava/util/Collection;)Z", false);
+            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testInheritance", "(Ljava/lang/Class;ZLjava/util/Collection;)Z", false);
             mv.visitVarInsn(ISTORE, RESULT);
         } catch (NullPointerException ex) {
             throw new RuntimeException("() does not name a class");
