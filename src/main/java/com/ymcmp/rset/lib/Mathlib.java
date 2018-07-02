@@ -5,6 +5,8 @@
 
 package com.ymcmp.rset.lib;
 
+import java.math.BigDecimal;
+
 import java.util.function.IntBinaryOperator;
 import java.util.function.DoubleBinaryOperator;
 
@@ -89,21 +91,33 @@ public final class Mathlib {
 
     @Export
     public static boolean _lt(Comparable a, Comparable b) {
-        return a.compareTo(b) < 0;
+        return compare(a, b) < 0;
     }
 
     @Export
     public static boolean _gt(Comparable a, Comparable b) {
-        return a.compareTo(b) > 0;
+        return compare(a, b) > 0;
     }
 
     @Export
     public static boolean _le(Comparable a, Comparable b) {
-        return a.compareTo(b) <= 0;
+        return compare(a, b) <= 0;
     }
 
     @Export
     public static boolean _ge(Comparable a, Comparable b) {
-        return a.compareTo(b) >= 0;
+        return compare(a, b) >= 0;
+    }
+
+    @Export("_cmp")
+    public static int compare(Comparable a, Comparable b) {
+        // Comparing 0:Number and 1.0:Number will cause a
+        // ClassCastException which is not what we want
+        if (a instanceof Number && b instanceof Number) {
+            final BigDecimal lhs = new BigDecimal(a.toString());
+            final BigDecimal rhs = new BigDecimal(b.toString());
+            return lhs.compareTo(rhs);
+        }
+        return a.compareTo(b);
     }
 }

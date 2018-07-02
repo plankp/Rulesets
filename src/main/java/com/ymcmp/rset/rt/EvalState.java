@@ -13,6 +13,8 @@ import java.util.Objects;
 import java.util.Collection;
 import java.util.EmptyStackException;
 
+import static com.ymcmp.rset.lib.Mathlib.compare;
+
 public class EvalState {
 
     protected final Stack<Integer> indexes = new Stack<>();
@@ -185,8 +187,9 @@ public class EvalState {
             // or v <= 0 and u >= 0
 
             k = data[next()];
-            final int u = a.compareTo(k);
-            final int v = b.compareTo(k);
+            final Comparable<?> ck = (Comparable<?>) k;
+            final int u = compare(a, ck);
+            final int v = compare(b, ck);
             final boolean r = u <= 0 && v >= 0 || v <= 0 && u >= 0;
             if (negateFlag ? !r : r) {
                 if (col != null) col.add(k);
