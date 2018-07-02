@@ -30,7 +30,9 @@ public class JavaObjTest {
         final StringReader reader = new StringReader(
             "rule field  = ; { (a, b, c)!length + 12!SIZE },\n" +
             "rule method = ; { Hello!(length,) },\n" +
-            "rule data   = k:!length { ?k },\n"
+            "rule data   = k:!length { ?k },\n" +
+            "rule child  = k:<\"java.lang.Number\" { ?k },\n" +
+            "rule parent = k:>\"java.lang.Number\" { ?k },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -86,6 +88,55 @@ public class JavaObjTest {
         assertSame(tests[1][0], list.get(0));
         assertSame(tests[2][0], list.get(1));
         assertSame(tests[3][0], list.get(2));
+    }
+
+    @Test
+    public void testChild() {
+        final Object[][] tests = {
+            { null }, // does not match
+            { 101 }, // matches
+            { 1.3 }, // matches
+            { new Object() }, // does not match
+            { "Hello, world!" }, // does not match
+            { },
+        };
+
+        final List<Object> list = new ArrayList<>();
+        final Rule rule = newJavaObj().getRule("child");
+        for (final Object[] test : tests) {
+            final Object obj = rule.apply(test);
+            if (obj != null) {
+                list.add(obj);
+            }
+        }
+
+        assertEquals(2, list.size());
+        assertEquals(101, list.get(0));
+        assertEquals(1.3, list.get(1));
+    }
+
+    @Test
+    public void testParent() {
+        final Object[][] tests = {
+            { null }, // does not match
+            { 101 }, // does not match
+            { 1.3 }, // does not match
+            { new Object() }, // matches
+            { "Hello, world!" }, // does not match
+            { },
+        };
+
+        final List<Object> list = new ArrayList<>();
+        final Rule rule = newJavaObj().getRule("child");
+        for (final Object[] test : tests) {
+            final Object obj = rule.apply(test);
+            if (obj != null) {
+                list.add(obj);
+            }
+        }
+
+        assertEquals(1, list.size());
+        assertSame(tests[3][0], list.get(0));
     }
 }
 
