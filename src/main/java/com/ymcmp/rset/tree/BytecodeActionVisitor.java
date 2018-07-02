@@ -87,6 +87,16 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
         mv.visitInsn(op);
     }
 
+    private void callMathlibCompareMethod(ParseTree lhs, ParseTree rhs, String method) {
+        visit(lhs);
+        mv.visitTypeInsn(CHECKCAST, "java/lang/Comparable");
+        visit(rhs);
+        mv.visitTypeInsn(CHECKCAST, "java/lang/Comparable");
+        mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", method, "(Ljava/lang/Comparable;Ljava/lang/Comparable;)Z", false);
+        // Box the boolean value
+        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+    }
+
     public Void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
             case S_LB: {
@@ -156,6 +166,12 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
                 visit(n.rule1);
                 visit(n.rule2);
                 mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Reflectlib", "access", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
+                break;
+            case S_LA:
+                callMathlibCompareMethod(n.rule1, n.rule2, "_lt");
+                break;
+            case S_RA:
+                callMathlibCompareMethod(n.rule1, n.rule2, "_gt");
                 break;
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);

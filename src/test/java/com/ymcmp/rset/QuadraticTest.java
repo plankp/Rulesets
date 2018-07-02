@@ -40,8 +40,11 @@ public class QuadraticTest {
             "   a=(?_float (?s1|'')~(?n1 | (?t1 & 1 | 0))):0;\n" +
             "   b=(?_float (?s2|'')~(?n2 | (?t2 & 1 | 0))):0;\n" +
             "   c=(?_float (?s3 | '') ~ (?n3 | 0)):0;\n" +
-            "   ((0 - ?b) + (?_sqrt (?_pow ?b 2) - 4 * ?a * ?c)) / (2 * ?a) ~" +
-            "   ',' ~ ((0 - ?b) - (?_sqrt (?_pow ?b 2) - 4 * ?a * ?c)) / (2 * ?a)" +
+            "   d=(?_pow ?b 2) - 4 * ?a * ?c;\n" +
+            "   ?d < 0\n" +
+            "       & 'No real roots,' ~ (?a > 0 & Upwards | Downwards)\n" +
+            "       | ((0 - ?b) + (?_sqrt ?d)) / (2 * ?a) ~" +
+            "   ',' ~ ((0 - ?b) - (?_sqrt ?d)) / (2 * ?a)" +
             "}"
         );
 
@@ -115,6 +118,8 @@ public class QuadraticTest {
         final Object[][] tests = {
             { "1", "0", "x", "^", "2", "+", "x", "-", "2" },
             { "x", "^", "2", "-", "2", "x", "-", "3", "5" },
+            { "x", "^", "2", "-", "x", "+", "1", "3", "5" }, // no real roots
+            { "-", "x", "^", "2", "-", "x", "-", "2", "6" }, // no real roots
         };
 
         final StringBuilder sb = new StringBuilder();
@@ -126,7 +131,11 @@ public class QuadraticTest {
                 }
             });
         }
-        assertEquals("calc,0.4,-0.5\ncalc,7,-5\n",
+        assertEquals(
+                "calc,0.4,-0.5\n" +
+                "calc,7,-5\n" +
+                "calc,No real roots,Upwards\n" +
+                "calc,No real roots,Downwards\n",
                 sb.toString());
     }
 }

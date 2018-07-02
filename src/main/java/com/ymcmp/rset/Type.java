@@ -42,6 +42,16 @@ public enum Type {
         }
     }
 
+    public boolean isRelativeOp() {
+        switch (this) {
+            case S_LA:
+            case S_RA:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public boolean isValue() {
         switch (this) {
             case L_INT:

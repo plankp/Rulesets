@@ -87,6 +87,19 @@ import com.ymcmp.lexparse.tree.ParseTree;
         return new BinaryRule(tok, rule1, rule2);
     }
 
+    public ParseTree parseRelative() {
+        // < and > are non-associative (hence do not utilize consumeRules or term*Sequence methods)
+        final ParseTree lhs = parseMath();
+        if (lhs == null) return null;
+        final Token<Type> op = getToken();
+        if (op != null && op.type.isRelativeOp()) {
+            return new BinaryRule(op, lhs, consumeRule(this::parseMath,
+                    "Expected right side for relative operator '" + op.text + "'"));
+        }
+        ungetToken(op);
+        return lhs;
+    }
+
     public ParseTree parseMath() {
         return consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_ADD, () ->
             consumeRules(this::delegateBinaryRuleCtor, TOKS_PARSE_MUL, () ->
@@ -98,7 +111,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
         final ParseTree tree =
                 termNormalizingSequence(KaryRule.Type.CALL, null, () ->
                     termNormalizingSequence(KaryRule.Type.ARRAY, Type.S_CM, () ->
-                        termNormalizingSequence(KaryRule.Type.JOIN, Type.S_TD, this::parseMath)));
+                        termNormalizingSequence(KaryRule.Type.JOIN, Type.S_TD, this::parseRelative)));
         if (tree != null) {
             final Token<Type> tok = getToken();
             if (tok != null && tok.type == Type.S_LB) {
