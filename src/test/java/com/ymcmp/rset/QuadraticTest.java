@@ -15,6 +15,7 @@ import java.util.Map;
 import com.ymcmp.rset.rt.Rulesets;
 
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import static org.junit.Assert.*;
@@ -22,6 +23,8 @@ import static org.junit.Assert.*;
 public class QuadraticTest {
 
     private static Class<?> Quadratic;
+
+    private Rulesets rsets;
 
     @BeforeClass
     public static void compile() {
@@ -62,6 +65,11 @@ public class QuadraticTest {
         }
     }
 
+    @Before
+    public void initializeRuleset() {
+        rsets = newQuadratic();
+    }
+
     @Test
     public void testEmpty() {
         final Object[][] tests = {
@@ -70,7 +78,7 @@ public class QuadraticTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newQuadratic().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
@@ -91,7 +99,7 @@ public class QuadraticTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newQuadratic().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
@@ -111,7 +119,7 @@ public class QuadraticTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newQuadratic().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');

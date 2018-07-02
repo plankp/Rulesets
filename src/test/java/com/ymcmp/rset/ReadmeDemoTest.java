@@ -15,6 +15,7 @@ import java.util.Map;
 import com.ymcmp.rset.rt.Rulesets;
 
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import static org.junit.Assert.*;
@@ -22,6 +23,8 @@ import static org.junit.Assert.*;
 public class ReadmeDemoTest {
 
     private static Class<?> ReadmeDemo;
+
+    private Rulesets rsets;
 
     @BeforeClass
     public static void compile() {
@@ -60,6 +63,11 @@ public class ReadmeDemoTest {
         }
     }
 
+    @Before
+    public void initializeRuleset() {
+        rsets = newReadmeDemo();
+    }
+
     private static Character[] strToCharArray(String str) {
         if (str == null || str.isEmpty()) return new Character[0];
         return str.chars().mapToObj(e -> (char) e).toArray(Character[]::new);
@@ -80,7 +88,7 @@ public class ReadmeDemoTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newReadmeDemo().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(obj).append('\n');

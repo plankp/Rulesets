@@ -73,8 +73,9 @@ public class LegacyClauseTest {
         };
 
         final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newLegacyClause();
         for (final Object[] test : tests) {
-            newLegacyClause().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');

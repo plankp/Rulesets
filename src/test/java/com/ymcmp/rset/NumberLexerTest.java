@@ -15,6 +15,7 @@ import java.util.Map;
 import com.ymcmp.rset.rt.Rulesets;
 
 import org.junit.Test;
+import org.junit.Before;
 import org.junit.BeforeClass;
 
 import static org.junit.Assert.*;
@@ -22,6 +23,8 @@ import static org.junit.Assert.*;
 public class NumberLexerTest {
 
     private static Class<?> NumberLexer;
+
+    private Rulesets rsets;
 
     @BeforeClass
     public static void compile() {
@@ -57,6 +60,12 @@ public class NumberLexerTest {
         }
     }
 
+
+    @Before
+    public void initializeRuleset() {
+        rsets = newNumberLexer();
+    }
+
     @Test
     public void testBase2() {
         final Object[][] tests = {
@@ -68,7 +77,7 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newNumberLexer().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
@@ -89,7 +98,7 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newNumberLexer().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
@@ -110,7 +119,7 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newNumberLexer().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
@@ -137,7 +146,7 @@ public class NumberLexerTest {
 
         final StringBuilder sb = new StringBuilder();
         for (final Object[] test : tests) {
-            newNumberLexer().forEachRule((name, rule) -> {
+            rsets.forEachRule((name, rule) -> {
                 final Object obj = rule.apply(test);
                 if (obj != null) {
                     sb.append(name).append(',').append(obj).append('\n');
