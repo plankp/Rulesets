@@ -6,8 +6,10 @@
 package com.ymcmp.rset;
 
 import java.util.Set;
-import java.util.HashSet;
 import java.util.Collections;
+
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import com.ymcmp.rset.tree.*;
 
@@ -69,16 +71,11 @@ import com.ymcmp.lexparse.tree.ParseTree;
         return null;
     }
 
-    private static final Set<Type> TOKS_PARSE_MUL = new HashSet<Type>() {{
-        add(Type.S_ST);
-        add(Type.S_DV);
-        add(Type.S_MD);
-    }};
+    private static final Set<Type> TOKS_PARSE_MUL =
+            Stream.of(Type.S_ST, Type.S_DV, Type.S_MD).collect(Collectors.toSet());
 
-    private static final Set<Type> TOKS_PARSE_ADD = new HashSet<Type>() {{
-        add(Type.S_AD);
-        add(Type.S_MN);
-    }};
+    private static final Set<Type> TOKS_PARSE_ADD =
+            Stream.of(Type.S_AD, Type.S_MN).collect(Collectors.toSet());
 
     private static final Set<Type> TOK_PARSE_ACC = Collections.singleton(Type.S_EX);
 

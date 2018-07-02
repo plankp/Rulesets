@@ -7,8 +7,10 @@ package com.ymcmp.rset;
 
 import java.util.Map;
 import java.util.Set;
-import java.util.HashSet;
-import java.util.HashMap;
+import java.util.AbstractMap.SimpleEntry;
+
+import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 import java.io.Reader;
 import java.io.Closeable;
@@ -19,23 +21,23 @@ import com.ymcmp.lexparse.Token;
 
 public class RsetLexer implements Lexer<Type>, Closeable {
 
-    private static final Set<Character> STR_ESC = new HashSet<Character>() {{
-        add('\\'); add('\''); add('"');
-        add('a'); add('b'); add('t'); add('n');
-        add('v'); add('f'); add('r');
-    }};
+    private static final Set<Character> STR_ESC =
+            Stream.of('\\', '\'', '"', 'a', 'b', 't', 'n', 'v', 'f', 'r')
+                    .collect(Collectors.toSet());
 
-    private static final Map<Character, Type> MONO_OP = new HashMap<Character, Type>() {{
-        put(',', Type.S_CM); put('=', Type.S_EQ); put('-', Type.S_MN);
-        put('+', Type.S_AD); put('?', Type.S_QM); put(':', Type.S_CO);
-        put('|', Type.S_OR); put('~', Type.S_TD); put('*', Type.S_ST);
-        put('/', Type.S_DV); put('%', Type.S_MD); put('!', Type.S_EX);
-        put('&', Type.S_AM); put(';', Type.S_SM);
-        put('<', Type.S_LA); put('>', Type.S_RA);
-        put('(', Type.S_LP); put(')', Type.S_RP);
-        put('[', Type.S_LS); put(']', Type.S_RS);
-        put('{', Type.S_LB); put('}', Type.S_RB);
-    }};
+    private static final Map<Character, Type> MONO_OP = Stream.of(
+            new SimpleEntry<>(',', Type.S_CM), new SimpleEntry<>('=', Type.S_EQ),
+            new SimpleEntry<>('-', Type.S_MN), new SimpleEntry<>('+', Type.S_AD),
+            new SimpleEntry<>('?', Type.S_QM), new SimpleEntry<>(':', Type.S_CO),
+            new SimpleEntry<>('|', Type.S_OR), new SimpleEntry<>('~', Type.S_TD),
+            new SimpleEntry<>('*', Type.S_ST), new SimpleEntry<>('/', Type.S_DV),
+            new SimpleEntry<>('%', Type.S_MD), new SimpleEntry<>('!', Type.S_EX),
+            new SimpleEntry<>('&', Type.S_AM), new SimpleEntry<>(';', Type.S_SM),
+            new SimpleEntry<>('<', Type.S_LA), new SimpleEntry<>('>', Type.S_RA),
+            new SimpleEntry<>('(', Type.S_LP), new SimpleEntry<>(')', Type.S_RP),
+            new SimpleEntry<>('[', Type.S_LS), new SimpleEntry<>(']', Type.S_RS),
+            new SimpleEntry<>('{', Type.S_LB), new SimpleEntry<>('}', Type.S_RB))
+            .collect(Collectors.toMap(SimpleEntry::getKey, SimpleEntry::getValue));
  
     private Reader reader;
     private int buf = -1;
