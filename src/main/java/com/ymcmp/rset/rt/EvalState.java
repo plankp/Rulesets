@@ -23,10 +23,6 @@ public class EvalState {
 
     private boolean negateFlag;
 
-    public EvalState(Object... data) {
-        this.data = data;
-    }
-
     public void setData(Object... data) {
         this.data = data;
     }
@@ -100,7 +96,8 @@ public class EvalState {
                 return null;
             }
 
-            final EvalState destructedState = new EvalState(destruct);
+            final EvalState destructedState = new EvalState();
+            destructedState.setData(destruct);
             destructedState.setNegateFlag(this.negateFlag);
             return destructedState;
         } catch (IndexOutOfBoundsException ex) {
