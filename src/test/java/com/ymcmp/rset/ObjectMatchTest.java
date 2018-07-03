@@ -29,7 +29,7 @@ public class ObjectMatchTest {
     public static void compile() {
         final StringReader reader = new StringReader(
             "rule i123 = k:(1 2 3 | (-1) (-2) (-3)) { ?k },\n" +
-            "rule f123 = k:(1.0 2.0 3.0 | (-1.0) (-2.0) (-3.0)) { ?k },\n" +
+            "rule f123 = k:(1. 2. 3. | (-1.) (-2.) (-3.)) { ?k },\n" +
             "rule group = k:(1 2 3, 4 5 6) { ?k },\n" +
             "rule chars = k:%abc { ?k },\n" +
             "rule destr = k:[1 2 3] { ?k },\n" +

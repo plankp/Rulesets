@@ -96,9 +96,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
         final int k = read();
         if (k == '.') {
             final String frac = readWhile(Character::isDigit);
-            if (!frac.isEmpty()) {
-                return new Token<>(Type.L_REAL, t + '.' + frac);
-            }
+            return new Token<>(Type.L_REAL, t + '.' + (frac.isEmpty() ? '0' : frac));
         } else {
             unread(k);
         }
