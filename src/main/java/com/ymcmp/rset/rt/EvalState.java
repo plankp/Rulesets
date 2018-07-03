@@ -106,18 +106,20 @@ public class EvalState {
         return negateFlag ? !b : b;
     }
 
+    private boolean handleMeaningfulNulls(final Collection<Object> col) {
+        if (negateFlag) {
+            if (col != null) col.add(null);
+            return true;
+        }
+        return false;
+    }
+
     public boolean testInheritance(final Class cl, final boolean from, final Collection<Object> col) {
         try {
             final Object k = data[next()];
 
-            if (k == null) {
-                // null is not a type, without negateFlag, it will always be false
-                if (negateFlag) {
-                   if (col != null) col.add(null);
-                   return true;
-                }
-                return false;
-            }
+            // null is not a type, without negateFlag, it will always be false
+            if (k == null) return handleMeaningfulNulls(col);
 
             final Class ck = k.getClass();
             if (processNegate(from ? cl.isAssignableFrom(ck) : ck.isAssignableFrom(cl))) {
@@ -158,15 +160,10 @@ public class EvalState {
     public boolean hasFieldOrMethod(final String selector, final Collection<Object> col) {
         try {
             final Object k = data[next()];
-            if (k == null) {
-                // null can not contain any field or method
-                // if negateFlag is on, this must return true
-                if (negateFlag) {
-                    if (col != null) col.add(null);
-                    return true;
-                }
-                return false;
-            }
+
+            // null can not contain any field or method
+            // if negateFlag is on, this must return true
+            if (k == null) return handleMeaningfulNulls(col);
 
             final Class<?> cl = k.getClass();
             if (processNegate(classHasField(cl, selector)) || processNegate(classHasMethod(cl, selector))) {
