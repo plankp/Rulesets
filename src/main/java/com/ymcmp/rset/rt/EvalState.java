@@ -106,6 +106,10 @@ public class EvalState {
         return null;
     }
 
+    private boolean processNegate(final boolean b) {
+        return negateFlag ? !b : b;
+    }
+
     public boolean testInheritance(final Class cl, final boolean from, final Collection<Object> col) {
         try {
             final Object k = data[next()];
@@ -131,6 +135,31 @@ public class EvalState {
         return false;
     }
 
+    private static boolean classHasField(final Class<?> cl, final String selector) {
+        // Arrays have length as attribute but
+        // it is actually not a field to the class's concern
+        if (cl.isArray()) {
+            return "length".equals(selector);
+        } else {
+            try {
+                // Is it even possible for getField to return null?
+                return cl.getField(selector) != null;
+            } catch (NoSuchFieldException ex) {
+                // class does not have field that is public
+            }
+        }
+        return false;
+    }
+
+    private static boolean classHasMethod(final Class<?> cl, final String selector) {
+        // Not using cl.getMethod(selector) because only care if method exists,
+        // whereas getMethod expects us to know the parameter types
+        for (final Method m : cl.getMethods()) {
+            if (m.getName().equals(selector)) return true;
+        }
+        return false;
+    }
+
     public boolean hasFieldOrMethod(final String selector, final Collection<Object> col) {
         try {
             final Object k = data[next()];
@@ -145,35 +174,7 @@ public class EvalState {
             }
 
             final Class<?> cl = k.getClass();
-
-            // Look for field
-            boolean r = false;
-            // Arrays have length as attribute but
-            // it is actually not a field to the class's concern
-            if (cl.isArray()) {
-                r = "length".equals(selector);
-            } else {
-                try {
-                    r = cl.getField(selector) != null;
-                } catch (NoSuchFieldException ex) {
-                    r = false;
-                }
-            }
-
-            if (negateFlag ? !r : r) {
-                if (col != null) col.add(k);
-                return true;
-            }
-
-            // Look for method
-            r = false;
-            // Not using cl.getMethod(selector) because only care if method exists,
-            // whereas getMethod expects us to know the parameter types
-            for (final Method m : cl.getMethods()) {
-                if (r = m.getName().equals(selector)) break;
-            }
-
-            if (negateFlag ? !r : r) {
+            if (processNegate(classHasField(cl, selector)) || processNegate(classHasMethod(cl, selector))) {
                 if (col != null) col.add(k);
                 return true;
             }
@@ -186,8 +187,7 @@ public class EvalState {
     public boolean testEquality(final Object obj, final Collection<Object> col) {
         try {
             final Object k = data[next()];
-            final boolean r = Objects.equals(obj, k);
-            if (negateFlag ? !r : r) {
+            if (processNegate(Objects.equals(obj, k))) {
                 if (col != null) col.add(k);
                 return true;
             }
@@ -212,8 +212,7 @@ public class EvalState {
             final Comparable<?> ck = (Comparable<?>) k;
             final int u = compare(a, ck);
             final int v = compare(b, ck);
-            final boolean r = u <= 0 && v >= 0 || v <= 0 && u >= 0;
-            if (negateFlag ? !r : r) {
+            if (processNegate(u <= 0 && v >= 0 || v <= 0 && u >= 0)) {
                 if (col != null) col.add(k);
                 return true;
             }
