@@ -111,8 +111,6 @@ public class Main {
 
             // Create directories
             Files.write(Files.createDirectories(Paths.get(opt.pathName)).resolve(opt.outputName), bytes);
-        } catch (IOException ex) {
-            throw ex;
         }
     }
 }
