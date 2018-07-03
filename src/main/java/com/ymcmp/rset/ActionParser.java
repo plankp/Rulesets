@@ -6,6 +6,7 @@
 package com.ymcmp.rset;
 
 import java.util.Set;
+import java.util.Optional;
 import java.util.Collections;
 
 import java.util.stream.Stream;
@@ -108,11 +109,11 @@ import com.ymcmp.lexparse.tree.ParseTree;
     }
 
     public ParseTree parseLoop() {
-        final ParseTree tree =
-                termNormalizingSequence(KaryRule.Type.CALL, null, () ->
-                    termNormalizingSequence(KaryRule.Type.ARRAY, Type.S_CM, () ->
-                        termNormalizingSequence(KaryRule.Type.JOIN, Type.S_TD, this::parseRelative)));
-        if (tree != null) {
+        return Optional.ofNullable(
+            termNormalizingSequence(KaryRule.Type.CALL, null, () ->
+                termNormalizingSequence(KaryRule.Type.ARRAY, Type.S_CM, () ->
+                    termNormalizingSequence(KaryRule.Type.JOIN, Type.S_TD, this::parseRelative))))
+        .map(tree -> {
             final Token<Type> tok = getToken();
             if (tok != null && tok.type == Type.S_LB) {
                 final ParseTree inner = parse();
@@ -121,7 +122,8 @@ import com.ymcmp.lexparse.tree.ParseTree;
             } else {
                 ungetToken(tok);
             }
-        }
-        return tree;
+            return tree;
+        })
+        .orElse(null);
     }
 }
