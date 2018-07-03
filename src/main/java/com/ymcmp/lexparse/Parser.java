@@ -75,25 +75,13 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
     public default <R> R consumeRules(TriFunction<? super Token<T>, ? super R, ? super R, ? extends R> fn,
                                       Collection<T> delim, Supplier<? extends R> rule) {
         R head = rule.get();
-        if (head == null) return null;
-
-        while (true) {
-            Token<T> t = null;
-            if (!delim.isEmpty()) {
-                t = getToken();
-                if (t == null || !delim.contains(t.type)) {
-                    ungetToken(t);
-                    break;
-                }
-            }
-            final R tail = rule.get();
-            if (tail == null) {
-                if (!delim.isEmpty()) {
-                    head = fn.apply(t, head, tail);
-                }
+        while (head != null) {
+            Token<T> t = getToken();
+            if (t == null || !delim.contains(t.type)) {
+                ungetToken(t);
                 break;
             }
-            head = fn.apply(t, head, tail);
+            head = fn.apply(t, head, rule.get());
         }
         return head;
     }
