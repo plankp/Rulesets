@@ -33,7 +33,7 @@ public class ObjectMatchTest {
             "rule group = k:(1 2 3, 4 5 6) { ?k },\n" +
             "rule chars = k:%abc { ?k },\n" +
             "rule destr = k:[1 2 3] { ?k },\n" +
-            "rule null  = () { 'Found null!' },\n"
+            "rule null  = () { '\\Found null!\\\"' },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -184,6 +184,6 @@ public class ObjectMatchTest {
                 sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
             }
         }
-        assertEquals("Found null!\n", sb.toString());
+        assertEquals("\\Found null!\"\n", sb.toString());
     }
 }
