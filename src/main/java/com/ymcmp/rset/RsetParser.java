@@ -6,6 +6,7 @@
 package com.ymcmp.rset;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.ymcmp.rset.tree.*;
 
@@ -52,51 +53,48 @@ public class RsetParser extends BaseParser<RulesetGroup> {
         return parseRulesets();
     }
 
-    private RulesetNode.Type determineRuleType() {
+    private Optional<RulesetNode.Type> determineRuleType() {
         final Token<Type> t = getToken();
         if (t != null && t.type == Type.L_IDENT) {
             switch (t.text) {
                 case "rule":        // generates public test(Map)Z, act(Map)Object, rule(Object[])Object
-                    return RulesetNode.Type.RULE;
+                    return Optional.of(RulesetNode.Type.RULE);
                 case "subrule":     // generates public test(Map)Z, act(Map)Object
-                    return RulesetNode.Type.SUBRULE;
+                    return Optional.of(RulesetNode.Type.SUBRULE);
                 case "fragment":    // inlines test, will cause error if being mutually referenced
-                    return RulesetNode.Type.FRAGMENT;
+                    return Optional.of(RulesetNode.Type.FRAGMENT);
                 default:
                     throw new IllegalParseException(t);
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     public RulesetNode parseRuleset() {
-        final RulesetNode.Type rulesetType = determineRuleType();
+        return determineRuleType().map(rulesetType -> {
+            final ValueNode name = consumeRule(this::parseValue, "Missing name for ruleset");
 
-        if (rulesetType == null) {
-            return null;
-        }
+            consumeToken(Type.S_EQ, "Expected '=' in ruleset '" + name.getText() + "' before rule");
 
-        final ValueNode name = consumeRule(this::parseValue, "Missing name for ruleset");
+            final ParseTree rule = consumeRule(ruleParser::parse,
+                    "Expected rule clause after new rule '" + name.getText() + "'");
 
-        consumeToken(Type.S_EQ, "Expected '=' in ruleset '" + name.getText() + "' before rule");
+            final RulesetNode rset = new RulesetNode(rulesetType, name, rule);
 
-        final ParseTree rule = consumeRule(ruleParser::parse,
-                "Expected rule clause after new rule '" + name.getText() + "'");
-
-        final RulesetNode rset = new RulesetNode(rulesetType, name, rule);
-
-        final Token<Type> b = getToken();
-        if (b != null && b.type == Type.S_LB) {
-            rset.expr = actionParser.parse();
-            consumeToken(Type.S_RB, "Unclosed Ruleset expression, missing '}'");
-            if (rulesetType == RulesetNode.Type.FRAGMENT && rset.expr != null) {
-                // fragments cannot have non-empty actions, warning
-                System.err.println("Warning: " + name.getText() + " is fragment type but contains non-empty action block");
-            }
-        } else {
-            ungetToken(b);
-        }
-        return rset;
+            Optional.ofNullable(getToken()).ifPresent(b -> {
+                if (b.type == Type.S_LB) {
+                    rset.expr = actionParser.parse();
+                    consumeToken(Type.S_RB, "Unclosed Ruleset expression, missing '}'");
+                    if (rulesetType == RulesetNode.Type.FRAGMENT && rset.expr != null) {
+                        // fragments cannot have non-empty actions, warning
+                        System.err.println("Warning: " + name.getText() + " is fragment type but contains non-empty action block");
+                    }
+                } else {
+                    ungetToken(b);
+                }
+            });
+            return rset;
+        }).orElse(null);
     }
 
     public RulesetGroup parseRulesets() {
