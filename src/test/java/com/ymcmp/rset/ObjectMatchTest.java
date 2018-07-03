@@ -148,6 +148,7 @@ public class ObjectMatchTest {
     public void testDestr() {
         final Object[][] tests = {
             { },
+            { null },
             { 1, 2, 3 },
             { Arrays.asList(1, 2) },
             { new Object[]{ 1, 2, 3 } },
