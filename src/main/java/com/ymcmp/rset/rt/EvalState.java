@@ -42,33 +42,20 @@ public class EvalState {
         negateFlag = false;
     }
 
-    private int silencedPop() {
+    public Object next() {
         try {
-            return indexes.pop();
-        } catch (EmptyStackException ex) {
-            return 0;
+            final int i = indexes.pop();
+            indexes.push(i + 1);
+            return data[i];
+        } catch (IndexOutOfBoundsException ex) {
+            prev();
+            return Epsilon.INSTANCE;
         }
     }
 
-    public int next() {
-        final int i = silencedPop();
-        indexes.push(i + 1);
-        return i;
-    }
-
-    public int prev() {
-        final int i = silencedPop();
+    public void prev() {
+        final int i = indexes.pop();
         indexes.push(i - 1);
-        return i;
-    }
-
-    public int getIndex() {
-        try {
-            return indexes.peek();
-        } catch (EmptyStackException ex) {
-            //
-        }
-        return 0;
     }
 
     public void unsave() {
@@ -76,60 +63,49 @@ public class EvalState {
     }
 
     public void save() {
-        indexes.push(getIndex());
+        indexes.push(indexes.peek());
     }
 
     public EvalState destructArray() {
-        try {
-            final Object k = data[next()];
-            Object[] destruct = null;
-            if (k == null) return null;
-            if (k.getClass().isArray()) {
-                destruct = (Object[]) k;
-            } else if (k instanceof Collection) {
-                destruct = ((Collection<?>) k).toArray();
-            } else {
-                return null;
-            }
+        final Object k = next();
+        if (k == null) return null;
 
-            final EvalState destructedState = new EvalState();
-            destructedState.setData(destruct);
-            destructedState.setNegateFlag(this.negateFlag);
-            return destructedState;
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
+        Object[] destruct = null;
+        if (k.getClass().isArray()) {
+            destruct = (Object[]) k;
+        } else if (k instanceof Collection) {
+            destruct = ((Collection<?>) k).toArray();
+        } else {
+            return null;
         }
-        return null;
+
+        final EvalState destructedState = new EvalState();
+        destructedState.reset();
+        destructedState.setData(destruct);
+        destructedState.setNegateFlag(this.negateFlag);
+        return destructedState;
     }
 
     private boolean processNegate(final boolean b) {
         return negateFlag ? !b : b;
     }
 
-    private boolean handleMeaningfulNulls(final Collection<Object> col) {
-        if (negateFlag) {
-            if (col != null) col.add(null);
+    private boolean condAdd(final boolean test, final Object k, final Collection<Object> col) {
+        if (test) {
+            if (col != null) col.add(k);
             return true;
         }
         return false;
     }
 
     public boolean testInheritance(final Class cl, final boolean from, final Collection<Object> col) {
-        try {
-            final Object k = data[next()];
+        final Object k = next();
 
-            // null is not a type, without negateFlag, it will always be false
-            if (k == null) return handleMeaningfulNulls(col);
+        // null is not a type, without negateFlag, it will always be false
+        if (k == null) return condAdd(negateFlag, null, col);
 
-            final Class ck = k.getClass();
-            if (processNegate(from ? cl.isAssignableFrom(ck) : ck.isAssignableFrom(cl))) {
-                if (col != null) col.add(k);
-                return true;
-            }
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
-        }
-        return false;
+        final Class ck = k.getClass();
+        return condAdd(processNegate(from ? cl.isAssignableFrom(ck) : ck.isAssignableFrom(cl)), k, col);
     }
 
     private static boolean classHasField(final Class<?> cl, final String selector) {
@@ -158,39 +134,23 @@ public class EvalState {
     }
 
     public boolean hasFieldOrMethod(final String selector, final Collection<Object> col) {
-        try {
-            final Object k = data[next()];
+        final Object k = next();
 
-            // null can not contain any field or method
-            // if negateFlag is on, this must return true
-            if (k == null) return handleMeaningfulNulls(col);
+        // null can not contain any field or method
+        // if negateFlag is on, this must return true
+        if (k == null) return condAdd(negateFlag, null, col);
 
-            final Class<?> cl = k.getClass();
-            if (processNegate(classHasField(cl, selector)) || processNegate(classHasMethod(cl, selector))) {
-                if (col != null) col.add(k);
-                return true;
-            }
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
-        }
-        return false;
+        final Class<?> cl = k.getClass();
+        return condAdd(processNegate(classHasField(cl, selector)) || processNegate(classHasMethod(cl, selector)), k, col);
     }
 
     public boolean testEquality(final Object obj, final Collection<Object> col) {
-        try {
-            final Object k = data[next()];
-            if (processNegate(Objects.equals(obj, k))) {
-                if (col != null) col.add(k);
-                return true;
-            }
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
-        }
-        return false;
+        final Object k = next();
+        return condAdd(!Epsilon.INSTANCE.equals(k) && processNegate(Objects.equals(obj, k)), k, col);
     }
 
     public boolean testRange(final Comparable a, final Comparable b, final Collection<Object> col) {
-        Object k = Epsilon.INSTANCE;
+        final Object k = next();
         try {
             // To be in range, either:
             //    a <= k and b >= k
@@ -200,58 +160,24 @@ public class EvalState {
             //    u <= 0 and v >= 0
             // or v <= 0 and u >= 0
 
-            k = data[next()];
             final Comparable<?> ck = (Comparable<?>) k;
             final int u = compare(a, ck);
             final int v = compare(b, ck);
-            if (processNegate(u <= 0 && v >= 0 || v <= 0 && u >= 0)) {
-                if (col != null) col.add(k);
-                return true;
-            }
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
+            return condAdd(processNegate(u <= 0 && v >= 0 || v <= 0 && u >= 0), k, col);
         } catch (ClassCastException | NullPointerException ex) {
             // current slot value does not belong in set,
             // which satisfies *not* being in range.
             // return true if negate flag is on
-            if (negateFlag) {
-                if (col != null) col.add(k);
-                return true;
-            }
+            return condAdd(!Epsilon.INSTANCE.equals(k) && negateFlag, k, col);
         }
-        return false;
     }
 
     public boolean testSlotOccupied(Collection<Object> col) {
-        try {
-            final Object k = data[next()];
-            if (!negateFlag) {
-                if (col != null) col.add(k);
-                return true;
-            }
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
-        }
-        return false;
+        return condAdd(!negateFlag, next(), col);
     }
 
     public boolean testEnd(Collection<Object> col) {
-        try {
-            final Object k = data[next()];
-            // out of bounds would have happened here if it had to happen
-            // if it reaches beyond this point, that means, it is not the
-            // end. Only happens when negate flag is on
-            if (negateFlag) {
-                if (col != null) col.add(k);
-                return true;
-            }
-        } catch (IndexOutOfBoundsException ex) {
-            prev();
-            if (!negateFlag) {
-                if (col != null) col.add(Epsilon.INSTANCE);
-                return true;
-            }
-        }
-        return false;
+        final Object k = next();
+        return condAdd(processNegate(Epsilon.INSTANCE.equals(k)), k, col);
     }
 }
