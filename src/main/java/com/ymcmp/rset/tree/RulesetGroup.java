@@ -158,9 +158,10 @@ public final class RulesetGroup extends ParseTree {
         {
             // Dependency generating constructor, (when user does not have custom Extension to bundle)
             final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "()V", null, null);
+            final ASMUtils ctora = ASMUtils.wrapperFor(ctor);
             ctor.visitCode();
             ctor.visitVarInsn(ALOAD, 0);
-            ASMUtils.newObjectNoArgs(ctor, -1, "com/ymcmp/rset/lib/Extensions");
+            ctora.newObjectNoArgs(-1, "com/ymcmp/rset/lib/Extensions");
             ctor.visitMethodInsn(INVOKESPECIAL, className, "<init>", "(Lcom/ymcmp/rset/lib/Extensions;)V", false);
             ctor.visitInsn(RETURN);
             ctor.visitMaxs(0, 0);
@@ -168,17 +169,14 @@ public final class RulesetGroup extends ParseTree {
         }
 
         final MethodVisitor ctor = cw.visitMethod(ACC_PUBLIC, "<init>", "(Lcom/ymcmp/rset/lib/Extensions;)V", null, null);
+        final ASMUtils ctora = ASMUtils.wrapperFor(ctor);
         ctor.visitCode();
         // super();
         ctor.visitVarInsn(ALOAD, 0);
         ctor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
-        // state = new EvalState(new Object[0]);
+        // state = new EvalState();
         ctor.visitVarInsn(ALOAD, 0);
-        ctor.visitTypeInsn(NEW, "com/ymcmp/rset/rt/EvalState");
-        ctor.visitInsn(DUP);
-        ctor.visitInsn(ICONST_0);
-        ctor.visitTypeInsn(ANEWARRAY, "java/lang/Object");
-        ctor.visitMethodInsn(INVOKESPECIAL, "com/ymcmp/rset/rt/EvalState", "<init>", "([Ljava/lang/Object;)V", false);
+        ctora.newObjectNoArgs(-1, "com/ymcmp/rset/rt/EvalState");
         ctor.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         // ext = %injected through constructor;
         ctor.visitVarInsn(ALOAD, 0);
@@ -186,7 +184,7 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitFieldInsn(PUTFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
         // rules = new HashMap<>();
         ctor.visitVarInsn(ALOAD, 0);
-        ASMUtils.newObjectNoArgs(ctor, -1, "java/util/HashMap");
+        ctora.newObjectNoArgs(-1, "java/util/HashMap");
         ctor.visitFieldInsn(PUTFIELD, className, "rules", "Ljava/util/Map;");
 
         for (final RulesetNode r : rsets) {
@@ -220,6 +218,7 @@ public final class RulesetGroup extends ParseTree {
             if (ruleName == null) continue;
 
             final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_VARARGS, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
+            final ASMUtils mva = ASMUtils.wrapperFor(mv);
             mv.visitCode();
             // state.reset(); state.setData(data@1);
             mv.visitVarInsn(ALOAD, 0);
@@ -237,9 +236,9 @@ public final class RulesetGroup extends ParseTree {
             // return (%test(env@2, new ArrayList<>())) ? act(env@2) : null;
             mv.visitVarInsn(ALOAD, 0);
             mv.visitVarInsn(ALOAD, 2);
-            ASMUtils.newObjectNoArgs(mv, -1, "java/util/ArrayList");
+            mva.newObjectNoArgs(-1, "java/util/ArrayList");
             mv.visitMethodInsn(INVOKEVIRTUAL, className, testName, "(Ljava/util/Map;Ljava/util/List;)Z", false);
-            ASMUtils.testIfElse(mv, IFEQ, () -> {
+            mva.testIfElse(IFEQ, () -> {
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitVarInsn(ALOAD, 2);
                 mv.visitMethodInsn(INVOKEVIRTUAL, className, actnName, "(Ljava/util/Map;)Ljava/lang/Object;", false);

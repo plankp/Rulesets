@@ -53,49 +53,25 @@ public interface ASMUtils {
         final Label loop = new Label();
         final Label exit = new Label();
         mv.visitLabel(loop);
-        if (test != null) test.accept(exit);
+        test.accept(exit);
         if (body != null) body.accept(exit, loop);
         mv.visitJumpInsn(GOTO, loop);
         mv.visitLabel(exit);
     }
 
-    public static void newObjectNoArgs(final MethodVisitor vis, int slot, final String className) {
-        new ASMUtils() {
+    public static ASMUtils wrapperFor(final MethodVisitor vis) {
+        return new ASMUtils() {
             @Override
             public MethodVisitor getMethodVisitor() {
                 return vis;
             }
-        }.newObjectNoArgs(slot, className);
-    }
-
-    public static void testIfElse(final MethodVisitor vis, final int jumpInsn, final Runnable ifTrue, final Runnable ifFalse) {
-        new ASMUtils() {
-            @Override
-            public MethodVisitor getMethodVisitor() {
-                return vis;
-            }
-        }.testIfElse(jumpInsn, ifTrue, ifFalse);
-    }
-
-    public static void testIf(final MethodVisitor vis, final int jumpInsn, final Runnable ifTrue) {
-        new ASMUtils() {
-            @Override
-            public MethodVisitor getMethodVisitor() {
-                return vis;
-            }
-        }.testIf(jumpInsn, ifTrue);
+        };
     }
 
     public default void ifBoolTrue(int boolSlot, Runnable body) {
         final MethodVisitor mv = getMethodVisitor();
         mv.visitVarInsn(ILOAD, boolSlot);
         testIf(IFEQ, body);
-    }
-
-    public default void ifBoolTrue(int boolSlot, Label lbl, Runnable body) {
-        final MethodVisitor mv = getMethodVisitor();
-        mv.visitVarInsn(ILOAD, boolSlot);
-        testIf(IFEQ, lbl, body);
     }
 
     public default void ifBoolFalse(int boolSlot, Runnable body) {
