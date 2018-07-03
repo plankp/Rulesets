@@ -71,10 +71,6 @@ public class EvalState {
         return 0;
     }
 
-    public Object[] copyRange(int from, int to) {
-        return Arrays.copyOfRange(data, from, to);
-    }
-
     public void unsave() {
         indexes.pop();
     }
@@ -124,8 +120,7 @@ public class EvalState {
             }
 
             final Class ck = k.getClass();
-            final boolean r = from ? cl.isAssignableFrom(ck) : ck.isAssignableFrom(cl);
-            if (negateFlag ? !r : r) {
+            if (processNegate(from ? cl.isAssignableFrom(ck) : ck.isAssignableFrom(cl))) {
                 if (col != null) col.add(k);
                 return true;
             }
