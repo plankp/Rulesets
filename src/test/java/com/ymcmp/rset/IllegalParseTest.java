@@ -25,6 +25,15 @@ public class IllegalParseTest {
     }
 
     @Test(expected = IllegalParseException.class)
+    public void parseBadRuleType() {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("hello"))) {
+            new RsetParser(lexer).parse();
+        } catch (IOException ex) {
+            fail("No manipulating IO?");
+        }
+    }
+
+    @Test(expected = IllegalParseException.class)
     public void parseRuleWithoutName() {
         try (final RsetLexer lexer = new RsetLexer(new StringReader("rule"))) {
             new RsetParser(lexer).parse();

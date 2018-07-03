@@ -11,6 +11,7 @@ import com.ymcmp.rset.tree.*;
 
 import com.ymcmp.lexparse.Lexer;
 import com.ymcmp.lexparse.Token;
+import com.ymcmp.lexparse.IllegalParseException;
 
 import com.ymcmp.lexparse.tree.ParseTree;
 
@@ -62,8 +63,7 @@ public class RsetParser extends BaseParser<RulesetGroup> {
                 case "fragment":    // inlines test, will cause error if being mutually referenced
                     return RulesetNode.Type.FRAGMENT;
                 default:
-                    ungetToken(t);
-                    break;
+                    throw new IllegalParseException(t);
             }
         }
         return null;
