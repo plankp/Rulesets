@@ -18,7 +18,7 @@ import static org.objectweb.asm.Opcodes.*;
 public abstract class BaseRuleVisitor extends Visitor<Void> implements ASMUtils {
 
     public enum VarType {
-        _COUNTER_RESV, HIDDEN, MAP, LIST, COUNTER, NUM, BOOL, EVAL_STATE;
+        HIDDEN, MAP, LIST, NUM, BOOL, EVAL_STATE;
     }
 
     private final Stack<VarType> locals = new Stack<>();
@@ -43,17 +43,11 @@ public abstract class BaseRuleVisitor extends Visitor<Void> implements ASMUtils 
 
     public int pushNewLocal(VarType t) {
         locals.push(t);
-        final int k = locals.size() - 1;
-        if (t == VarType.COUNTER) {
-            locals.push(VarType._COUNTER_RESV);
-        }
-        return k;
+        return locals.size() - 1;
     }
 
     public void popLocal() {
-        if (locals.pop() == VarType._COUNTER_RESV) {
-            locals.pop();
-        }
+        locals.pop();
     }
 
     public int findNearestLocal(VarType t) {
