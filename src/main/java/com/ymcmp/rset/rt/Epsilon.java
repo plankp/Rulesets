@@ -17,7 +17,8 @@ public final class Epsilon {
 
     @Override
     public boolean equals(final Object k) {
-        return k != null && k == this;
+        // Singleton, only possibility for equality
+        return k == this;
     }
 
     @Override
