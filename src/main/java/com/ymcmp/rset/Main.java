@@ -52,7 +52,8 @@ public class Main {
                             "\n" +
                             "Link to copyright notices of used libraries:\n" +
                             "  https://github.com/plankp/Rulesets/blob/master/COPYING");
-                    break;
+                    // invoking help will ignore all other options
+                    return;
                 case "-n":
                 case "--class-name":
                     // User will provide something like com/ymcmp/Crules
