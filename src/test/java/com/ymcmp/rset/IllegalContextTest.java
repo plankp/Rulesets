@@ -23,6 +23,7 @@ public class IllegalContextTest {
         opt = new Main.Options();
         opt.className = "Name";
         opt.pathName = ".";
+        opt.inputName = "memory";
         opt.outputName = "Name.class";
     }
 
@@ -77,6 +78,24 @@ public class IllegalContextTest {
     public void visitIllegalNullRangeName() {
         try {
             Main.compile(new StringReader("rule a = ()-a"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void visitDirectRecursiveFragment() {
+        try {
+            Main.compile(new StringReader("rule a = &b, fragment b = &b"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void visitMutualRecursiveFragment() {
+        try {
+            Main.compile(new StringReader("rule a = &b, fragment b = &c, fragment c = &b"), opt);
         } catch (IOException ex) {
             fail("No IO operation!");
         }
