@@ -31,8 +31,8 @@ public class NegateTest {
             "rule a   = k:a { ?k }," +
             "rule na  = k:~a { ?k }," +
             "rule nna = k:~~a { ?k }," +
-            "rule r   = k:(5-10) { ?k }," +
-            "rule nr  = k:~(5-10) { ?k }," +
+            "rule r   = k:(5-10.0) { ?k }," +
+            "rule nr  = k:~(5-10.0) { ?k }," +
             "rule or  = k:(a | b) { ?k }," +
             "rule nor = k:~(a | b) { ?k }," +
             "rule orn = k:(~a | ~b) { ?k }," +

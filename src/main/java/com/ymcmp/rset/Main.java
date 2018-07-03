@@ -7,8 +7,6 @@ package com.ymcmp.rset;
 
 import java.io.Reader;
 import java.io.IOException;
-// import java.io.StringReader;
-// import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
 import java.nio.file.Paths;
