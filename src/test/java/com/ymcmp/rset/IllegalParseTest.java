@@ -15,15 +15,6 @@ import static org.junit.Assert.fail;
 
 public class IllegalParseTest {
 
-    @Test(expected = RuntimeException.class)
-    public void lexIllegalCharacter() {
-        try (final RsetLexer lexer = new RsetLexer(new StringReader("\0"))) {
-            new RsetParser(lexer).parse();
-        } catch (IOException ex) {
-            fail("No manipulating IO?");
-        }
-    }
-
     @Test(expected = IllegalParseException.class)
     public void parseBadRuleType() {
         try (final RsetLexer lexer = new RsetLexer(new StringReader("hello"))) {
