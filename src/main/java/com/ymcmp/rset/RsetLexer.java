@@ -5,16 +5,18 @@
 
 package com.ymcmp.rset;
 
+import java.io.Reader;
+import java.io.Closeable;
+import java.io.IOException;
+
+import java.nio.BufferOverflowException;
+
 import java.util.Map;
 import java.util.Set;
 import java.util.AbstractMap.SimpleEntry;
 
 import java.util.stream.Stream;
 import java.util.stream.Collectors;
-
-import java.io.Reader;
-import java.io.Closeable;
-import java.io.IOException;
 
 import com.ymcmp.lexparse.Lexer;
 import com.ymcmp.lexparse.Token;
@@ -76,7 +78,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                     final Token<Type> ident = lexIdent();
                     if (ident != null) return ident;
 
-                    throw new RuntimeException("Unknown char " + c);
+                    throw new BadCharException(c);
                 }
             }
         }
@@ -151,7 +153,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
 
     @Override
     public void unread(final int k) {
-        if (buf != -1) throw new RuntimeException("Not buffering > 1 chars");
+        if (buf != -1) throw new BufferOverflowException();
         buf = k;
     }
 
