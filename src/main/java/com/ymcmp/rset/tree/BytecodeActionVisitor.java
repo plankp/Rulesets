@@ -24,7 +24,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
+public class BytecodeActionVisitor extends BaseVisitor {
 
     private ClassWriter cw;
     private String className;
@@ -39,10 +39,6 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
     @Override
     public MethodVisitor getMethodVisitor() {
         return this.mv;
-    }
-
-    public Void visitMethodNotFound(final ParseTree tree) {
-        throw new RuntimeException(tree.getClass().getSimpleName() + " cannot be converted to action");
     }
 
     public Void visitValueNode(final ValueNode n) {
@@ -220,70 +216,76 @@ public class BytecodeActionVisitor extends Visitor<Void> implements ASMUtils {
         }
     }
 
-    public Void visitKaryRule(final KaryRule n) {
-        switch (n.type) {
-            case SUBSCRIPT: {
-                boolean flag = false;
-                for (int i = 0; i < n.rules.size(); ++i) {
-                    visit(n.rules.get(i));
-                    if (!flag) {
-                        flag = true;
-                    } else {
-                        mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Arraylib", "subscript", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
-                    }
-                }
-                return null;
+    @Override
+    public void visitRuleSubscript(final List<ParseTree> rules) {
+        boolean flag = false;
+        for (int i = 0; i < rules.size(); ++i) {
+            visit(rules.get(i));
+            if (!flag) {
+                flag = true;
+            } else {
+                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Arraylib", "subscript", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", false);
             }
-            case JOIN:
-                storeToArray(n.rules);
-                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "concat", "([Ljava/lang/Object;)Ljava/lang/String;", false);
-                return null;
-            case ARRAY:
-                storeToArray(n.rules);
-                return null;
-            case CALL:
-                visit(n.rules.get(0));
-                mv.visitTypeInsn(CHECKCAST, "java/util/function/Function");
-                storeToArray(n.rules.subList(1, n.rules.size()));
-                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/function/Function", "apply", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
-                return null;
-            case AND:
-                generateShortCircuitRoutine(IFEQ, n.rules);
-                return null;
-            case OR:
-                generateShortCircuitRoutine(IFNE, n.rules);
-                return null;
-            case ASSIGN: {
-                // NOTE: This implementation does not mutate maps or arrays
-                final int k = n.rules.size() - 1;
-                final int local = ++locals;
-                visit(n.rules.get(k));
-                mv.visitVarInsn(ASTORE, local);
-                // a = b = c = d --> a, b, c will be d
-                for (int i = k - 1; i >= 0; --i) {
-                    mv.visitVarInsn(ALOAD, 1);
-                    visit(n.rules.get(i));
-                    mv.visitVarInsn(ALOAD, local);
-                    mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
-                    mv.visitInsn(POP);
-                }
-                mv.visitVarInsn(ALOAD, local);
-                --locals;
-                return null;
-            }
-            case IGNORE: {
-                int i = 0;
-                for (; i < n.rules.size() - 1; ++i) {
-                    visit(n.rules.get(i));
-                    mv.visitInsn(POP);
-                }
-                // Last expression keeps it's value
-                visit(n.rules.get(i));
-                return null;
-            }
-            default:
-                throw new RuntimeException("Unknown rule block " + n.type);
         }
+    }
+
+    @Override
+    public void visitRuleJoin(final List<ParseTree> rules) {
+        storeToArray(rules);
+        mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Stdlib", "concat", "([Ljava/lang/Object;)Ljava/lang/String;", false);
+    }
+
+    @Override
+    public void visitRuleArray(final List<ParseTree> rules) {
+        storeToArray(rules);
+    }
+
+    @Override
+    public void visitRuleCall(final List<ParseTree> rules) {
+        visit(rules.get(0));
+        mv.visitTypeInsn(CHECKCAST, "java/util/function/Function");
+        storeToArray(rules.subList(1, rules.size()));
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/function/Function", "apply", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+    }
+
+    @Override
+    public void visitRuleAnd(final List<ParseTree> rules) {
+        generateShortCircuitRoutine(IFEQ, rules);
+    }
+
+    @Override
+    public void visitRuleOr(final List<ParseTree> rules) {
+        generateShortCircuitRoutine(IFNE, rules);
+    }
+
+    @Override
+    public void visitRuleAssign(final List<ParseTree> rules) {
+        // NOTE: This implementation does not mutate maps or arrays
+        final int k = rules.size() - 1;
+        final int local = ++locals;
+        visit(rules.get(k));
+        mv.visitVarInsn(ASTORE, local);
+        // a = b = c = d --> a, b, c will be d
+        for (int i = k - 1; i >= 0; --i) {
+            mv.visitVarInsn(ALOAD, 1);
+            visit(rules.get(i));
+            mv.visitVarInsn(ALOAD, local);
+            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
+            mv.visitInsn(POP);
+        }
+        mv.visitVarInsn(ALOAD, local);
+        --locals;
+    }
+
+    @Override
+    public void visitRuleIgnore(final List<ParseTree> rules) {
+        int i = 0;
+        for (; i < rules.size() - 1; ++i) {
+            visit(rules.get(i));
+            mv.visitInsn(POP);
+        }
+        // Last expression keeps it's value
+        visit(rules.get(i));
     }
 
     public Void visitRulesetNode(final RulesetNode n) {

@@ -15,7 +15,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;
 
-public abstract class BaseRuleVisitor extends Visitor<Void> implements ASMUtils {
+public abstract class BaseRuleVisitor extends BaseVisitor {
 
     public enum VarType {
         HIDDEN, MAP, LIST, NUM, BOOL, EVAL_STATE;

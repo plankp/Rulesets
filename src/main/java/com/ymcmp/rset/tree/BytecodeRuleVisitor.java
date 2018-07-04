@@ -6,6 +6,7 @@
 package com.ymcmp.rset.tree;
 
 import java.util.Map;
+import java.util.List;
 import java.util.function.Consumer;
 
 import org.objectweb.asm.Label;
@@ -346,144 +347,136 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         }
     }
 
-    public Void visitKaryRule(final KaryRule n) {
-        switch (n.type) {
-            case SEQ: {
-                final int ruleCount = n.rules.size();
-                logMessage("FINE", "Sequential clauses (" + ruleCount + " total):");
+    public void visitRuleSeq(final List<ParseTree> rules) {
+        final int ruleCount = rules.size();
+        logMessage("FINE", "Sequential clauses (" + ruleCount + " total):");
 
-                final Label exit = new Label();
-                final int out = findNearestLocal(VarType.LIST);
-                final int lst = pushNewLocal(VarType.LIST);
-                newObjectNoArgs(lst, "java/util/ArrayList");
-                for (int i = 0; i < ruleCount; ++i) {
-                    logMessage("FINER", "Sequential clause " + (i + 1) + " out of " + ruleCount + ":");
+        final Label exit = new Label();
+        final int out = findNearestLocal(VarType.LIST);
+        final int lst = pushNewLocal(VarType.LIST);
+        newObjectNoArgs(lst, "java/util/ArrayList");
+        for (int i = 0; i < ruleCount; ++i) {
+            logMessage("FINER", "Sequential clause " + (i + 1) + " out of " + ruleCount + ":");
 
-                    visit(n.rules.get(i));
-                    jumpIfBoolFalse(RESULT, exit);
-                }
-                mv.visitInsn(ICONST_1);
-                mv.visitVarInsn(ISTORE, RESULT);
-                mv.visitLabel(exit);
-
-                addToParseStack(lst, out);
-                popLocal();
-                return null;
-            }
-            case SWITCH: {
-                final int ruleCount = n.rules.size();
-                logMessage("FINE", "Switch clauses (" + ruleCount + " total):");
-
-                final Label exit = new Label();
-                final Label epilogue = new Label();
-                final int list = findNearestLocal(VarType.LIST);
-                final int rwnd = pushNewLocal(VarType.NUM);
-
-                final int negateState = pushNewLocal(VarType.BOOL);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
-                mv.visitVarInsn(ISTORE, negateState);
-
-                /*
-                ~(a | b) true when input is neither a nor b
-                ~a | ~b  true when input is either not a or not b
-
-                Explaination for generated code:
-                GENERALIZED_SWITCH_CLAUSE (boolean negateState, rule... init, rule last):
-                $FOREACH rule in init
-                    saveRoutine
-                    result = test rule
-                    if negateState {
-                        if !result goto epilogue
-                    } else {
-                        if result goto exit
-                    }
-                    unsaveRoutine
-                $ENDFOR
-
-                    saveRoutine
-                    result = test ~last
-                    if result goto exit
-                epilogue:
-                    unsaveRoutine
-                    result = false
-                exit:
-                */
-
-                for (int i = 0; i < ruleCount - 1; ++i) {
-                    logMessage("FINER", "Switch clause " + (i + 1) + " out of " + ruleCount + ":");
-
-                    saveRoutine(list, rwnd);
-                    visit(n.rules.get(i));
-
-                    ifBoolElse(negateState, () -> {
-                        mv.visitVarInsn(ILOAD, RESULT);
-                        mv.visitJumpInsn(IFEQ, epilogue);
-                    }, () -> {
-                        mv.visitVarInsn(ILOAD, RESULT);
-                        mv.visitJumpInsn(IFNE, exit);
-                    });
-                    unsaveRoutine(list, rwnd);
-                };
-
-                logMessage("FINER", "Switch clause " + ruleCount + " out of " + ruleCount + ":");
-
-                saveRoutine(list, rwnd);
-                visit(n.rules.get(ruleCount - 1));
-
-                ifBoolFalse(RESULT, exit, () -> {
-                    mv.visitLabel(epilogue);
-                    unsaveRoutine(list, rwnd);
-                    mv.visitInsn(ICONST_0);
-                    mv.visitVarInsn(ISTORE, RESULT);
-                });
-
-                popLocal();
-                popLocal();
-
-                return null;
-            }
-            case GROUP: {
-                final int ruleCount = n.rules.size();
-                logMessage("FINE", "Grouping clauses (" + ruleCount + " total):");
-
-                final Label br0 = new Label();
-                final Label br1 = new Label();
-                final int plst = findNearestLocal(VarType.LIST);
-                final int list = pushNewLocal(VarType.LIST);
-                final int rwnd = pushNewLocal(VarType.NUM);
-                newObjectNoArgs(list, "java/util/ArrayList");
-                saveStack(plst, rwnd);
-                for (int i = 0; i < ruleCount; ++i) {
-                    logMessage("FINER", "Group clause " + (i + 1) + " out of " + ruleCount + ":");
-
-                    visit(n.rules.get(i));
-                    jumpIfBoolFalse(RESULT, br0);
-                    decSizeAndDup(plst);
-                    testIf(IF_ICMPLT, () -> {
-                        mv.visitVarInsn(ALOAD, list);
-                        mv.visitInsn(SWAP);
-                        mv.visitVarInsn(ALOAD, plst);
-                        mv.visitInsn(SWAP);
-                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "remove", "(I)Ljava/lang/Object;", true);
-                        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
-                    });
-                    mv.visitInsn(POP);
-                }
-
-                addToParseStack(list, plst);
-                mv.visitJumpInsn(GOTO, br1);
-                mv.visitLabel(br0);
-                unsaveStack(plst, rwnd);
-                mv.visitLabel(br1);
-                popLocal();
-                popLocal();
-                return null;
-            }
-            default:
-                throw new RuntimeException("Unknown rule block " + n.type);
+            visit(rules.get(i));
+            jumpIfBoolFalse(RESULT, exit);
         }
+        mv.visitInsn(ICONST_1);
+        mv.visitVarInsn(ISTORE, RESULT);
+        mv.visitLabel(exit);
+
+        addToParseStack(lst, out);
+        popLocal();
+    }
+
+    public void visitRuleSwitch(final List<ParseTree> rules) {
+        final int ruleCount = rules.size();
+        logMessage("FINE", "Switch clauses (" + ruleCount + " total):");
+
+        final Label exit = new Label();
+        final Label epilogue = new Label();
+        final int list = findNearestLocal(VarType.LIST);
+        final int rwnd = pushNewLocal(VarType.NUM);
+
+        final int negateState = pushNewLocal(VarType.BOOL);
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
+        mv.visitVarInsn(ISTORE, negateState);
+
+        /*
+        ~(a | b) true when input is neither a nor b
+        ~a | ~b  true when input is either not a or not b
+
+        Explaination for generated code:
+        GENERALIZED_SWITCH_CLAUSE (boolean negateState, rule... init, rule last):
+        $FOREACH rule in init
+            saveRoutine
+            result = test rule
+            if negateState {
+                if !result goto epilogue
+            } else {
+                if result goto exit
+            }
+            unsaveRoutine
+        $ENDFOR
+
+            saveRoutine
+            result = test ~last
+            if result goto exit
+        epilogue:
+            unsaveRoutine
+            result = false
+        exit:
+        */
+
+        for (int i = 0; i < ruleCount - 1; ++i) {
+            logMessage("FINER", "Switch clause " + (i + 1) + " out of " + ruleCount + ":");
+
+            saveRoutine(list, rwnd);
+            visit(rules.get(i));
+
+            ifBoolElse(negateState, () -> {
+                mv.visitVarInsn(ILOAD, RESULT);
+                mv.visitJumpInsn(IFEQ, epilogue);
+            }, () -> {
+                mv.visitVarInsn(ILOAD, RESULT);
+                mv.visitJumpInsn(IFNE, exit);
+            });
+            unsaveRoutine(list, rwnd);
+        };
+
+        logMessage("FINER", "Switch clause " + ruleCount + " out of " + ruleCount + ":");
+
+        saveRoutine(list, rwnd);
+        visit(rules.get(ruleCount - 1));
+
+        ifBoolFalse(RESULT, exit, () -> {
+            mv.visitLabel(epilogue);
+            unsaveRoutine(list, rwnd);
+            mv.visitInsn(ICONST_0);
+            mv.visitVarInsn(ISTORE, RESULT);
+        });
+
+        popLocal();
+        popLocal();
+    }
+
+    public void visitRuleGroup(final List<ParseTree> rules) {
+        final int ruleCount = rules.size();
+        logMessage("FINE", "Grouping clauses (" + ruleCount + " total):");
+
+        final Label br0 = new Label();
+        final Label br1 = new Label();
+        final int plst = findNearestLocal(VarType.LIST);
+        final int list = pushNewLocal(VarType.LIST);
+        final int rwnd = pushNewLocal(VarType.NUM);
+        newObjectNoArgs(list, "java/util/ArrayList");
+        saveStack(plst, rwnd);
+        for (int i = 0; i < ruleCount; ++i) {
+            logMessage("FINER", "Group clause " + (i + 1) + " out of " + ruleCount + ":");
+
+            visit(rules.get(i));
+            jumpIfBoolFalse(RESULT, br0);
+            decSizeAndDup(plst);
+            testIf(IF_ICMPLT, () -> {
+                mv.visitVarInsn(ALOAD, list);
+                mv.visitInsn(SWAP);
+                mv.visitVarInsn(ALOAD, plst);
+                mv.visitInsn(SWAP);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "remove", "(I)Ljava/lang/Object;", true);
+                mv.visitMethodInsn(INVOKEINTERFACE, "java/util/List", "add", "(Ljava/lang/Object;)Z", true);
+            });
+            mv.visitInsn(POP);
+        }
+
+        addToParseStack(list, plst);
+        mv.visitJumpInsn(GOTO, br1);
+        mv.visitLabel(br0);
+        unsaveStack(plst, rwnd);
+        mv.visitLabel(br1);
+        popLocal();
+        popLocal();
     }
 
     public Void visitCaptureRule(final CaptureRule n) {
