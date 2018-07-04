@@ -13,6 +13,7 @@ import java.nio.BufferOverflowException;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.Optional;
 import java.util.AbstractMap.SimpleEntry;
 
 import java.util.stream.Stream;
@@ -72,69 +73,71 @@ public class RsetLexer implements Lexer<Type>, Closeable {
 
                     unread(c);
 
-                    final Token<Type> numeric = lexNumeric();
-                    if (numeric != null) return numeric;
-
-                    final Token<Type> ident = lexIdent();
-                    if (ident != null) return ident;
-
-                    throw new BadCharException(c);
+                    return lexNumeric().orElseGet(() -> lexIdent().orElseThrow(() -> {
+                        throw new BadCharException(c);
+                    }));
                 }
             }
         }
         return null;
     }
 
-    private Token<Type> lexIdent() {
+    private Optional<Token<Type>> lexIdent() {
         final String i = readWhile(RsetLexer::isIdent);
         if (!i.isEmpty()) {
-            return new Token<>(Type.L_IDENT, i);
+            return Optional.of(new Token<>(Type.L_IDENT, i));
         }
-        return null;
+        return Optional.empty();
     }
 
-    private Token<Type> lexNumeric() {
+    private Optional<Token<Type>> lexNumeric() {
         final String t = readWhile(Character::isDigit);
         final int k = read();
         if (k == '.') {
             final String frac = readWhile(Character::isDigit);
-            return new Token<>(Type.L_REAL, t + '.' + (frac.isEmpty() ? '0' : frac));
+            return Optional.of(new Token<>(Type.L_REAL, t + '.' + (frac.isEmpty() ? '0' : frac)));
         } else {
             unread(k);
         }
         if (!t.isEmpty()) {
-            return new Token<>(Type.L_INT, t);
+            return Optional.of(new Token<>(Type.L_INT, t));
         }
-        return null;
+        return Optional.empty();
     }
 
-    private Token<Type> lexRawString(char quoteMark) {
+    private boolean processEscaping(final char k, final StringBuilder sb) {
+        if (k == '\\') {    // Escape sequences
+            final int e = read();
+            if (e == -1) {
+                return false;
+            }
+
+            final char c = (char) e;
+            if (!STR_ESC.contains(c)) {
+                sb.append('\\');
+            }
+            sb.append('\\').append(c);
+        } else {
+            if (k == '\'' || k == '\"') {
+                // escape it, avoids problems
+                sb.append('\\');
+            }
+            sb.append(k);
+        }
+        return true;
+    }
+
+    private Token<Type> lexRawString(final char quoteMark) {
         final StringBuilder sb = new StringBuilder();
         // unterminated strings are considered complete
-        while (true) {
+        boolean run = true;
+        while (run) {
             int k = read();
             if (k == -1 || k == quoteMark) {
                 break;
             }
 
-            if (k == '\\') {    // Escape sequences
-                final int e = read();
-                if (e == -1) {
-                    break;
-                }
-
-                final char c = (char) e;
-                if (!STR_ESC.contains(c)) {
-                    sb.append('\\');
-                }
-                sb.append('\\').append(c);
-            } else {
-                if (k == '\'' || k == '\"') {
-                    // escape it, avoids problems
-                    sb.append('\\');
-                }
-                sb.append((char) k);
-            }
+            run = processEscaping((char) k, sb);
         }
         return new Token<>(Type.L_IDENT, sb.toString());
     }
