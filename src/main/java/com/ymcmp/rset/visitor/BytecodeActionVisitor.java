@@ -3,7 +3,7 @@
  * Licensed under the BSD-3-Clause License - https://raw.githubusercontent.com/plankp/Rulesets/blob/master/LICENSE
  */
 
-package com.ymcmp.rset.tree;
+package com.ymcmp.rset.visitor;
 
 import java.util.Map;
 import java.util.List;
@@ -18,6 +18,8 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
 import com.ymcmp.rset.Type;
+
+import com.ymcmp.rset.tree.*;
 
 import com.ymcmp.lexparse.tree.Visitor;
 import com.ymcmp.lexparse.tree.ParseTree;

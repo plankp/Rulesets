@@ -3,7 +3,7 @@
  * Licensed under the BSD-3-Clause License - https://raw.githubusercontent.com/plankp/Rulesets/blob/master/LICENSE
  */
 
-package com.ymcmp.rset.tree;
+package com.ymcmp.rset;
 
 import java.util.function.Consumer;
 import java.util.function.BiConsumer;

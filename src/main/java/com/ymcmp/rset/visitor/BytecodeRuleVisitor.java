@@ -3,7 +3,7 @@
  * Licensed under the BSD-3-Clause License - https://raw.githubusercontent.com/plankp/Rulesets/blob/master/LICENSE
  */
 
-package com.ymcmp.rset.tree;
+package com.ymcmp.rset.visitor;
 
 import java.util.Map;
 import java.util.List;
@@ -14,6 +14,10 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
 import com.ymcmp.rset.Type;
+import com.ymcmp.rset.Scope;
+import com.ymcmp.rset.Scope.VarType;
+
+import com.ymcmp.rset.tree.*;
 
 import com.ymcmp.lexparse.tree.Visitor;
 import com.ymcmp.lexparse.tree.ParseTree;
@@ -52,7 +56,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             default: {
                 logMessage("FINE", "Test for " + n.getText());
 
-                final int plst = findNearestLocal(VarType.LIST);
+                final int plst = scope.findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
 
@@ -76,9 +80,9 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                         mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toCharArray", "()[C", false);
 
                         final int len = n.toObject().toString().length(); // Strings are immutable, compute length at compile time
-                        final int lst = pushNewLocal(VarType.LIST);
-                        final int arr = pushNewLocal(VarType.LIST);
-                        final int idx = pushNewLocal(VarType.NUM);
+                        final int lst = scope.pushNewLocal(VarType.LIST);
+                        final int arr = scope.pushNewLocal(VarType.LIST);
+                        final int idx = scope.pushNewLocal(VarType.NUM);
                         newObjectNoArgs(lst, "java/util/ArrayList");
                         mv.visitVarInsn(ASTORE, arr);
                         mv.visitInsn(ICONST_0);
@@ -104,9 +108,9 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                         });
                         mv.visitInsn(POP);
                         addToParseStack(lst, plst);
-                        popLocal();
-                        popLocal();
-                        popLocal();
+                        scope.popLocal();
+                        scope.popLocal();
+                        scope.popLocal();
                         break;
                     }
                 }
@@ -133,7 +137,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             mv.visitLdcInsn(cl);
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             mv.visitInsn(from ? ICONST_1 : ICONST_0);
-            mv.visitVarInsn(ALOAD, findNearestLocal(VarType.LIST));
+            mv.visitVarInsn(ALOAD, scope.findNearestLocal(VarType.LIST));
             mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testInheritance", "(Ljava/lang/Class;ZLjava/util/Collection;)Z", false);
             mv.visitVarInsn(ISTORE, RESULT);
         } catch (NullPointerException ex) {
@@ -146,7 +150,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             case S_TD: {
                 logMessage("FINE", "Negate next clause");
 
-                final int negateSave = pushNewLocal(VarType.BOOL);
+                final int negateSave = scope.pushNewLocal(VarType.BOOL);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
@@ -162,29 +166,29 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                 mv.visitVarInsn(ILOAD, negateSave);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setNegateFlag", "(Z)V", false);
-                popLocal();
+                scope.popLocal();
                 return null;
             }
             case S_QM: {
                 logMessage("FINE", "[0, 1] next clause");
 
-                final int list = findNearestLocal(VarType.LIST);
-                final int rwnd = pushNewLocal(VarType.NUM);
+                final int list = scope.findNearestLocal(VarType.LIST);
+                final int rwnd = scope.pushNewLocal(VarType.NUM);
                 saveRoutine(list, rwnd);
                 visit(n.rule);
                 ifBoolFalse(RESULT, () -> unsaveRoutine(list, rwnd));
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
-                popLocal();
+                scope.popLocal();
                 return null;
             }
             case S_AD: {
                 logMessage("FINE", "[1, n] next clause");
 
-                final int plst = findNearestLocal(VarType.LIST);
-                final int flag = pushNewLocal(VarType.BOOL);
-                final int list = pushNewLocal(VarType.LIST);
-                final int rwnd = pushNewLocal(VarType.NUM);
+                final int plst = scope.findNearestLocal(VarType.LIST);
+                final int flag = scope.pushNewLocal(VarType.BOOL);
+                final int list = scope.pushNewLocal(VarType.LIST);
+                final int rwnd = scope.pushNewLocal(VarType.NUM);
                 mv.visitInsn(ICONST_0);
                 mv.visitVarInsn(ISTORE, flag);
                 newObjectNoArgs(list, "java/util/ArrayList");
@@ -202,17 +206,17 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 addToParseStack(list, plst);
                 mv.visitVarInsn(ILOAD, flag);
                 mv.visitVarInsn(ISTORE, RESULT);
-                popLocal();
-                popLocal();
-                popLocal();
+                scope.popLocal();
+                scope.popLocal();
+                scope.popLocal();
                 return null;
             }
             case S_ST: {
                 logMessage("FINE", "[0, n] next clause");
 
-                final int plst = findNearestLocal(VarType.LIST);
-                final int list = pushNewLocal(VarType.LIST);
-                final int rwnd = pushNewLocal(VarType.NUM);
+                final int plst = scope.findNearestLocal(VarType.LIST);
+                final int list = scope.pushNewLocal(VarType.LIST);
+                final int rwnd = scope.pushNewLocal(VarType.NUM);
                 newObjectNoArgs(list, "java/util/ArrayList");
 
                 whileLoop(exit -> {
@@ -226,8 +230,8 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 addToParseStack(list, plst);
                 mv.visitInsn(ICONST_1);
                 mv.visitVarInsn(ISTORE, RESULT);
-                popLocal();
-                popLocal();
+                scope.popLocal();
+                scope.popLocal();
                 return null;
             }
             case S_EX:
@@ -238,7 +242,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                     mv.visitLdcInsn(selector);
-                    mv.visitVarInsn(ALOAD, findNearestLocal(VarType.LIST));
+                    mv.visitVarInsn(ALOAD, scope.findNearestLocal(VarType.LIST));
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "hasFieldOrMethod", "(Ljava/lang/String;Ljava/util/Collection;)Z", false);
                     mv.visitVarInsn(ISTORE, RESULT);
                     return null;
@@ -261,7 +265,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 mv.visitInsn(DUP);
                 testIfElse(IFNULL, () -> {
                     // save this.evalState,
-                    final int save = pushNewLocal(VarType.EVAL_STATE);
+                    final int save = scope.pushNewLocal(VarType.EVAL_STATE);
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                     mv.visitVarInsn(ASTORE, save);
@@ -278,7 +282,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     mv.visitVarInsn(ALOAD, 0);
                     mv.visitVarInsn(ALOAD, save);
                     mv.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                    popLocal();
+                    scope.popLocal();
                 }, () -> {
                     // evalState is null, result is set to false because item was not destructable
                     mv.visitInsn(POP);
@@ -326,7 +330,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 final ValueNode node2 = (ValueNode) n.rule2;
                 logMessage("FINE", "Test range of [" + node1.getText() + ", " + node2.getText() + "]");
 
-                final int plst = findNearestLocal(VarType.LIST);
+                final int plst = scope.findNearestLocal(VarType.LIST);
                 mv.visitVarInsn(ALOAD, 0);
                 mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
 
@@ -352,8 +356,8 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         logMessage("FINE", "Sequential clauses (" + ruleCount + " total):");
 
         final Label exit = new Label();
-        final int out = findNearestLocal(VarType.LIST);
-        final int lst = pushNewLocal(VarType.LIST);
+        final int out = scope.findNearestLocal(VarType.LIST);
+        final int lst = scope.pushNewLocal(VarType.LIST);
         newObjectNoArgs(lst, "java/util/ArrayList");
         for (int i = 0; i < ruleCount; ++i) {
             logMessage("FINER", "Sequential clause " + (i + 1) + " out of " + ruleCount + ":");
@@ -366,7 +370,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv.visitLabel(exit);
 
         addToParseStack(lst, out);
-        popLocal();
+        scope.popLocal();
     }
 
     public void visitRuleSwitch(final List<ParseTree> rules) {
@@ -375,10 +379,10 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
         final Label exit = new Label();
         final Label epilogue = new Label();
-        final int list = findNearestLocal(VarType.LIST);
-        final int rwnd = pushNewLocal(VarType.NUM);
+        final int list = scope.findNearestLocal(VarType.LIST);
+        final int rwnd = scope.pushNewLocal(VarType.NUM);
 
-        final int negateState = pushNewLocal(VarType.BOOL);
+        final int negateState = scope.pushNewLocal(VarType.BOOL);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
@@ -438,8 +442,8 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             mv.visitVarInsn(ISTORE, RESULT);
         });
 
-        popLocal();
-        popLocal();
+        scope.popLocal();
+        scope.popLocal();
     }
 
     public void visitRuleGroup(final List<ParseTree> rules) {
@@ -448,9 +452,9 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
         final Label br0 = new Label();
         final Label br1 = new Label();
-        final int plst = findNearestLocal(VarType.LIST);
-        final int list = pushNewLocal(VarType.LIST);
-        final int rwnd = pushNewLocal(VarType.NUM);
+        final int plst = scope.findNearestLocal(VarType.LIST);
+        final int list = scope.pushNewLocal(VarType.LIST);
+        final int rwnd = scope.pushNewLocal(VarType.NUM);
         newObjectNoArgs(list, "java/util/ArrayList");
         saveStack(plst, rwnd);
         for (int i = 0; i < ruleCount; ++i) {
@@ -475,15 +479,15 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv.visitLabel(br0);
         unsaveStack(plst, rwnd);
         mv.visitLabel(br1);
-        popLocal();
-        popLocal();
+        scope.popLocal();
+        scope.popLocal();
     }
 
     public Void visitCaptureRule(final CaptureRule n) {
         final Label exit = new Label();
         final String dest = n.dest.getText();
-        final int plst = findNearestLocal(VarType.LIST);
-        final int map = findNearestLocal(VarType.MAP);
+        final int plst = scope.findNearestLocal(VarType.LIST);
+        final int map = scope.findNearestLocal(VarType.MAP);
         logMessage("FINE", "Capturing next clause as " + dest);
 
         visit(n.rule);
@@ -513,11 +517,11 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv = cw.visitMethod(ACC_PUBLIC, testName, "(Ljava/util/Map;Ljava/util/List;)Z", "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/Object;>;Ljava/util/List<Ljava/lang/Object;>;)Z", null);
         mv.visitCode();
 
-        pushNewLocal(VarType.HIDDEN);  // this
-        final int env = pushNewLocal(VarType.MAP);      // env
-        final int lst = pushNewLocal(VarType.LIST);     // lst
-        final int map = pushNewLocal(VarType.MAP);
-        RESULT = pushNewLocal(VarType.BOOL);
+        scope.pushNewLocal(VarType.HIDDEN);  // this
+        final int env = scope.pushNewLocal(VarType.MAP);      // env
+        final int lst = scope.pushNewLocal(VarType.LIST);     // lst
+        final int map = scope.pushNewLocal(VarType.MAP);
+        RESULT = scope.pushNewLocal(VarType.BOOL);
 
         // Initialize objects
         newObjectNoArgs(map, "java/util/HashMap");
@@ -541,11 +545,11 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv.visitVarInsn(ILOAD, RESULT);
         mv.visitInsn(IRETURN);
 
-        popLocal();
-        popLocal();
-        popLocal();
-        popLocal();
-        popLocal();
+        scope.popLocal();
+        scope.popLocal();
+        scope.popLocal();
+        scope.popLocal();
+        scope.popLocal();
 
         mv.visitMaxs(0, 0);
         mv.visitEnd();

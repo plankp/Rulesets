@@ -3,12 +3,17 @@
  * Licensed under the BSD-3-Clause License - https://raw.githubusercontent.com/plankp/Rulesets/blob/master/LICENSE
  */
 
-package com.ymcmp.rset.tree;
+package com.ymcmp.rset.visitor;
 
 import java.util.Stack;
 
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
+
+import com.ymcmp.rset.Scope;
+import com.ymcmp.rset.Scope.VarType;
+
+import com.ymcmp.rset.tree.*;
 
 import com.ymcmp.lexparse.tree.Visitor;
 import com.ymcmp.lexparse.tree.ParseTree;
@@ -17,14 +22,10 @@ import static org.objectweb.asm.Opcodes.*;
 
 public abstract class BaseRuleVisitor extends BaseVisitor {
 
-    public enum VarType {
-        HIDDEN, MAP, LIST, NUM, BOOL, EVAL_STATE;
-    }
-
-    private final Stack<VarType> locals = new Stack<>();
-
     protected final String className;
     protected final ClassWriter cw;
+
+    public final Scope scope = new Scope();
 
     public final boolean genDebugInfo;
 
@@ -39,19 +40,6 @@ public abstract class BaseRuleVisitor extends BaseVisitor {
     @Override
     public MethodVisitor getMethodVisitor() {
         return this.mv;
-    }
-
-    public int pushNewLocal(VarType t) {
-        locals.push(t);
-        return locals.size() - 1;
-    }
-
-    public void popLocal() {
-        locals.pop();
-    }
-
-    public int findNearestLocal(VarType t) {
-        return locals.lastIndexOf(t);
     }
 
     public void logMessage(final String level, final String message) {
@@ -97,7 +85,7 @@ public abstract class BaseRuleVisitor extends BaseVisitor {
     }
 
     protected void invokeEvalStateNoObject(int resultSlot, String methodName) {
-        final int plst = findNearestLocal(VarType.LIST);
+        final int plst = scope.findNearestLocal(VarType.LIST);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitVarInsn(ALOAD, plst);

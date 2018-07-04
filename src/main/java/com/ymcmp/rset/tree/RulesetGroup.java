@@ -21,7 +21,11 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
-import com.ymcmp.rset.tree.BaseRuleVisitor.VarType;
+import com.ymcmp.rset.ASMUtils;
+import com.ymcmp.rset.Scope.VarType;
+
+import com.ymcmp.rset.visitor.BytecodeRuleVisitor;
+import com.ymcmp.rset.visitor.BytecodeActionVisitor;
 
 import com.ymcmp.lexparse.tree.ParseTree;
 
@@ -68,9 +72,9 @@ public final class RulesetGroup extends ParseTree {
                         case SUBRULE:
                             return vis -> {
                                 final String name = e.name.getText();
-                                final int lst = vis.findNearestLocal(VarType.LIST);
-                                final int localEnv = vis.pushNewLocal(VarType.MAP);
-                                final int parseLst = vis.pushNewLocal(VarType.LIST);
+                                final int lst = vis.scope.findNearestLocal(VarType.LIST);
+                                final int localEnv = vis.scope.pushNewLocal(VarType.MAP);
+                                final int parseLst = vis.scope.pushNewLocal(VarType.LIST);
                                 vis.mv.visitVarInsn(ALOAD, 0);
                                 vis.mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
                                 vis.mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
@@ -99,8 +103,8 @@ public final class RulesetGroup extends ParseTree {
                                     vis.mv.visitInsn(POP);
                                 });
                                 vis.mv.visitVarInsn(ISTORE, vis.RESULT);
-                                vis.popLocal();
-                                vis.popLocal();
+                                vis.scope.popLocal();
+                                vis.scope.popLocal();
                             };
                         case FRAGMENT:
                             return vis -> {
