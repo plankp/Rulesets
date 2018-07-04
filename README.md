@@ -81,29 +81,32 @@ Interfacing the rules with Java:
 final String generatedClassName = /* Something */;
 try (final RsetLexer lexer = new RsetLexer(/* A Reader that contains the above code */)) {
     final RsetParser parser = new RsetParser(lexer);
+    final RulesetGroup tree = parser.parse();
 
-    // The alternative is to write the bytes to a file
-    // and save it as with class name you gave .class
-    //
-    // The output file is dependent on
-    //   com.ymcmp.rset.rt.*
-    //   com.ymcmp.rset.lib.*
-    final byte[] bytes = Ruleset.toEvalMap(parser.parse().toBytecode(generatedClassName));
+    if (tree != null) {
+        // The alternative is to write the bytes to a file
+        // and save it as with class name you gave .class
+        //
+        // The output file is dependent on
+        //   com.ymcmp.rset.rt.*
+        //   com.ymcmp.rset.lib.*
+        final byte[] bytes = tree.toBytecode(generatedClassName);
 
-    final ByteClassLoader bcl = new ByteClassLoader();
-    final Class<?> cl = bcl.loadFromBytes(generatedClassName, bytes);
+        final ByteClassLoader bcl = new ByteClassLoader();
+        final Class<?> cl = bcl.loadFromBytes(generatedClassName, bytes);
 
-    // cl implements Rulesets, so this cast is safe
-    // You could use cl.getConstructor(Extensions.class).newInstance(ext) for loading custom extensions
-    final Rulesets rulesets = (Rulesets) cl.getConstructor().newInstance();
+        // cl implements Rulesets, so this cast is safe
+        // You could use cl.getConstructor(Extensions.class).newInstance(ext) for loading custom extensions
+        final Rulesets rulesets = (Rulesets) cl.getConstructor().newInstance();
 
-    // In this example, we will be testing 0x1234
-    final Object[] test = new Object[]{ '0', 'x', '1', '2', '3', '4' };
-    rulesets.forEachRule((name, rule) -> {
-        final Object result = rule.apply(test);
-        // name: name of the matching rule
-        // result: result of { ... } after rule definition
-    });
+        // In this example, we will be testing 0x1234
+        final Object[] test = new Object[]{ '0', 'x', '1', '2', '3', '4' };
+        rulesets.forEachRule((name, rule) -> {
+            final Object result = rule.apply(test);
+            // name: name of the matching rule
+            // result: result of { ... } after rule definition
+        });
+    }
 } catch (Exception ex) {
     // Handle these...
 }
