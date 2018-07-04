@@ -24,7 +24,7 @@ public abstract class ParseTree {
         // look for method T visitClassName (ClassName)
         final String synthName = "visit" + this.getClass().getSimpleName();
         try {
-            final Method m = vis.getClass().getDeclaredMethod(synthName, this.getClass());
+            final Method m = vis.getClass().getMethod(synthName, this.getClass());
             return (T) m.invoke(vis, this);
         } catch (NoSuchMethodException | IllegalAccessException ex) {
             return vis.methodNotFound(this);
