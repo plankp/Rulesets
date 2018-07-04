@@ -65,21 +65,24 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                 case '\'':
                 case '"':
                     return lexRawString(c);
-                default: {
-                    final Type type = MONO_OP.get(c);
-                    if (type != null) {
-                        return new Token<>(type, Character.toString(c));
-                    }
+                default:
+                    return getTokenFrom(c).orElseGet(() -> {
+                        unread(c);
 
-                    unread(c);
-
-                    return lexNumeric().orElseGet(() -> lexIdent().orElseThrow(() -> {
-                        throw new BadCharException(c);
-                    }));
-                }
+                        // Using orElseGet instead of orElseThrow since Java 8
+                        // cannot infer Throwable is BadCharException which is a RTE
+                        return lexNumeric().orElseGet(() -> lexIdent().orElseGet(() -> {
+                            throw new BadCharException(c);
+                        }));
+                    });
             }
         }
         return null;
+    }
+
+    private Optional<Token<Type>> getTokenFrom(final char c) {
+        return Optional.ofNullable(MONO_OP.get(c))
+                .map(type -> new Token<>(type, Character.toString(c)));
     }
 
     private Optional<Token<Type>> lexIdent() {
@@ -105,18 +108,21 @@ public class RsetLexer implements Lexer<Type>, Closeable {
         return Optional.empty();
     }
 
-    private boolean processEscaping(final char k, final StringBuilder sb) {
+    private static void processStrEsc(final char c, final StringBuilder sb) {
+        if (!STR_ESC.contains(c)) {
+            sb.append('\\');
+        }
+        sb.append('\\').append(c);
+    }
+
+    private boolean processStrChar(final char k, final StringBuilder sb) {
         if (k == '\\') {    // Escape sequences
             final int e = read();
             if (e == -1) {
                 return false;
             }
 
-            final char c = (char) e;
-            if (!STR_ESC.contains(c)) {
-                sb.append('\\');
-            }
-            sb.append('\\').append(c);
+            processStrEsc((char) e, sb);
         } else {
             if (k == '\'' || k == '\"') {
                 // escape it, avoids problems
@@ -137,7 +143,7 @@ public class RsetLexer implements Lexer<Type>, Closeable {
                 break;
             }
 
-            run = processEscaping((char) k, sb);
+            run = processStrChar((char) k, sb);
         }
         return new Token<>(Type.L_IDENT, sb.toString());
     }
