@@ -43,21 +43,8 @@ public class BytecodeActionVisitor extends BaseVisitor {
         return this.mv;
     }
 
-    public Void visitValueNode(final ValueNode n) {
-        mv.visitLdcInsn(n.toObject());
-        // Make sure the item on stack is an object, not a primitive
-        switch (n.token.type) {
-            case L_INT:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-                break;
-            case L_REAL:
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-                break;
-            case L_CHARS:
-                mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toCharArray", "()[C", false);
-                break;
-        }
-        return null;
+    public void visitValueNode(final ValueNode n) {
+        pushAsObject(n);
     }
 
     public Void visitUnaryRule(final UnaryRule n) {

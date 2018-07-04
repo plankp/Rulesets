@@ -35,6 +35,11 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         this.refs = refs;
     }
 
+    private void loadEvalState() {
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+    }
+
     public Void visitRefRule(final RefRule n) {
         final String name = n.node.getText();
         final Consumer<BytecodeRuleVisitor> cons = refs.get(name);
@@ -57,65 +62,41 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 logMessage("FINE", "Test for " + n.getText());
 
                 final int plst = scope.findNearestLocal(VarType.LIST);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                loadEvalState();
 
-                final Object obj = n.toObject();
-                if (obj == null) {
-                    // LdcInsn does not handle nulls
-                    mv.visitInsn(ACONST_NULL);
-                } else {
-                    mv.visitLdcInsn(obj);
-                }
-                // Make sure the item on stack is an object, not a primitive
-                switch (n.token.type) {
-                    case L_INT:
-                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-                        break;
-                    case L_REAL:
-                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-                        break;
-                    case L_CHARS: {
-                        // convert to char[], use a different testEquality...
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/String", "toCharArray", "()[C", false);
+                pushAsObject(n);
 
-                        final int len = n.toObject().toString().length(); // Strings are immutable, compute length at compile time
-                        final int lst = scope.pushNewLocal(VarType.LIST);
-                        final int arr = scope.pushNewLocal(VarType.LIST);
-                        final int idx = scope.pushNewLocal(VarType.NUM);
-                        newObjectNoArgs(lst, "java/util/ArrayList");
-                        mv.visitVarInsn(ASTORE, arr);
-                        mv.visitInsn(ICONST_0);
-                        mv.visitVarInsn(ISTORE, idx);
-                        mv.visitInsn(ICONST_0);
+                if (n.token.type == Type.L_CHARS) {
+                    // generate a loop that tests equality on every index
+                    // %abc is short-hand for %a %b %c which becomes
+                    // testEquality((Character) 'a') testEquality((Character) 'b') testEquality((Character) 'c')
+
+                    final int arrChars = scope.pushNewLocal(VarType.LIST);
+                    final int lst = scope.pushNewLocal(VarType.LIST);
+                    mv.visitVarInsn(ASTORE, arrChars);
+                    newObjectNoArgs(lst, "java/util/ArrayList");
+                    storeBool(RESULT, false);
+
+                    // Strings are immutable, compute length at compile time
+                    fixedIntCounter(scope.pushNewLocal(VarType.NUM), 0, n.toObject().toString().length(), (i, exit, loop) -> {
+                        loadEvalState();
+                        mv.visitVarInsn(ALOAD, arrChars);
+                        mv.visitVarInsn(ILOAD, i);
+                        mv.visitInsn(CALOAD);
+                        mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
+                        mv.visitVarInsn(ALOAD, lst);
+                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
                         mv.visitVarInsn(ISTORE, RESULT);
-                        whileLoop(exit -> {
-                            mv.visitVarInsn(ILOAD, idx);
-                            mv.visitLdcInsn(len);
-                            mv.visitJumpInsn(IF_ICMPGE, exit);
-                        }, (exit, loop) -> {
-                            mv.visitVarInsn(ALOAD, 0);
-                            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
-                            mv.visitVarInsn(ALOAD, arr);
-                            mv.visitVarInsn(ILOAD, idx);
-                            mv.visitInsn(CALOAD);
-                            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                            mv.visitVarInsn(ALOAD, lst);
-                            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
-                            mv.visitVarInsn(ISTORE, RESULT);
-                            jumpIfBoolFalse(RESULT, exit);
-                            mv.visitIincInsn(idx, 1);
-                        });
-                        mv.visitInsn(POP);
-                        addToParseStack(lst, plst);
-                        scope.popLocal();
-                        scope.popLocal();
-                        scope.popLocal();
-                        break;
-                    }
-                }
+                        jumpIfBoolFalse(RESULT, exit);
+                    });
+                    mv.visitInsn(POP);
+                    addToParseStack(lst, plst);
+                    scope.popLocal();
+                    scope.popLocal();
+                    scope.popLocal();
+                } else {
+                    // Other data types just call testEquality, nothing special is needed
 
-                if (n.token.type != Type.L_CHARS) {
                     mv.visitVarInsn(ALOAD, plst);
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
                     mv.visitVarInsn(ISTORE, RESULT);
@@ -132,8 +113,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     ? ("Test if class of slot inherits from class '" + cl + "'")
                     : ("Test if class '" + cl + "' inherits from class of slot"));
             // load the class at runtime instead of compile time
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+            loadEvalState();
             mv.visitLdcInsn(cl);
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             mv.visitInsn(from ? ICONST_1 : ICONST_0);
@@ -151,19 +131,16 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 logMessage("FINE", "Negate next clause");
 
                 final int negateSave = scope.pushNewLocal(VarType.BOOL);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                loadEvalState();
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
                 mv.visitVarInsn(ISTORE, negateSave);
                 // Negate the current state: ~~'a' actually means 'a'
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                loadEvalState();
                 mv.visitVarInsn(ILOAD, negateSave);
                 testIfElse(IFNE, () -> mv.visitInsn(ICONST_1), () -> mv.visitInsn(ICONST_0));
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setNegateFlag", "(Z)V", false);
                 visit(n.rule);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                loadEvalState();
                 mv.visitVarInsn(ILOAD, negateSave);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setNegateFlag", "(Z)V", false);
                 scope.popLocal();
@@ -177,8 +154,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 saveRoutine(list, rwnd);
                 visit(n.rule);
                 ifBoolFalse(RESULT, () -> unsaveRoutine(list, rwnd));
-                mv.visitInsn(ICONST_1);
-                mv.visitVarInsn(ISTORE, RESULT);
+                storeBool(RESULT, true);
                 scope.popLocal();
                 return null;
             }
@@ -189,8 +165,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 final int flag = scope.pushNewLocal(VarType.BOOL);
                 final int list = scope.pushNewLocal(VarType.LIST);
                 final int rwnd = scope.pushNewLocal(VarType.NUM);
-                mv.visitInsn(ICONST_0);
-                mv.visitVarInsn(ISTORE, flag);
+                storeBool(flag, false);
                 newObjectNoArgs(list, "java/util/ArrayList");
 
                 whileLoop(exit -> {
@@ -198,8 +173,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     visit(n.rule);
                     jumpIfBoolFalse(RESULT, exit);
                 }, (exit, loop) -> {
-                    mv.visitInsn(ICONST_1);
-                    mv.visitVarInsn(ISTORE, flag);
+                    storeBool(flag, true);
                 });
 
                 unsaveRoutine(list, rwnd);
@@ -222,14 +196,12 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 whileLoop(exit -> {
                     saveRoutine(list, rwnd);
                     visit(n.rule);
-                    mv.visitVarInsn(ILOAD, RESULT);
-                    mv.visitJumpInsn(IFEQ, exit);
+                    jumpIfBoolFalse(RESULT, exit);
                 }, null);
 
                 unsaveRoutine(list, rwnd);
                 addToParseStack(list, plst);
-                mv.visitInsn(ICONST_1);
-                mv.visitVarInsn(ISTORE, RESULT);
+                storeBool(RESULT, true);
                 scope.popLocal();
                 scope.popLocal();
                 return null;
@@ -239,8 +211,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     final String selector = ((ValueNode) n.rule).toObject().toString();
                     logMessage("FINE", "Test if object responds to selector '" + selector + "'");
 
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    loadEvalState();
                     mv.visitLdcInsn(selector);
                     mv.visitVarInsn(ALOAD, scope.findNearestLocal(VarType.LIST));
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "hasFieldOrMethod", "(Ljava/lang/String;Ljava/util/Collection;)Z", false);
@@ -258,16 +229,14 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             case S_LS: {
                 logMessage("FINE", "Destructing Array or Collection:");
 
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                loadEvalState();
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "destructArray", "()Lcom/ymcmp/rset/rt/EvalState;", false);
 
                 mv.visitInsn(DUP);
                 testIfElse(IFNULL, () -> {
                     // save this.evalState,
                     final int save = scope.pushNewLocal(VarType.EVAL_STATE);
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    loadEvalState();
                     mv.visitVarInsn(ASTORE, save);
 
                     // update this.state to the newly created state (TOP OF STACK),
@@ -286,8 +255,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 }, () -> {
                     // evalState is null, result is set to false because item was not destructable
                     mv.visitInsn(POP);
-                    mv.visitInsn(ICONST_0);
-                    mv.visitVarInsn(ISTORE, RESULT);
+                    storeBool(RESULT, false);
                 });
                 return null;
             }
@@ -331,8 +299,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 logMessage("FINE", "Test range of [" + node1.getText() + ", " + node2.getText() + "]");
 
                 final int plst = scope.findNearestLocal(VarType.LIST);
-                mv.visitVarInsn(ALOAD, 0);
-                mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                loadEvalState();
 
                 try {
                     ldcRangeConstant(node1);
@@ -365,8 +332,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             visit(rules.get(i));
             jumpIfBoolFalse(RESULT, exit);
         }
-        mv.visitInsn(ICONST_1);
-        mv.visitVarInsn(ISTORE, RESULT);
+        storeBool(RESULT, true);
         mv.visitLabel(exit);
 
         addToParseStack(lst, out);
@@ -383,8 +349,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         final int rwnd = scope.pushNewLocal(VarType.NUM);
 
         final int negateState = scope.pushNewLocal(VarType.BOOL);
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        loadEvalState();
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "getNegateFlag", "()Z", false);
         mv.visitVarInsn(ISTORE, negateState);
 
@@ -420,13 +385,9 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             saveRoutine(list, rwnd);
             visit(rules.get(i));
 
-            ifBoolElse(negateState, () -> {
-                mv.visitVarInsn(ILOAD, RESULT);
-                mv.visitJumpInsn(IFEQ, epilogue);
-            }, () -> {
-                mv.visitVarInsn(ILOAD, RESULT);
-                mv.visitJumpInsn(IFNE, exit);
-            });
+            ifBoolElse(negateState,
+                    () -> jumpIfBoolFalse(RESULT, epilogue),
+                    () -> jumpIfBoolTrue(RESULT, exit));
             unsaveRoutine(list, rwnd);
         };
 
@@ -438,8 +399,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         ifBoolFalse(RESULT, exit, () -> {
             mv.visitLabel(epilogue);
             unsaveRoutine(list, rwnd);
-            mv.visitInsn(ICONST_0);
-            mv.visitVarInsn(ISTORE, RESULT);
+            storeBool(RESULT, false);
         });
 
         scope.popLocal();
