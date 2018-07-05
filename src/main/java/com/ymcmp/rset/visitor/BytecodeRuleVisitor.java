@@ -265,29 +265,15 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
     }
 
     private void ldcRangeConstant(ValueNode node) {
-        switch (node.token.type) {
-            case L_CHARS: {
-                final String str = node.toObject().toString();
-                if (str.length() != 1) {
-                    throw new RuntimeException("Invalid char range on " + str + ", length > 1");
-                }
-                mv.visitLdcInsn(str.charAt(0));
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                break;
+        pushAsObject(node);
+        if (node.token.type == Type.L_CHARS) {
+            final String str = node.toObject().toString();
+            if (str.length() != 1) {
+                throw new RuntimeException("Invalid char range on " + str + ", length > 1");
             }
-            case L_INT:
-                mv.visitLdcInsn(node.toObject());
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-                break;
-            case L_REAL:
-                mv.visitLdcInsn(node.toObject());
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-                break;
-            case L_IDENT:
-                mv.visitLdcInsn(node.toObject());
-                break;
-            default:
-                throw new RuntimeException("Illegal load for " + node.token);
+            mv.visitInsn(ICONST_0);
+            mv.visitInsn(CALOAD);
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
         }
     }
 
@@ -301,12 +287,8 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 final int plst = scope.findNearestLocal(VarType.LIST);
                 loadEvalState();
 
-                try {
-                    ldcRangeConstant(node1);
-                    ldcRangeConstant(node2);
-                } catch (IndexOutOfBoundsException ex) {
-                    throw new RuntimeException("Broken char range on empty char sequence: " + node1.getText() + ", " + node2.getText());
-                }
+                ldcRangeConstant(node1);
+                ldcRangeConstant(node2);
 
                 mv.visitVarInsn(ALOAD, plst);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testRange", "(Ljava/lang/Comparable;Ljava/lang/Comparable;Ljava/util/Collection;)Z", false);
