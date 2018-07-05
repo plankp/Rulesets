@@ -272,39 +272,46 @@ public final class RulesetGroup extends ParseTree {
         ctor.visitEnd();
 
         // Implement the Rulesets interface
-        {
-            MethodVisitor mv;
-            mv = cw.visitMethod(ACC_PUBLIC, "getRuleNames", "()Ljava/util/Set;", "()Ljava/util/Set<Ljava/lang/String;>;", null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
-            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "keySet", "()Ljava/util/Set;", true);
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-
-            mv = cw.visitMethod(ACC_PUBLIC, "getRule", "(Ljava/lang/String;)Lcom/ymcmp/rset/rt/Rule;", null, null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
-            mv.visitVarInsn(ALOAD, 1);
-            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
-            mv.visitInsn(ARETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-
-            mv = cw.visitMethod(ACC_PUBLIC, "forEachRule", "(Ljava/util/function/BiConsumer;)V", "(Ljava/util/function/BiConsumer<-Ljava/lang/String;+Lcom/ymcmp/rset/rt/Rule;>;)V", null);
-            mv.visitCode();
-            mv.visitVarInsn(ALOAD, 0);
-            mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
-            mv.visitVarInsn(ALOAD, 1);
-            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "forEach", "(Ljava/util/function/BiConsumer;)V", true);
-            mv.visitInsn(RETURN);
-            mv.visitMaxs(0, 0);
-            mv.visitEnd();
-        }
+        implGetRule(cw, className);
+        implGetRuleNames(cw, className);
+        implForEachRule(cw, className);
 
         cw.visitEnd();
         return cw.toByteArray();
+    }
+
+    private static void implGetRuleNames(ClassWriter cw, String className) {
+        final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getRuleNames", "()Ljava/util/Set;", "()Ljava/util/Set<Ljava/lang/String;>;", null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "keySet", "()Ljava/util/Set;", true);
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+
+    private static void implGetRule(ClassWriter cw, String className) {
+        final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "getRule", "(Ljava/lang/String;)Lcom/ymcmp/rset/rt/Rule;", null, null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
+        mv.visitInsn(ARETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
+    }
+
+    private static void implForEachRule(ClassWriter cw, String className) {
+        final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "forEachRule", "(Ljava/util/function/BiConsumer;)V", "(Ljava/util/function/BiConsumer<-Ljava/lang/String;+Lcom/ymcmp/rset/rt/Rule;>;)V", null);
+        mv.visitCode();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
+        mv.visitVarInsn(ALOAD, 1);
+        mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "forEach", "(Ljava/util/function/BiConsumer;)V", true);
+        mv.visitInsn(RETURN);
+        mv.visitMaxs(0, 0);
+        mv.visitEnd();
     }
 }
