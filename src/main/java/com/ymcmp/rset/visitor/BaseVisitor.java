@@ -29,7 +29,7 @@ public abstract class BaseVisitor extends Visitor<Void> implements ASMUtils {
             case SEQ:       visitRuleSeq(r.rules); break;
             case SWITCH:    visitRuleSwitch(r.rules); break;
             case GROUP:     visitRuleGroup(r.rules); break;
-            default: return methodNotFound(r);
+            default: throw new UnsupportedOperationException();
         }
         return null;
     }
