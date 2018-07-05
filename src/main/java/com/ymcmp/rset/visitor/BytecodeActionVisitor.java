@@ -70,6 +70,7 @@ public class BytecodeActionVisitor extends BaseVisitor {
         castRuleToDouble(lhs);
         castRuleToDouble(rhs);
         mv.visitInsn(op);
+        doubleToNumber();
     }
 
     private void callMathlibCompareMethod(ParseTree lhs, ParseTree rhs, String method) {
@@ -80,6 +81,21 @@ public class BytecodeActionVisitor extends BaseVisitor {
         mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Mathlib", method, "(Ljava/lang/Comparable;Ljava/lang/Comparable;)Z", false);
         // Box the boolean value
         mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+    }
+
+    private void doubleToNumber() {
+        // Cast to int if value is same, then box value
+        mv.visitInsn(DUP2);
+        mv.visitInsn(DUP2);
+        mv.visitInsn(D2I);
+        mv.visitInsn(I2D);
+        mv.visitInsn(DCMPL);
+        testIfElse(IFEQ, () -> {
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
+        }, () -> {
+            mv.visitInsn(D2I);
+            mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
+        });
     }
 
     public void visitBinaryRule(final BinaryRule n) {
@@ -130,7 +146,7 @@ public class BytecodeActionVisitor extends BaseVisitor {
                 });
                 mv.visitVarInsn(ALOAD, original);
                 --locals;
-                return;
+                break;
             }
             case S_AD:
                 binaryDoubleOp(n.rule1, n.rule2, DADD);
@@ -160,21 +176,6 @@ public class BytecodeActionVisitor extends BaseVisitor {
                 break;
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);
-        }
-
-        if (n.op.type.isNumberOp()) {
-            // Cast to int if value is same, then box value
-            mv.visitInsn(DUP2);
-            mv.visitInsn(DUP2);
-            mv.visitInsn(D2I);
-            mv.visitInsn(I2D);
-            mv.visitInsn(DCMPL);
-            testIfElse(IFEQ, () -> {
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Double", "valueOf", "(D)Ljava/lang/Double;", false);
-            }, () -> {
-                mv.visitInsn(D2I);
-                mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
-            });
         }
     }
 
