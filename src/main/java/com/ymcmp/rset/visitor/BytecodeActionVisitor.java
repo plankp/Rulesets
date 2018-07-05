@@ -47,14 +47,14 @@ public class BytecodeActionVisitor extends BaseVisitor {
         pushAsObject(n);
     }
 
-    public Void visitUnaryRule(final UnaryRule n) {
+    public void visitUnaryRule(final UnaryRule n) {
         switch (n.op.type) {
             case S_QM:
                 mv.visitVarInsn(ALOAD, 1);
                 visit(n.rule);
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/String", "valueOf", "(Ljava/lang/Object;)Ljava/lang/String;", false);
                 mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "get", "(Ljava/lang/Object;)Ljava/lang/Object;", true);
-                return null;
+                break;
             default:
                 throw new RuntimeException("Unknown unary operator " + n.op);
         }
@@ -82,7 +82,7 @@ public class BytecodeActionVisitor extends BaseVisitor {
         mv.visitMethodInsn(INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
     }
 
-    public Void visitBinaryRule(final BinaryRule n) {
+    public void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
             case S_LB: {
                 // (a, b, c) { ?_it }
@@ -130,7 +130,7 @@ public class BytecodeActionVisitor extends BaseVisitor {
                 });
                 mv.visitVarInsn(ALOAD, original);
                 --locals;
-                return null;
+                return;
             }
             case S_AD:
                 binaryDoubleOp(n.rule1, n.rule2, DADD);
@@ -176,7 +176,6 @@ public class BytecodeActionVisitor extends BaseVisitor {
                 mv.visitMethodInsn(INVOKESTATIC, "java/lang/Integer", "valueOf", "(I)Ljava/lang/Integer;", false);
             });
         }
-        return null;
     }
 
     private void generateShortCircuitRoutine(int branchOp, List<ParseTree> body) {
@@ -277,7 +276,7 @@ public class BytecodeActionVisitor extends BaseVisitor {
         visit(rules.get(i));
     }
 
-    public Void visitRulesetNode(final RulesetNode n) {
+    public void visitRulesetNode(final RulesetNode n) {
         final String actnName = "act" + n.name.getText();
         mv = cw.visitMethod(ACC_PUBLIC, actnName, "(Ljava/util/Map;)Ljava/lang/Object;", "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/Object;>;)Ljava/lang/Object;", null);
         mv.visitCode();
@@ -290,6 +289,5 @@ public class BytecodeActionVisitor extends BaseVisitor {
         mv.visitInsn(ARETURN);
         mv.visitMaxs(0, 0);
         mv.visitEnd();
-        return null;
     }
 }

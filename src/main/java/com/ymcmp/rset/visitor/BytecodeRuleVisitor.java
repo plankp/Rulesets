@@ -40,24 +40,23 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
     }
 
-    public Void visitRefRule(final RefRule n) {
+    public void visitRefRule(final RefRule n) {
         final String name = n.node.getText();
         final Consumer<BytecodeRuleVisitor> cons = refs.get(name);
         if (cons == null) throw new RuntimeException("Attempt to reference undeclared rule " + name);
         cons.accept(this);
-        return null;
     }
 
-    public Void visitValueNode(final ValueNode n) {
+    public void visitValueNode(final ValueNode n) {
         switch (n.token.type) {
             case S_ST:
                 logMessage("FINE", "Test wildcard slot");
                 invokeEvalStateNoObject(RESULT, "testSlotOccupied");
-                return null;
+                break;
             case S_SM:
                 logMessage("FINE", "Test end of data");
                 invokeEvalStateNoObject(RESULT, "testEnd");
-                return null;
+                break;
             default: {
                 logMessage("FINE", "Test for " + n.getText());
 
@@ -101,7 +100,6 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
                     mv.visitVarInsn(ISTORE, RESULT);
                 }
-                return null;
             }
         }
     }
@@ -125,7 +123,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         }
     }
 
-    public Void visitUnaryRule(final UnaryRule n) {
+    public void visitUnaryRule(final UnaryRule n) {
         switch (n.op.type) {
             case S_TD: {
                 logMessage("FINE", "Negate next clause");
@@ -144,7 +142,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 mv.visitVarInsn(ILOAD, negateSave);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setNegateFlag", "(Z)V", false);
                 scope.popLocal();
-                return null;
+                break;
             }
             case S_QM: {
                 logMessage("FINE", "[0, 1] next clause");
@@ -156,7 +154,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 ifBoolFalse(RESULT, () -> unsaveRoutine(list, rwnd));
                 storeBool(RESULT, true);
                 scope.popLocal();
-                return null;
+                break;
             }
             case S_AD: {
                 logMessage("FINE", "[1, n] next clause");
@@ -183,7 +181,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 scope.popLocal();
                 scope.popLocal();
                 scope.popLocal();
-                return null;
+                break;
             }
             case S_ST: {
                 logMessage("FINE", "[0, n] next clause");
@@ -204,7 +202,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 storeBool(RESULT, true);
                 scope.popLocal();
                 scope.popLocal();
-                return null;
+                break;
             }
             case S_EX:
                 try {
@@ -216,16 +214,16 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     mv.visitVarInsn(ALOAD, scope.findNearestLocal(VarType.LIST));
                     mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "hasFieldOrMethod", "(Ljava/lang/String;Ljava/util/Collection;)Z", false);
                     mv.visitVarInsn(ISTORE, RESULT);
-                    return null;
+                    break;
                 } catch (NullPointerException ex) {
                     throw new RuntimeException("Selector cannot be ()");
                 }
             case S_LA:
                 testInheritanceRoutine((ValueNode) n.rule, true);
-                return null;
+                break;
             case S_RA:
                 testInheritanceRoutine((ValueNode) n.rule, false);
-                return null;
+                break;
             case S_LS: {
                 logMessage("FINE", "Destructing Array or Collection:");
 
@@ -257,7 +255,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     mv.visitInsn(POP);
                     storeBool(RESULT, false);
                 });
-                return null;
+                break;
             }
             default:
                 throw new RuntimeException("Unknown unary operator " + n.op);
@@ -277,7 +275,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         }
     }
 
-    public Void visitBinaryRule(final BinaryRule n) {
+    public void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
             case S_MN: {
                 final ValueNode node1 = (ValueNode) n.rule1;
@@ -293,7 +291,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 mv.visitVarInsn(ALOAD, plst);
                 mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testRange", "(Ljava/lang/Comparable;Ljava/lang/Comparable;Ljava/util/Collection;)Z", false);
                 mv.visitVarInsn(ISTORE, RESULT);
-                return null;
+                break;
             }
             default:
                 throw new RuntimeException("Unknown binary operator " + n.op);
@@ -425,7 +423,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         scope.popLocal();
     }
 
-    public Void visitCaptureRule(final CaptureRule n) {
+    public void visitCaptureRule(final CaptureRule n) {
         final Label exit = new Label();
         final String dest = n.dest.getText();
         final int plst = scope.findNearestLocal(VarType.LIST);
@@ -450,10 +448,9 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv.visitLabel(exit);
         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
         mv.visitInsn(POP);
-        return null;
     }
 
-    public Void visitRulesetNode(final RulesetNode n) {
+    public void visitRulesetNode(final RulesetNode n) {
         final String name = n.name.getText();
         final String testName = "test" + name;
         mv = cw.visitMethod(ACC_PUBLIC, testName, "(Ljava/util/Map;Ljava/util/List;)Z", "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/Object;>;Ljava/util/List<Ljava/lang/Object;>;)Z", null);
@@ -495,6 +492,5 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
         mv.visitMaxs(0, 0);
         mv.visitEnd();
-        return null;
     }
 }
