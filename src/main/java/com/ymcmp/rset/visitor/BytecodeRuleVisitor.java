@@ -40,6 +40,12 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
     }
 
+    private void callEvalStateTest(final int localParseStack, final String name, final String params) {
+        mv.visitVarInsn(ALOAD, localParseStack);
+        mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", name, params, false);
+        mv.visitVarInsn(ISTORE, RESULT);
+    }
+
     public void visitRefRule(final RefRule n) {
         final String name = n.node.getText();
         final Consumer<BytecodeRuleVisitor> cons = refs.get(name);
@@ -83,9 +89,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                         mv.visitVarInsn(ILOAD, i);
                         mv.visitInsn(CALOAD);
                         mv.visitMethodInsn(INVOKESTATIC, "java/lang/Character", "valueOf", "(C)Ljava/lang/Character;", false);
-                        mv.visitVarInsn(ALOAD, lst);
-                        mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
-                        mv.visitVarInsn(ISTORE, RESULT);
+                        callEvalStateTest(lst, "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z");
                         jumpIfBoolFalse(RESULT, exit);
                     });
                     mv.visitInsn(POP);
@@ -96,9 +100,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 } else {
                     // Other data types just call testEquality, nothing special is needed
 
-                    mv.visitVarInsn(ALOAD, plst);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z", false);
-                    mv.visitVarInsn(ISTORE, RESULT);
+                    callEvalStateTest(plst, "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z");
                 }
             }
         }
@@ -115,9 +117,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             mv.visitLdcInsn(cl);
             mv.visitMethodInsn(INVOKESTATIC, "java/lang/Class", "forName", "(Ljava/lang/String;)Ljava/lang/Class;", false);
             mv.visitInsn(from ? ICONST_1 : ICONST_0);
-            mv.visitVarInsn(ALOAD, scope.findNearestLocal(VarType.LIST));
-            mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testInheritance", "(Ljava/lang/Class;ZLjava/util/Collection;)Z", false);
-            mv.visitVarInsn(ISTORE, RESULT);
+            callEvalStateTest(scope.findNearestLocal(VarType.LIST), "testInheritance", "(Ljava/lang/Class;ZLjava/util/Collection;)Z");
         } catch (NullPointerException ex) {
             throw new RuntimeException("() does not name a class");
         }
@@ -169,9 +169,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
                     loadEvalState();
                     mv.visitLdcInsn(selector);
-                    mv.visitVarInsn(ALOAD, scope.findNearestLocal(VarType.LIST));
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "hasFieldOrMethod", "(Ljava/lang/String;Ljava/util/Collection;)Z", false);
-                    mv.visitVarInsn(ISTORE, RESULT);
+                    callEvalStateTest(scope.findNearestLocal(VarType.LIST), "hasFieldOrMethod", "(Ljava/lang/String;Ljava/util/Collection;)Z");
                     break;
                 } catch (NullPointerException ex) {
                     throw new RuntimeException("Selector cannot be ()");
@@ -240,15 +238,11 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 final ValueNode node2 = (ValueNode) n.rule2;
                 logMessage("FINE", "Test range of [" + node1.getText() + ", " + node2.getText() + "]");
 
-                final int plst = scope.findNearestLocal(VarType.LIST);
                 loadEvalState();
-
                 ldcRangeConstant(node1);
                 ldcRangeConstant(node2);
-
-                mv.visitVarInsn(ALOAD, plst);
-                mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "testRange", "(Ljava/lang/Comparable;Ljava/lang/Comparable;Ljava/util/Collection;)Z", false);
-                mv.visitVarInsn(ISTORE, RESULT);
+                callEvalStateTest(scope.findNearestLocal(VarType.LIST),
+                        "testRange", "(Ljava/lang/Comparable;Ljava/lang/Comparable;Ljava/util/Collection;)Z");
                 break;
             }
             default:
