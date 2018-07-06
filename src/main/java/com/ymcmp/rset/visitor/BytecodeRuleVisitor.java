@@ -156,54 +156,12 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 scope.popLocal();
                 break;
             }
-            case S_AD: {
-                logMessage("FINE", "[1, n] next clause");
-
-                final int plst = scope.findNearestLocal(VarType.LIST);
-                final int flag = scope.pushNewLocal(VarType.BOOL);
-                final int list = scope.pushNewLocal(VarType.LIST);
-                final int rwnd = scope.pushNewLocal(VarType.NUM);
-                storeBool(flag, false);
-                newObjectNoArgs(list, "java/util/ArrayList");
-
-                whileLoop(exit -> {
-                    saveRoutine(list, rwnd);
-                    visit(n.rule);
-                    jumpIfBoolFalse(RESULT, exit);
-                }, (exit, loop) -> {
-                    storeBool(flag, true);
-                });
-
-                unsaveRoutine(list, rwnd);
-                addToParseStack(list, plst);
-                mv.visitVarInsn(ILOAD, flag);
-                mv.visitVarInsn(ISTORE, RESULT);
-                scope.popLocal();
-                scope.popLocal();
-                scope.popLocal();
+            case S_AD:
+                testNCases(n.rule, RESULT, false);
                 break;
-            }
-            case S_ST: {
-                logMessage("FINE", "[0, n] next clause");
-
-                final int plst = scope.findNearestLocal(VarType.LIST);
-                final int list = scope.pushNewLocal(VarType.LIST);
-                final int rwnd = scope.pushNewLocal(VarType.NUM);
-                newObjectNoArgs(list, "java/util/ArrayList");
-
-                whileLoop(exit -> {
-                    saveRoutine(list, rwnd);
-                    visit(n.rule);
-                    jumpIfBoolFalse(RESULT, exit);
-                }, null);
-
-                unsaveRoutine(list, rwnd);
-                addToParseStack(list, plst);
-                storeBool(RESULT, true);
-                scope.popLocal();
-                scope.popLocal();
+            case S_ST:
+                testNCases(n.rule, RESULT, true);
                 break;
-            }
             case S_EX:
                 try {
                     final String selector = ((ValueNode) n.rule).toObject().toString();

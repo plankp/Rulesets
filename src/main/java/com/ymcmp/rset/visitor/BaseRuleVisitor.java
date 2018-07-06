@@ -108,4 +108,47 @@ public abstract class BaseRuleVisitor extends BaseVisitor {
         mv.visitInsn(DUP);
         mv.visitInsn(ICONST_0);
     }
+
+    protected void testNCases(final ParseTree rule, final int resultSlot, final boolean startsFromZero) {
+        logMessage("FINE", "[" + (startsFromZero ? '0' : '1') + ", n] next clause");
+
+        final int plst = scope.findNearestLocal(VarType.LIST);
+        final int list = scope.pushNewLocal(VarType.LIST);
+        final int rwnd = scope.pushNewLocal(VarType.NUM);
+
+        final int flag;
+        if (startsFromZero) {
+            flag = -1;
+        } else {
+            flag = scope.pushNewLocal(VarType.BOOL);
+            storeBool(flag, false);
+        }
+
+        newObjectNoArgs(list, "java/util/ArrayList");
+
+        whileLoop(exit -> {
+            saveRoutine(list, rwnd);
+            visit(rule);
+            jumpIfBoolFalse(resultSlot, exit);
+        }, (exit, loop) -> {
+            if (!startsFromZero) {
+                storeBool(flag, true);
+            }
+        });
+
+        unsaveRoutine(list, rwnd);
+        addToParseStack(list, plst);
+
+        if (startsFromZero) {
+            mv.visitInsn(ICONST_1);
+        } else {
+            mv.visitVarInsn(ILOAD, flag);
+        }
+        mv.visitVarInsn(ISTORE, resultSlot);
+
+        if (!startsFromZero) scope.popLocal();
+
+        scope.popLocal();
+        scope.popLocal();
+    }
 }
