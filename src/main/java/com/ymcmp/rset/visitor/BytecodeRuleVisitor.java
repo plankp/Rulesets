@@ -151,7 +151,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                 final int rwnd = scope.pushNewLocal(VarType.NUM);
                 saveRoutine(list, rwnd);
                 visit(n.rule);
-                ifBoolFalse(RESULT, () -> unsaveRoutine(list, rwnd));
+                ifBoolElse(RESULT, this::updateSaveRoutine, () -> unsaveRoutine(list, rwnd));
                 storeBool(RESULT, true);
                 scope.popLocal();
                 break;
@@ -277,6 +277,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
         final Label exit = new Label();
         final Label epilogue = new Label();
+        final Label end = new Label();
         final int list = scope.findNearestLocal(VarType.LIST);
         final int rwnd = scope.pushNewLocal(VarType.NUM);
 
@@ -308,7 +309,10 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
         epilogue:
             unsaveRoutine
             result = false
+            goto end
         exit:
+            updateSaveRoutine
+        end:
         */
 
         for (int i = 0; i < ruleCount - 1; ++i) {
@@ -332,7 +336,10 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
             mv.visitLabel(epilogue);
             unsaveRoutine(list, rwnd);
             storeBool(RESULT, false);
+            mv.visitJumpInsn(GOTO, end);
         });
+        updateSaveRoutine();
+        mv.visitLabel(end);
 
         scope.popLocal();
         scope.popLocal();

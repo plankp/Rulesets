@@ -109,6 +109,12 @@ public abstract class BaseRuleVisitor extends BaseVisitor {
         mv.visitInsn(ICONST_0);
     }
 
+    protected void updateSaveRoutine() {
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "updateSave", "()V", false);
+    }
+
     protected void testNCases(final ParseTree rule, final int resultSlot, final boolean startsFromZero) {
         logMessage("FINE", "[" + (startsFromZero ? '0' : '1') + ", n] next clause");
 
@@ -134,6 +140,7 @@ public abstract class BaseRuleVisitor extends BaseVisitor {
             if (!startsFromZero) {
                 storeBool(flag, true);
             }
+            ifBoolTrue(resultSlot, this::updateSaveRoutine);
         });
 
         unsaveRoutine(list, rwnd);

@@ -66,6 +66,12 @@ public class EvalState {
         indexes.push(indexes.peek());
     }
 
+    public void updateSave() {
+        final int i = indexes.pop();
+        indexes.pop();
+        indexes.push(i);
+    }
+
     public EvalState destructArray() {
         final Object k = next();
         if (k == null) return null;
