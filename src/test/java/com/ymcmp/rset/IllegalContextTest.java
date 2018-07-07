@@ -109,4 +109,22 @@ public class IllegalContextTest {
             fail("No IO operation!");
         }
     }
+
+    @Test(expected = RuntimeException.class)
+    public void visitNullSubstitution() {
+        try {
+            Main.compile(new StringReader("fragment a = &0, rule b = &a"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void visitOutOfBoundsSubstitution() {
+        try {
+            Main.compile(new StringReader("fragment a = &3, rule b = &a/1/2"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
 }

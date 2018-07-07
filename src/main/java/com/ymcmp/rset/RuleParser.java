@@ -54,8 +54,16 @@ import com.ymcmp.lexparse.tree.ParseTree;
                     return new ValueNode(t);
                 case S_TD:
                     return new UnaryRule(t, parseRuleAtomic());
-                case S_AM:
-                    return new RefRule(parseValue());
+                case S_AM: {
+                    final RefRule rrule = new RefRule(parseValue());
+                    final Token<Type> lookahead = getToken();
+                    if (lookahead != null && lookahead.type == Type.S_DV) {
+                        rrule.subst = consumeRules(Type.S_DV, this::parseValue);
+                    } else {
+                        ungetToken(lookahead);
+                    }
+                    return rrule;
+                }
                 case S_EX:
                 case S_LA:
                 case S_RA:

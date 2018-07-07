@@ -7,6 +7,7 @@ package com.ymcmp.rset.visitor;
 
 import java.util.Map;
 import java.util.List;
+
 import java.util.function.Consumer;
 
 import org.objectweb.asm.Label;
@@ -28,6 +29,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
     private final Map<String, Consumer<BytecodeRuleVisitor>> refs;
 
     public int RESULT;
+    public List<ParseTree> SUBST_VARS;
 
     public BytecodeRuleVisitor(ClassWriter cw, String className, boolean genDebugInfo, Map<String, Consumer<BytecodeRuleVisitor>> refs) {
         super(cw, className, genDebugInfo);
@@ -46,9 +48,24 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
     public void visitRefRule(final RefRule n) {
         final String name = n.node.getText();
-        final Consumer<BytecodeRuleVisitor> cons = refs.get(name);
-        if (cons == null) throw new RuntimeException("Attempt to reference undeclared rule " + name);
-        cons.accept(this);
+        try {
+            final int i = Integer.parseInt(name);
+            // references to a substitution variable (macros?)
+            if (SUBST_VARS == null || i >= SUBST_VARS.size()) {
+                throw new RuntimeException("Attempt to reference undeclared substitution variable " + i);
+            }
+            visit(SUBST_VARS.get(i));
+        } catch (NumberFormatException ex) {
+            final List<ParseTree> save = SUBST_VARS;
+            SUBST_VARS = n.subst;
+
+            // references to a fragment, subrule or rule
+            final Consumer<BytecodeRuleVisitor> cons = refs.get(name);
+            if (cons == null) throw new RuntimeException("Attempt to reference undeclared rule " + name);
+            cons.accept(this);
+
+            SUBST_VARS = save;
+        }
     }
 
     public void visitValueNode(final ValueNode n) {

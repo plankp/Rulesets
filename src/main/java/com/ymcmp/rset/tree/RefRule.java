@@ -5,6 +5,9 @@
 
 package com.ymcmp.rset.tree;
 
+import java.util.List;
+import java.util.Collections;
+
 import com.ymcmp.rset.Type;
 
 import com.ymcmp.lexparse.Token;
@@ -14,22 +17,28 @@ public final class RefRule extends ParseTree {
 
     public final ValueNode node;
 
+    public List<ParseTree> subst;
+
     public RefRule(ValueNode node) {
         this.node = node;
     }
 
     @Override
     public ParseTree getChild(int node) {
-        throw new IndexOutOfBoundsException("RefRule does not have children: " + node);
+        return (subst == null ? ((List<ParseTree>) Collections.EMPTY_LIST) : subst).get(node);
     }
 
     @Override
     public int getChildCount() {
-        return 0;
+        return subst == null ? 0 : subst.size();
     }
 
     @Override
     public String getText() {
-        return '(' + "get " + node.getText() + ')';
+        if (subst == null) {
+            return '(' + "get " + node.getText() + ')';
+        } else {
+            return '(' + "subst " + node.getText() + ' ' + subst + ')';
+        }
     }
 }

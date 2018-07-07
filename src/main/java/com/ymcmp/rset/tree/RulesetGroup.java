@@ -161,6 +161,7 @@ public final class RulesetGroup extends ParseTree {
                         if (fragmentStack.contains(name)) {
                             throw new RuntimeException("Recursive fragment definition via " + fragmentStack + " -> " + name);
                         }
+
                         fragmentStack.push(name);
 
                         vis.logMessage("FINE", "Entering rule fragment " + name);

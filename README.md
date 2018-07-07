@@ -11,8 +11,8 @@ Install jdk 8 or higher, Use `gradlew`
 It is similar to a lexer and parser generator in many ways, except you also
 use it to match an sequence of (or singular) basic Java objects. You can check
 if any object responds to a selector (has field or method with the specified
-name). Checking if the object is subclass or parent class is also allowed. The objects that support equality-based matches are limited
-to:
+name). Checking if the object is subclass or parent class is also allowed. The
+objects that support equality-based matches are limited to:
 
 *  Null
 *  Integers
@@ -24,7 +24,7 @@ to:
 
 In addition, Integer, Doubles, Characters and Strings support relative comparisons.
 
-Essentially, this is a DSL that matches data in a regex-like syntax
+Essentially, this is a DSL that matches data in a macro-supporting regex-like syntax
 
 ## How do you use this?
 
