@@ -5,8 +5,6 @@
 
 package com.ymcmp.rset.visitor;
 
-import java.util.Stack;
-
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
@@ -15,7 +13,6 @@ import com.ymcmp.rset.Scope.VarType;
 
 import com.ymcmp.rset.tree.*;
 
-import com.ymcmp.lexparse.tree.Visitor;
 import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;

@@ -5,23 +5,14 @@
 
 package com.ymcmp.rset.visitor;
 
-import java.util.Map;
 import java.util.List;
-import java.util.Arrays;
-import java.util.HashMap;
-
-import java.util.stream.Stream;
-import java.util.stream.Collectors;
 
 import org.objectweb.asm.Label;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.MethodVisitor;
 
-import com.ymcmp.rset.Type;
-
 import com.ymcmp.rset.tree.*;
 
-import com.ymcmp.lexparse.tree.Visitor;
 import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;

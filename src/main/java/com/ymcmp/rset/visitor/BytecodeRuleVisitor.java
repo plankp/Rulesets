@@ -19,7 +19,6 @@ import com.ymcmp.rset.Scope.VarType;
 
 import com.ymcmp.rset.tree.*;
 
-import com.ymcmp.lexparse.tree.Visitor;
 import com.ymcmp.lexparse.tree.ParseTree;
 
 import static org.objectweb.asm.Opcodes.*;
