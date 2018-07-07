@@ -69,7 +69,6 @@ public final class RulesetNode extends ParseTree {
             + ' ' + rule.getText() + ' ' + expr.getText() + ')';
     }
 
-
     public Optional<String> makeRuleName() {
         return type.ruleName(name.getText());
     }
