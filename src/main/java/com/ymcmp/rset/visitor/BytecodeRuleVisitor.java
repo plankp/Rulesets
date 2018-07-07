@@ -406,7 +406,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
 
     public void visitRulesetNode(final RulesetNode n) {
         final String name = n.name.getText();
-        final String testName = "test" + name;
+        final String testName = n.makeTestName().get();
         mv = cw.visitMethod(ACC_PUBLIC, testName, "(Ljava/util/Map;Ljava/util/List;)Z", "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/Object;>;Ljava/util/List<Ljava/lang/Object;>;)Z", null);
         mv.visitCode();
 
