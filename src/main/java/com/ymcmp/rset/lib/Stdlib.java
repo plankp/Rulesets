@@ -23,8 +23,8 @@ public final class Stdlib {
         // Do nothing
     }
 
-    @Export
-    public static Object[] _ord(final Object... args) {
+    @Export("_ord")
+    public static Object[] toOrdinal(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Character) {
@@ -44,8 +44,8 @@ public final class Stdlib {
         return args;
     }
 
-    @Export
-    public static Object[] _chr(final Object... args) {
+    @Export("_chr")
+    public static Object[] toChar(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
             if (k instanceof Character) {
@@ -59,12 +59,16 @@ public final class Stdlib {
         return args;
     }
 
-    @Export
-    public static Object[] _int(final Object... args) {
+    @Export("_int")
+    public static Object[] toInt(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
-            if (k instanceof Number) {
+            if (k == null) {
+                // Do nothing, null maps to null
+            } else if (k instanceof Number) {
                 args[i] = ((Number) k).intValue();
+            } else if (k instanceof Character) {
+                args[i] = (int) ((Character) k).charValue();
             } else {
                 try {
                     args[i] = Integer.parseInt(k.toString());
@@ -76,11 +80,13 @@ public final class Stdlib {
         return args;
     }
 
-    @Export
-    public static Object[] _float(final Object... args) {
+    @Export("_float")
+    public static Object[] toFloat(final Object... args) {
         for (int i = 0; i < args.length; ++i) {
             final Object k = args[i];
-            if (k instanceof Number) {
+            if (k == null) {
+                // Do nothing, null maps to null
+            } else if (k instanceof Number) {
                 args[i] = ((Number) k).doubleValue();
             } else {
                 try {
@@ -93,15 +99,15 @@ public final class Stdlib {
         return args;
     }
 
-    @Export
-    public static String _join(final Object... args) {
+    @Export("_join")
+    public static String join(final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, " ");
         return sb.toString();
     }
 
-    @Export
-    public static String _djoin(final Object delim, final Object... args) {
+    @Export("_djoin")
+    public static String joinWithDelim(final Object delim, final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, delim.toString());
         return sb.toString();
@@ -114,8 +120,8 @@ public final class Stdlib {
         return sb.toString();
     }
 
-    @Export
-    public static String _lines(final Object... args) {
+    @Export("_lines")
+    public static String lines(final Object... args) {
         final StringBuilder sb = new StringBuilder();
         joinHelper(sb, args, "\n");
         return sb.toString();
@@ -141,7 +147,7 @@ public final class Stdlib {
 
     @Export("_p")
     public static Object print(final Object... k) {
-        System.out.println(_join(k));
+        System.out.println(join(k));
         return null;
     }
 
