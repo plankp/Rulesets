@@ -108,21 +108,20 @@ public class RsetLexer implements Lexer<Type>, Closeable {
         return Optional.empty();
     }
 
-    private static void processStrEsc(final char c, final StringBuilder sb) {
+    private static boolean processStrEsc(final int e, final StringBuilder sb) {
+        if (e == -1) return false;
+
+        final char c = (char) e;
         if (!STR_ESC.contains(c)) {
             sb.append('\\');
         }
         sb.append('\\').append(c);
+        return true;
     }
 
     private boolean processStrChar(final char k, final StringBuilder sb) {
-        if (k == '\\') {    // Escape sequences
-            final int e = read();
-            if (e == -1) {
-                return false;
-            }
-
-            processStrEsc((char) e, sb);
+        if (k == '\\') {
+            return processStrEsc(read(), sb);
         } else {
             if (k == '\'' || k == '\"') {
                 // escape it, avoids problems
