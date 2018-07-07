@@ -127,4 +127,22 @@ public class IllegalContextTest {
             fail("No IO operation!");
         }
     }
+
+    @Test(expected = RuntimeException.class)
+    public void visitSubstitutionOnRule() {
+        try {
+            Main.compile(new StringReader("rule a = &0"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void visitSubstitutionOnSubrule() {
+        try {
+            Main.compile(new StringReader("subrule a = &0"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
 }
