@@ -14,5 +14,5 @@ public interface Rulesets {
 
     public Rule getRule(String name);
 
-    public void forEachRule(BiConsumer<? super String, ? extends Rule> consumer);
+    public void forEachRule(BiConsumer<? super String, ? super Rule> consumer);
 }

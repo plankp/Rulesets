@@ -44,7 +44,7 @@ import static org.objectweb.asm.Opcodes.*;
     }
 
     public static void implForEachRule(ClassWriter cw, String className) {
-        final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "forEachRule", "(Ljava/util/function/BiConsumer;)V", "(Ljava/util/function/BiConsumer<-Ljava/lang/String;+Lcom/ymcmp/rset/rt/Rule;>;)V", null);
+        final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC, "forEachRule", "(Ljava/util/function/BiConsumer;)V", "(Ljava/util/function/BiConsumer<-Ljava/lang/String;-Lcom/ymcmp/rset/rt/Rule;>;)V", null);
         mv.visitVarInsn(ALOAD, 0);
         mv.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
         mv.visitVarInsn(ALOAD, 1);
