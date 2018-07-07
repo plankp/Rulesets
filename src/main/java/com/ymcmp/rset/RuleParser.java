@@ -41,6 +41,10 @@ import com.ymcmp.lexparse.tree.ParseTree;
                 termNormalizingSequence(KaryRule.Type.SEQ, null, this::parseInnerLoop));
     }
 
+    private static ValueNode synthesizeValue(Type type, String text) {
+        return new ValueNode(new Token<>(type, text));
+    }
+
     private ParseTree ruleAtomicHelper() {
         final Token<Type> t = getToken();
         if (t != null) {
@@ -57,19 +61,14 @@ import com.ymcmp.lexparse.tree.ParseTree;
                 case S_RA:
                     return new UnaryRule(t, parseValue());
                 case S_LS: {
-                    final ParseTree rule = consumeRule(this::parse,
-                            "Expecting rule to match against destructed list");
+                    final ParseTree rule = this.parse();
                     consumeToken(Type.S_RS, "Unclosed list destruction, missing ']'");
-                    return new UnaryRule(t, rule);
+                    return new UnaryRule(t, rule == null ? synthesizeValue(Type.S_SM, ";") : rule);
                 }
                 case S_LP: {
                     final ParseTree rule = termNormalizingSequence(KaryRule.Type.GROUP, Type.S_CM, this::parse);
                     consumeToken(Type.S_RP, "Unclosed clause, missing ')'");
-                    if (rule == null) {
-                        // Synthesize a null token, user wants to test for value NULL
-                        return new ValueNode(new Token<>(Type.L_NULL, "()"));
-                    }
-                    return rule;
+                    return rule == null ? synthesizeValue(Type.L_NULL, "()") : rule;
                 }
                 default:
                     ungetToken(t);

@@ -32,7 +32,8 @@ public class ObjectMatchTest {
             "rule f123 = k:(1. 2. 3. | (-1.) (-2.) (-3.)) { ?k },\n" +
             "rule group = k:(1 2 3, 4 5 6) { ?k },\n" +
             "rule chars = k:%abc { ?k },\n" +
-            "rule destr = k:[1 2 3] { ?k },\n" +
+            "rule dest1 = k:[1 2 3] { ?k },\n" +
+            "rule dest2 = k:[] { ?k },\n" +
             "rule null  = () { '\\Found null!\\\"' },\n"
         );
 
@@ -145,7 +146,7 @@ public class ObjectMatchTest {
     }
 
     @Test
-    public void testDestr() {
+    public void testDest1() {
         final Object[][] tests = {
             { },
             { null },
@@ -158,7 +159,7 @@ public class ObjectMatchTest {
         final StringBuilder sb = new StringBuilder();
         final Rulesets rsets = newObjectMatch();
         for (final Object[] test : tests) {
-            final Object obj = rsets.getRule("destr").apply(test);
+            final Object obj = rsets.getRule("dest1").apply(test);
             if (obj != null) {
                 sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
             }
@@ -166,6 +167,30 @@ public class ObjectMatchTest {
         assertEquals(
                 "[1, 2, 3]\n" +
                 "[1, 2, 3]\n",
+                sb.toString());
+    }
+
+    @Test
+    public void testDest2() {
+        final Object[][] tests = {
+            { },
+            { null },
+            { Arrays.asList() },
+            { new Object[]{ } },
+            { Arrays.asList(1, 2, 3) },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        final Rulesets rsets = newObjectMatch();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("dest2").apply(test);
+            if (obj != null) {
+                sb.append(obj.getClass().isArray() ? Arrays.toString((Object[]) obj) : obj).append('\n');
+            }
+        }
+        assertEquals(
+                "<epsilon>\n" +
+                "<epsilon>\n",
                 sb.toString());
     }
 
