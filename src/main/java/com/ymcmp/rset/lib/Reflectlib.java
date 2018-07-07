@@ -24,6 +24,8 @@ public final class Reflectlib {
      * if entry is list-like, we look for a method.
      * otherwise convert to string, look for field.
      *
+     * This method of field *must* have public visibility
+     *
      * @return
      *   - Null if error occurred (including entry does not exist),
      *   - Value if field named entry was found,
