@@ -192,4 +192,16 @@ public final class Arraylib {
             return null;
         }
     }
+
+    public static Iterable<?> toIterable(final Object obj) {
+        if (obj == null) return null;
+
+        if (obj.getClass().isArray()) {
+            return Arrays.asList((Object[]) obj);
+        }
+        if (obj instanceof Map<?, ?>) {
+            return ((Map<?, ?>) obj).entrySet();
+        }
+        return (Iterable<?>) obj;
+    }
 }

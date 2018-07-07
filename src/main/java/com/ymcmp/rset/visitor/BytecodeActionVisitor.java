@@ -91,35 +91,18 @@ public class BytecodeActionVisitor extends BaseVisitor {
 
     public void visitBinaryRule(final BinaryRule n) {
         switch (n.op.type) {
-            case S_LB: {
+            case S_LB:
                 // (a, b, c) { ?_it }
-                final int original = ++locals;
                 visit(n.rule1);
                 mv.visitInsn(DUP);
-                mv.visitVarInsn(ASTORE, original);
-                testIf(IFNULL, () -> {
-                    mv.visitVarInsn(ALOAD, original);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Object", "getClass", "()Ljava/lang/Class;", false);
-                    mv.visitMethodInsn(INVOKEVIRTUAL, "java/lang/Class", "isArray", "()Z", false);
-                    testIfElse(IFEQ, () -> {
-                        mv.visitVarInsn(ALOAD, original);
-                        mv.visitTypeInsn(CHECKCAST, "[Ljava/lang/Object;");
-                        mv.visitMethodInsn(INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;", false);
-                    }, () -> {
-                        mv.visitVarInsn(ALOAD, original);
-                        mv.visitInsn(DUP);
-                        mv.visitTypeInsn(INSTANCEOF, "java/util/Map");
-                        testIfElse(IFEQ, () -> {
-                            mv.visitTypeInsn(CHECKCAST, "java/util/Map");
-                            mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "entrySet", "()Ljava/util/Set;", true);
-                        }, () -> mv.visitTypeInsn(CHECKCAST, "java/lang/Iterable"));
-                    });
-
+                mv.visitMethodInsn(INVOKESTATIC, "com/ymcmp/rset/lib/Arraylib", "toIterable", "(Ljava/lang/Object;)Ljava/lang/Iterable;", false);
+                mv.visitInsn(DUP);
+                testIfElse(IFNULL, () -> {
                     // At this point, the data on stack is an Iterable
                     final int local = ++locals;
                     mv.visitMethodInsn(INVOKEINTERFACE, "java/lang/Iterable", "iterator", "()Ljava/util/Iterator;", true);
                     mv.visitVarInsn(ASTORE, local);
-                    whileLoop((exit) -> {
+                    whileLoop(exit -> {
                         mv.visitVarInsn(ALOAD, local);
                         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "hasNext", "()Z", true);
                         mv.visitJumpInsn(IFEQ, exit);
@@ -129,16 +112,12 @@ public class BytecodeActionVisitor extends BaseVisitor {
                         mv.visitVarInsn(ALOAD, local);
                         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Iterator", "next", "()Ljava/lang/Object;", true);
                         mv.visitMethodInsn(INVOKEINTERFACE, "java/util/Map", "put", "(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;", true);
-                        mv.visitInsn(POP);
                         visit(n.rule2);
-                        mv.visitInsn(POP);
+                        mv.visitInsn(POP2);
                     });
                     --locals;
-                });
-                mv.visitVarInsn(ALOAD, original);
-                --locals;
+                }, () -> mv.visitInsn(POP));
                 break;
-            }
             case S_AD:
                 binaryDoubleOp(n.rule1, n.rule2, DADD);
                 break;
@@ -269,7 +248,7 @@ public class BytecodeActionVisitor extends BaseVisitor {
     }
 
     public void visitRulesetNode(final RulesetNode n) {
-        final String actnName = "act" + n.name.getText();
+        final String actnName = n.makeActnName().get();
         mv = cw.visitMethod(ACC_PUBLIC, actnName, "(Ljava/util/Map;)Ljava/lang/Object;", "(Ljava/util/Map<Ljava/lang/String;Ljava/lang/Object;>;)Ljava/lang/Object;", null);
         mv.visitCode();
         if (n.expr == null) {
