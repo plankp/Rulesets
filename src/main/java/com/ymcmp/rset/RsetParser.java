@@ -86,8 +86,8 @@ public class RsetParser extends BaseParser<RulesetGroup> {
                     rset.expr = actionParser.parse();
                     consumeToken(Type.S_RB, "Unclosed Ruleset expression, missing '}'");
                     if (rulesetType == RulesetNode.Type.FRAGMENT && rset.expr != null) {
-                        // fragments cannot have non-empty actions, warning
-                        System.err.println("Warning: " + name.getText() + " is fragment type but contains non-empty action block");
+                        // fragments cannot have non-empty actions
+                        throw new RuntimeException(name.getText() + " is fragment type but contains non-empty action block");
                     }
                 } else {
                     ungetToken(b);

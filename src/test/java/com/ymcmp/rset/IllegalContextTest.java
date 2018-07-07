@@ -100,4 +100,13 @@ public class IllegalContextTest {
             fail("No IO operation!");
         }
     }
+
+    @Test(expected = RuntimeException.class)
+    public void visitFragmentWithNonEmptyActionBody() {
+        try {
+            Main.compile(new StringReader("fragment a = a { 'Hi!' }"), opt);
+        } catch (IOException ex) {
+            fail("No IO operation!");
+        }
+    }
 }
