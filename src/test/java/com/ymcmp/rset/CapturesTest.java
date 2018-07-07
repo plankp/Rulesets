@@ -15,6 +15,7 @@ import java.util.Set;
 import java.util.Arrays;
 
 import com.ymcmp.rset.rt.Rulesets;
+import com.ymcmp.rset.lib.Extensions;
 
 import org.junit.Test;
 import org.junit.BeforeClass;
@@ -24,9 +25,11 @@ import static org.junit.Assert.*;
 public class CapturesTest {
 
     private static Class<?> Captures;
+    private static Extensions ext;
 
     @BeforeClass
     public static void compile() {
+        // This Ruleset does not have any standard exports! (see line 50, feature mask = 0)
         final StringReader reader = new StringReader(
             "rule xs = (xs:(x+)) u* { ?xs },\n" +
             "rule ys = ys:(y*) { ?ys },\n" +
@@ -44,14 +47,21 @@ public class CapturesTest {
         } else {
             throw new RuntimeException("This should not happen, generated classes must inherit Rulesets");
         }
+
+        ext = new Extensions(0);
     }
 
     public static Rulesets newCaptures() {
         try {
-            return (Rulesets) Captures.getConstructor().newInstance();
+            return (Rulesets) Captures.getConstructor(Extensions.class).newInstance(ext);
         } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException ex) {
             throw new RuntimeException(ex);
         }
+    }
+
+    @Test
+    public void featureMaskOnExtIsZero() {
+        assertEquals(0, ext.getEnabledFeatures());
     }
 
     @Test
