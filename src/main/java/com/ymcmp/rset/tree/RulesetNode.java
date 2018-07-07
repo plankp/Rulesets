@@ -13,30 +13,6 @@ public final class RulesetNode extends ParseTree {
 
     public enum Type {
         RULE, SUBRULE, FRAGMENT;
-
-        public Optional<String> ruleName(String name) {
-            return this == Type.RULE ? Optional.of("rule" + name) : Optional.empty();
-        }
-
-        public Optional<String> testName(String name) {
-            switch (this) {
-                case RULE:
-                case SUBRULE:
-                    return Optional.of("test" + name);
-                default:
-                    return Optional.empty();
-            }
-        }
-
-        public Optional<String> actnName(String name) {
-            switch (this) {
-                case RULE:
-                case SUBRULE:
-                    return Optional.of("act" + name);
-                default:
-                    return Optional.empty();
-            }
-        }
     }
 
     public final Type type;
@@ -70,14 +46,31 @@ public final class RulesetNode extends ParseTree {
     }
 
     public Optional<String> makeRuleName() {
-        return type.ruleName(name.getText());
+        switch (type) {
+            case RULE:
+                return Optional.of("rule" + name.getText());
+            default:
+                return Optional.empty();
+        }
     }
 
     public Optional<String> makeTestName() {
-        return type.testName(name.getText());
+        switch (type) {
+            case RULE:
+            case SUBRULE:
+                return Optional.of("test" + name.getText());
+            default:
+                return Optional.empty();
+        }
     }
 
     public Optional<String> makeActnName() {
-        return type.actnName(name.getText());
+        switch (type) {
+            case RULE:
+            case SUBRULE:
+                return Optional.of("act" + name.getText());
+            default:
+                return Optional.empty();
+        }
     }
 }

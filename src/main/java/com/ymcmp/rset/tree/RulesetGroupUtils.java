@@ -54,10 +54,10 @@ import static org.objectweb.asm.Opcodes.*;
         mv.visitEnd();
     }
 
-    public static void generateRuleMethod(ClassWriter cw, final String className, final String name, final RulesetNode.Type type) {
-        final String ruleName = type.ruleName(name).get();
-        final String testName = type.testName(name).get();
-        final String actnName = type.actnName(name).get();
+    public static void generateRuleMethod(ClassWriter cw, final String className, final RulesetNode r) {
+        final String ruleName = r.makeRuleName().get();
+        final String testName = r.makeTestName().get();
+        final String actnName = r.makeActnName().get();
 
         final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_VARARGS, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
         final ASMUtils mva = ASMUtils.wrapperFor(mv);

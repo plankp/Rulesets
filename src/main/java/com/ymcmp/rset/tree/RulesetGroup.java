@@ -102,7 +102,7 @@ public final class RulesetGroup extends ParseTree {
         for (final RulesetNode r : rsets) {
             r.makeTestName().ifPresent(k -> rw.visit(r));
             r.makeActnName().ifPresent(k -> aw.visit(r));
-            r.makeRuleName().ifPresent(k -> generateRuleMethod(cw, className, r.name.getText(), r.type));
+            r.makeRuleName().ifPresent(k -> generateRuleMethod(cw, className, r));
         }
 
         // Implement the Rulesets interface
