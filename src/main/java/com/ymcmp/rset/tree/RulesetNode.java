@@ -5,6 +5,8 @@
 
 package com.ymcmp.rset.tree;
 
+import java.util.Optional;
+
 import com.ymcmp.lexparse.tree.ParseTree;
 
 public final class RulesetNode extends ParseTree {
@@ -12,27 +14,27 @@ public final class RulesetNode extends ParseTree {
     public enum Type {
         RULE, SUBRULE, FRAGMENT;
 
-        public String ruleName(String name) {
-            return this == Type.RULE ? "rule" + name : null;
+        public Optional<String> ruleName(String name) {
+            return this == Type.RULE ? Optional.of("rule" + name) : Optional.empty();
         }
 
-        public String testName(String name) {
+        public Optional<String> testName(String name) {
             switch (this) {
                 case RULE:
                 case SUBRULE:
-                    return "test" + name;
+                    return Optional.of("test" + name);
                 default:
-                    return null;
+                    return Optional.empty();
             }
         }
-    
-        public String actnName(String name) {
+
+        public Optional<String> actnName(String name) {
             switch (this) {
                 case RULE:
                 case SUBRULE:
-                    return "act" + name;
+                    return Optional.of("act" + name);
                 default:
-                    return null;
+                    return Optional.empty();
             }
         }
     }
@@ -65,5 +67,18 @@ public final class RulesetNode extends ParseTree {
     public String getText() {
         return '(' + type.toString() + ' ' + name.getText()
             + ' ' + rule.getText() + ' ' + expr.getText() + ')';
+    }
+
+
+    public Optional<String> makeRuleName() {
+        return type.ruleName(name.getText());
+    }
+
+    public Optional<String> makeTestName() {
+        return type.testName(name.getText());
+    }
+
+    public Optional<String> makeActnName() {
+        return type.actnName(name.getText());
     }
 }

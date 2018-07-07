@@ -36,8 +36,7 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
     }
 
     private void loadEvalState() {
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        selfGetField(className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
     }
 
     private void callEvalStateTest(final int localParseStack, final String name, final String params) {
@@ -194,17 +193,14 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     mv.visitVarInsn(ASTORE, save);
 
                     // update this.state to the newly created state (TOP OF STACK),
-                    mv.visitVarInsn(ALOAD, 0);
-                    mv.visitInsn(SWAP);
-                    mv.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    selfPutField(className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
 
                     // test against the inner rules,
                     visit(n.rule);
 
                     // restore this.state
-                    mv.visitVarInsn(ALOAD, 0);
                     mv.visitVarInsn(ALOAD, save);
-                    mv.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+                    selfPutField(className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
                     scope.popLocal();
                 }, () -> {
                     // evalState is null, result is set to false because item was not destructable

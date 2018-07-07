@@ -29,6 +29,19 @@ public interface ASMUtils {
         if (slot > 0) mv.visitVarInsn(ASTORE, slot);
     }
 
+    public default void selfGetField(String className, String fieldName, String type) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitFieldInsn(GETFIELD, className, fieldName, type);
+    }
+
+    public default void selfPutField(String className, String fieldName, String type) {
+        final MethodVisitor mv = getMethodVisitor();
+        mv.visitVarInsn(ALOAD, 0);
+        mv.visitInsn(SWAP);
+        mv.visitFieldInsn(PUTFIELD, className, fieldName, type);
+    }
+
     public default void testIfElse(final int jumpInsn, final Runnable ifTrue, final Runnable ifFalse) {
         final MethodVisitor mv = getMethodVisitor();
         final Label br0 = new Label();

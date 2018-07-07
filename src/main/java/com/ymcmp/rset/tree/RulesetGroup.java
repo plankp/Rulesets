@@ -68,11 +68,10 @@ public final class RulesetGroup extends ParseTree {
         final BytecodeRuleVisitor rw = new BytecodeRuleVisitor(cw, className, genDebugInfo, generateRefsMap(className));
 
         // Generating code for Java 8
+        cw.visitSource(sourceFile, null);
         cw.visit(V1_8, ACC_PUBLIC | ACC_SUPER, className, null, "java/lang/Object", new String[]{
             "com/ymcmp/rset/rt/Rulesets"
         });
-
-        if (sourceFile != null) cw.visitSource(sourceFile, null);
 
         cwa.defineField(ACC_PRIVATE | ACC_FINAL, "rules", "Ljava/util/Map;", "Ljava/util/Map<Ljava/lang/String;Lcom/ymcmp/rset/rt/Rule;>;");
         cwa.defineField(ACC_PUBLIC, "state", "Lcom/ymcmp/rset/rt/EvalState;", null);
@@ -101,15 +100,9 @@ public final class RulesetGroup extends ParseTree {
         cwa.defineCtor(ACC_PUBLIC, "(Lcom/ymcmp/rset/lib/Extensions;)V", ctor -> implDelegatingCtor(ctor, className, rsets));
 
         for (final RulesetNode r : rsets) {
-            final String name = r.name.getText();
-
-            final String ruleName = r.type.ruleName(name);
-            final String testName = r.type.testName(name);
-            final String actnName = r.type.actnName(name);
-
-            if (testName != null) rw.visit(r);
-            if (actnName != null) aw.visit(r);
-            if (ruleName != null) generateRuleMethod(cw, className, name, r.type);
+            r.makeTestName().ifPresent(k -> rw.visit(r));
+            r.makeActnName().ifPresent(k -> aw.visit(r));
+            r.makeRuleName().ifPresent(k -> generateRuleMethod(cw, className, r.name.getText(), r.type));
         }
 
         // Implement the Rulesets interface
@@ -132,15 +125,14 @@ public final class RulesetGroup extends ParseTree {
                         final int lst = vis.scope.findNearestLocal(VarType.LIST);
                         final int localEnv = vis.scope.pushNewLocal(VarType.MAP);
                         final int parseLst = vis.scope.pushNewLocal(VarType.LIST);
-                        vis.mv.visitVarInsn(ALOAD, 0);
-                        vis.mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
+                        vis.selfGetField(className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
                         vis.mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
                         vis.mv.visitVarInsn(ASTORE, localEnv);
                         vis.newObjectNoArgs(parseLst, "java/util/ArrayList");
                         vis.mv.visitVarInsn(ALOAD, 0);
                         vis.mv.visitVarInsn(ALOAD, localEnv);
                         vis.mv.visitVarInsn(ALOAD, parseLst);
-                        vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, e.type.testName(name), "(Ljava/util/Map;Ljava/util/List;)Z", false);
+                        vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, e.makeTestName().get(), "(Ljava/util/Map;Ljava/util/List;)Z", false);
                         vis.mv.visitInsn(DUP);
                         vis.testIf(IFEQ, () -> {
                             vis.mv.visitVarInsn(ALOAD, lst);
@@ -149,7 +141,7 @@ public final class RulesetGroup extends ParseTree {
 
                             vis.logMessage("FINER", "Executing action of " + name);
 
-                            vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, e.type.actnName(name), "(Ljava/util/Map;)Ljava/lang/Object;", false);
+                            vis.mv.visitMethodInsn(INVOKEVIRTUAL, className, e.makeActnName().get(), "(Ljava/util/Map;)Ljava/lang/Object;", false);
                             vis.mv.visitInsn(DUP);
                             vis.testIf(IFNONNULL, () -> {
                                 vis.logMessage("FINER", "Using parse stack as result of action");

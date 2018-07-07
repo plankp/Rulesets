@@ -55,23 +55,20 @@ import static org.objectweb.asm.Opcodes.*;
     }
 
     public static void generateRuleMethod(ClassWriter cw, final String className, final String name, final RulesetNode.Type type) {
-        final String ruleName = type.ruleName(name);
-        final String testName = type.testName(name);
-        final String actnName = type.actnName(name);
+        final String ruleName = type.ruleName(name).get();
+        final String testName = type.testName(name).get();
+        final String actnName = type.actnName(name).get();
 
         final MethodVisitor mv = cw.visitMethod(ACC_PUBLIC | ACC_VARARGS, ruleName, "([Ljava/lang/Object;)Ljava/lang/Object;", null, null);
         final ASMUtils mva = ASMUtils.wrapperFor(mv);
         // state.reset(); state.setData(data@1);
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        mva.selfGetField(className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "reset", "()V", false);
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        mva.selfGetField(className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         mv.visitVarInsn(ALOAD, 1);
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/rt/EvalState", "setData", "([Ljava/lang/Object;)V", false);
         // env@2 = ext.export();
-        mv.visitVarInsn(ALOAD, 0);
-        mv.visitFieldInsn(GETFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
+        mva.selfGetField(className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
         mv.visitMethodInsn(INVOKEVIRTUAL, "com/ymcmp/rset/lib/Extensions", "export", "()Ljava/util/Map;", false);
         mv.visitVarInsn(ASTORE, 2);
         // return (%test(env@2, new ArrayList<>())) ? act(env@2) : null;
@@ -89,31 +86,31 @@ import static org.objectweb.asm.Opcodes.*;
         mv.visitEnd();
     }
 
-    public static void implDelegatingCtor(final MethodVisitor ctor, final String className, Iterable<RulesetNode> rsets) {
+    private static void initializeFields(final MethodVisitor ctor, final String className) {
         final ASMUtils ctora = ASMUtils.wrapperFor(ctor);
         // super();
         ctor.visitVarInsn(ALOAD, 0);
         ctor.visitMethodInsn(INVOKESPECIAL, "java/lang/Object", "<init>", "()V", false);
         // state = new EvalState();
-        ctor.visitVarInsn(ALOAD, 0);
         ctora.newObjectNoArgs(-1, "com/ymcmp/rset/rt/EvalState");
-        ctor.visitFieldInsn(PUTFIELD, className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
+        ctora.selfPutField(className, "state", "Lcom/ymcmp/rset/rt/EvalState;");
         // ext = %injected through constructor;
-        ctor.visitVarInsn(ALOAD, 0);
         ctor.visitVarInsn(ALOAD, 1);
-        ctor.visitFieldInsn(PUTFIELD, className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
+        ctora.selfPutField(className, "ext", "Lcom/ymcmp/rset/lib/Extensions;");
         // rules = new HashMap<>();
-        ctor.visitVarInsn(ALOAD, 0);
         ctora.newObjectNoArgs(-1, "java/util/HashMap");
-        ctor.visitFieldInsn(PUTFIELD, className, "rules", "Ljava/util/Map;");
+        ctora.selfPutField(className, "rules", "Ljava/util/Map;");
+    }
+
+    public static void implDelegatingCtor(final MethodVisitor ctor, final String className, Iterable<RulesetNode> rsets) {
+        initializeFields(ctor, className);
 
         for (final RulesetNode r : rsets) {
-            final String name = r.name.getText();
-            Optional.ofNullable(r.type.ruleName(name)).ifPresent(ruleName -> {
+            r.makeRuleName().ifPresent(ruleName -> {
                 // Map method to rule table
                 ctor.visitVarInsn(ALOAD, 0);
                 ctor.visitFieldInsn(GETFIELD, className, "rules", "Ljava/util/Map;");
-                ctor.visitLdcInsn(name);
+                ctor.visitLdcInsn(r.name.getText());
                 ctor.visitVarInsn(ALOAD, 0);
                 ctor.visitInvokeDynamicInsn("apply", "(L" + className + ";)Lcom/ymcmp/rset/rt/Rule;",
                         new Handle(H_INVOKESTATIC, "java/lang/invoke/LambdaMetafactory", "metafactory", "(Ljava/lang/invoke/MethodHandles$Lookup;Ljava/lang/String;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodType;Ljava/lang/invoke/MethodHandle;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/CallSite;", false),
