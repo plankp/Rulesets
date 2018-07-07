@@ -62,11 +62,9 @@ public interface Parser<T extends Enum<T>, R extends ParseTree> {
                     break;
                 }
             }
+
             final R el = rule.get();
-            if (el == null) {
-                if (delim != null) elms.add(null);
-                break;
-            }
+            if (el == null && delim == null) break;
             elms.add(el);
         }
         return elms;
