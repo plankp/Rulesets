@@ -97,7 +97,6 @@ public class BytecodeRuleVisitor extends BaseRuleVisitor {
                     scope.popLocal();
                 } else {
                     // Other data types just call testEquality, nothing special is needed
-
                     callEvalStateTest(plst, "testEquality", "(Ljava/lang/Object;Ljava/util/Collection;)Z");
                 }
             }
