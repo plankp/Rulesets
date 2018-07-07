@@ -71,7 +71,7 @@ public interface ASMUtils {
         final Label exit = new Label();
         mv.visitLabel(loop);
         test.accept(exit);
-        if (body != null) body.accept(exit, loop);
+        body.accept(exit, loop);
         mv.visitJumpInsn(GOTO, loop);
         mv.visitLabel(exit);
     }
