@@ -11,6 +11,30 @@ public final class RulesetNode extends ParseTree {
 
     public enum Type {
         RULE, SUBRULE, FRAGMENT;
+
+        public String ruleName(String name) {
+            return this == Type.RULE ? "rule" + name : null;
+        }
+
+        public String testName(String name) {
+            switch (this) {
+                case RULE:
+                case SUBRULE:
+                    return "test" + name;
+                default:
+                    return null;
+            }
+        }
+    
+        public String actnName(String name) {
+            switch (this) {
+                case RULE:
+                case SUBRULE:
+                    return "act" + name;
+                default:
+                    return null;
+            }
+        }
     }
 
     public final Type type;
