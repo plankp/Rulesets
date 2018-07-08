@@ -13,11 +13,6 @@ import java.util.stream.Stream;
 
 public final class Stdlib {
 
-    @Export public static final char _space = ' ';
-    @Export public static final char _tab = '\t';
-    @Export public static final char _bs = '\b';
-    @Export public static final char _lf = '\n';
-    @Export public static final char _cr = '\r';
     @Export public static final Object _null = null;
 
     private Stdlib() {
