@@ -13,6 +13,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.stream.Stream;
 import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public final class Arraylib {
@@ -201,6 +202,9 @@ public final class Arraylib {
         }
         if (obj instanceof Map<?, ?>) {
             return ((Map<?, ?>) obj).entrySet();
+        }
+        if (obj instanceof CharSequence) {
+            return ((CharSequence) obj).chars().mapToObj(e -> (char) e).collect(Collectors.toList());
         }
         return (Iterable<?>) obj;
     }

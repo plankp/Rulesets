@@ -77,5 +77,11 @@ public class ArraylibTest {
             ++counter;
         }
         assertEquals(3, counter);
+    
+        counter = 0;
+        for (final Object el : Arraylib.toIterable("Abc")) {
+            ++counter;
+        }
+        assertEquals(3, counter);
     }
 }
