@@ -67,23 +67,23 @@ public final class Mathlib {
         return Math.sqrt(a);
     }
 
-    @Export
-    public static int _and(int a, int b, Object... c) {
-        return intReduction(a, b, c, (lhs, rhs) -> a & b);
+    @Export("_and")
+    public static int and(int a, int b, Object... c) {
+        return intReduction(a, b, c, (lhs, rhs) -> lhs & rhs);
     }
 
-    @Export
-    public static int _or(int a, int b, Object... c) {
-        return intReduction(a, b, c, (lhs, rhs) -> a | b);
+    @Export("_or")
+    public static int or(int a, int b, Object... c) {
+        return intReduction(a, b, c, (lhs, rhs) -> lhs | rhs);
     }
 
-    @Export
-    public static int _xor(int a, int b, Object... c) {
-        return intReduction(a, b, c, (lhs, rhs) -> a ^ b);
+    @Export("_xor")
+    public static int xor(int a, int b, Object... c) {
+        return intReduction(a, b, c, (lhs, rhs) -> lhs ^ rhs);
     }
 
-    @Export
-    public static Object _not(Object k) {
+    @Export("_not")
+    public static Object not(Object k) {
         if (k instanceof Number) return ~((Number) k).intValue();
         if (k instanceof Boolean) return !((Boolean) k);
         return null;
