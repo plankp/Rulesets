@@ -34,6 +34,24 @@ public class IllegalParseTest {
     }
 
     @Test(expected = IllegalParseException.class)
+    public void parseRuleWithNoDelimeter() {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a"))) {
+            new RsetParser(lexer).parse();
+        } catch (IOException ex) {
+            fail("No manipulating IO?");
+        }
+    }
+
+    @Test(expected = IllegalParseException.class)
+    public void parseRuleWithWrongDelimeter() {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a b"))) {
+            new RsetParser(lexer).parse();
+        } catch (IOException ex) {
+            fail("No manipulating IO?");
+        }
+    }
+
+    @Test(expected = IllegalParseException.class)
     public void parseRuleWithoutClause() {
         try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = "))) {
             new RsetParser(lexer).parse();
