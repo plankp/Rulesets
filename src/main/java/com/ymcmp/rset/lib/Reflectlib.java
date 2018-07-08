@@ -40,8 +40,8 @@ public final class Reflectlib {
     }
 
     private static List<Object> convertToArray(Object obj) {
-        if (obj == null) return null;
-        if (obj.getClass().isArray()) return Arrays.asList((Object[]) obj);
+        final List<Object> list = Arraylib.polyArrayToList(obj);
+        if (list != null) return list;
         if (obj instanceof Collection) return new ArrayList<>((Collection<?>) obj);
         return null;
     }
@@ -49,7 +49,8 @@ public final class Reflectlib {
     private static Object accessField(Object obj, String name) {
         if (obj.getClass().isArray()) {
             // Arrays (at least in Java) only have length as a property
-            return "length".equals(name) ? ((Object[]) obj).length : null;
+            // This property, however, cannot be found using getField
+            return "length".equals(name) ? Arraylib.polyArraylength(obj) : null;
         }
 
         try {

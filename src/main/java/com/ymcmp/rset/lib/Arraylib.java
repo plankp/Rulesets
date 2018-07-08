@@ -61,7 +61,7 @@ public final class Arraylib {
         throw new ClassCastException(k + " is not an array");
     }
 
-    public static List<?> polyArrayToList(final Object k) {
+    public static List<Object> polyArrayToList(final Object k) {
         final int upperBound = polyArraylength(k);
         if (upperBound < 0) return null;
 
