@@ -31,9 +31,27 @@ public class ArraylibTest {
         assertEquals(Arrays.asList(1, 2, 3), list);
 
         // Test it anyway even though strings are immutable in java
-        final String string = "Hello";
-        assertEquals("olleH", Arraylib.reverse(string));
-        assertEquals("Hello", string);
+        final String string = "hello";
+        assertEquals("olleh", Arraylib.reverse(string));
+        assertEquals("hello", string);
+    }
+
+    @Test
+    public void sortDoesNotPerformInPlace() {
+        assertNull(Arraylib.sort(null));
+
+        final Object[] array = toArray(2, 1, 3);
+        assertArrayEquals(toArray(1, 2, 3), (Object[]) Arraylib.sort(array));
+        assertArrayEquals(toArray(2, 1, 3), array);
+
+        final List<Object> list = Arrays.asList(2, 1, 3);
+        assertEquals(Arrays.asList(1, 2, 3), Arraylib.sort(list));
+        assertEquals(Arrays.asList(2, 1, 3), list);
+
+        // Test it anyway even though strings are immutable in java
+        final String string = "hello";
+        assertEquals("ehllo", Arraylib.sort(string));
+        assertEquals("hello", string);
     }
 
     @Test
