@@ -92,7 +92,7 @@ public final class Arraylib {
 
     @Export("_iota")
     public static Integer[] iota(int k) {
-        return IntStream.range(1, k)
+        return IntStream.rangeClosed(1, k)
                 .mapToObj(e -> e)
                 .toArray(Integer[]::new);
     }
