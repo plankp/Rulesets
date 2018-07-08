@@ -37,17 +37,50 @@ public final class Arraylib {
         return l.toArray();
     }
 
+    public static int polyArraylength(final Object k) {
+        if (k instanceof byte[]) return ((byte[]) k).length;
+        if (k instanceof short[]) return ((short[]) k).length;
+        if (k instanceof char[]) return ((char[]) k).length;
+        if (k instanceof int[]) return ((int[]) k).length;
+        if (k instanceof float[]) return ((float[]) k).length;
+        if (k instanceof long[]) return ((long[]) k).length;
+        if (k instanceof double[]) return ((double[]) k).length;
+        if (k instanceof Object[]) return ((Object[]) k).length;
+        return -1;
+    }
+
+    public static Object polyAaload(final Object k, int offset) {
+        if (k instanceof byte[]) return ((byte[]) k)[offset];
+        if (k instanceof short[]) return ((short[]) k)[offset];
+        if (k instanceof char[]) return ((char[]) k)[offset];
+        if (k instanceof int[]) return ((int[]) k)[offset];
+        if (k instanceof float[]) return ((float[]) k)[offset];
+        if (k instanceof long[]) return ((long[]) k)[offset];
+        if (k instanceof double[]) return ((double[]) k)[offset];
+        if (k instanceof Object[]) return ((Object[]) k)[offset];
+        throw new ClassCastException(k + " is not an array");
+    }
+
+    public static List<?> polyArrayToList(final Object k) {
+        final int upperBound = polyArraylength(k);
+        if (upperBound < 0) return null;
+
+        final List<Object> list = new ArrayList<>();
+        for (int i = 0; i < upperBound; ++i) list.add(polyAaload(k, i));
+        return list;
+    }
+
     @Export("_sort")
     public static Object sort(Object k) {
         if (k == null) return null;
 
         // Do not sort in place
-        if (k.getClass().isArray()) {
-            final Object[] old = (Object[]) k;
-            final Object[] mod = Arrays.copyOf(old, old.length);
-            Arrays.sort(mod);
-            return mod;
+        final List mod = polyArrayToList(k);
+        if (mod != null) {
+            Collections.sort(mod);
+            return mod.toArray();
         }
+
         if (k instanceof Collection) {
             final ArrayList list = new ArrayList((Collection<?>) k);
             Collections.sort(list);
@@ -71,12 +104,12 @@ public final class Arraylib {
         if (k == null) return null;
 
         // Do not reverse in place
-        if (k.getClass().isArray()) {
-            final Object[] old = (Object[]) k;
-            final List<Object> mod = Arrays.asList(Arrays.copyOf(old, old.length));
+        final List mod = polyArrayToList(k);
+        if (mod != null) {
             Collections.reverse(mod);
             return mod.toArray();
         }
+
         if (k instanceof Collection) {
             final ArrayList<?> list = new ArrayList((Collection<?>) k);
             Collections.reverse(list);
@@ -92,10 +125,8 @@ public final class Arraylib {
     }
 
     @Export("_iota")
-    public static Integer[] iota(int k) {
-        return IntStream.rangeClosed(1, k)
-                .mapToObj(e -> e)
-                .toArray(Integer[]::new);
+    public static int[] iota(int k) {
+        return IntStream.rangeClosed(1, k).toArray();
     }
 
     @Export("_flatten")
@@ -109,8 +140,7 @@ public final class Arraylib {
         if (x == null) {
             col.add(null);
         } else if (x.getClass().isArray()) {
-            final Object[] arr = (Object[]) x;
-            for (final Object el : arr) flattenHelper(col, el);
+            for (final Object el : polyArrayToList(x)) flattenHelper(col, el);
         } else if (x instanceof Iterable) {
             ((Iterable<?>) x).forEach(el -> flattenHelper(col, el));
         } else if (x instanceof Stream) {
@@ -130,9 +160,9 @@ public final class Arraylib {
     public static Number length(final Object xs) {
         if (xs == null) return 0;
 
-        if (xs.getClass().isArray()) {
-            return ((Object[]) xs).length;
-        }
+        final int k = polyArraylength(xs);
+        if (k >= 0) return k;
+
         if (xs instanceof Collection) {
             return ((Collection<?>) xs).size();
         }
@@ -156,7 +186,7 @@ public final class Arraylib {
         if (base == null) return null;
         try {
             if (base.getClass().isArray()) {
-                return ((Object[]) base)[((Number) offset).intValue()];
+                return polyAaload(base, ((Number) offset).intValue());
             }
             if (base instanceof CharSequence) {
                 return ((CharSequence) base).charAt(((Number) offset).intValue());
@@ -197,9 +227,9 @@ public final class Arraylib {
     public static Iterable<?> toIterable(final Object obj) {
         if (obj == null) return null;
 
-        if (obj.getClass().isArray()) {
-            return Arrays.asList((Object[]) obj);
-        }
+        final Iterable<?> it = polyArrayToList(obj);
+        if (it != null) return it;
+
         if (obj instanceof Map<?, ?>) {
             return ((Map<?, ?>) obj).entrySet();
         }

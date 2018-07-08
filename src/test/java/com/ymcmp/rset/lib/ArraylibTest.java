@@ -56,7 +56,31 @@ public class ArraylibTest {
 
     @Test
     public void iotaGenerates1ToInclusiveN() {
-        assertArrayEquals(toArray(1, 2, 3), Arraylib.iota(3));
+        assertArrayEquals(new int[]{1, 2, 3}, Arraylib.iota(3));
+    }
+
+    @Test
+    public void lengthWorksOnAllArrays() {
+        assertEquals(3, Arraylib.length(new byte[]{1, 2, 3}));
+        assertEquals(3, Arraylib.length(new short[]{1, 2, 3}));
+        assertEquals(3, Arraylib.length(new char[]{'a', 'b', 'c'}));
+        assertEquals(3, Arraylib.length(new int[]{1, 2, 3}));
+        assertEquals(3, Arraylib.length(new float[]{1, 2, 3}));
+        assertEquals(3, Arraylib.length(new long[]{1, 2, 3}));
+        assertEquals(3, Arraylib.length(new double[]{1, 2, 3}));
+        assertEquals(3, Arraylib.length(new Object[]{null, null, null}));
+    }
+
+    @Test
+    public void subscriptWorksOnAllArrays() {
+        assertEquals((byte) 3, Arraylib.subscript(new byte[]{1, 2, 3}, 2));
+        assertEquals((short) 3, Arraylib.subscript(new short[]{1, 2, 3}, 2));
+        assertEquals('b', Arraylib.subscript(new char[]{'a', 'b', 'c'}, 1));
+        assertEquals((int) 3, Arraylib.subscript(new int[]{1, 2, 3}, 2));
+        assertEquals((float) 3, Arraylib.subscript(new float[]{1, 2, 3}, 2));
+        assertEquals((long) 2, Arraylib.subscript(new long[]{1, 2, 3}, 1));
+        assertEquals((double) 1, Arraylib.subscript(new double[]{1, 2, 3}, 0));
+        assertEquals("Hi", Arraylib.subscript(new Object[]{null, "Hi", null}, 1));
     }
 
     @Test
@@ -77,9 +101,15 @@ public class ArraylibTest {
             ++counter;
         }
         assertEquals(3, counter);
-    
+
         counter = 0;
         for (final Object el : Arraylib.toIterable("Abc")) {
+            ++counter;
+        }
+        assertEquals(3, counter);
+
+        counter = 0;
+        for (final Object el : Arraylib.toIterable(new int[] {2, 7, 4})) {
             ++counter;
         }
         assertEquals(3, counter);

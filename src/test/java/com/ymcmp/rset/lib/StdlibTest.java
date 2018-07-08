@@ -83,5 +83,6 @@ public class StdlibTest {
         assertFalse(Stdlib.isTruthy(toArray()));
         assertTrue(Stdlib.isTruthy("Abc"));
         assertFalse(Stdlib.isTruthy(""));
+        assertTrue(Stdlib.isTruthy(new int[4]));
     }
 }
