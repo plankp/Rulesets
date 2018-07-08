@@ -179,11 +179,6 @@ public final class Stdlib {
         if (obj instanceof Boolean) return (Boolean) obj;
         if (obj instanceof Number) return ((Number) obj).doubleValue() != 0;
         if (obj instanceof Character) return ((Character) obj).charValue() != 0;
-        if (obj instanceof Collection) return !((Collection<?>) obj).isEmpty();
-        if (obj instanceof CharSequence) return ((CharSequence) obj).length() > 0;
-        if (obj instanceof Map) return !((Map<?, ?>) obj).isEmpty();
-        if (obj instanceof Stream) return ((Stream<?>) obj).findAny().isPresent();
-        if (obj.getClass().isArray()) return Arraylib.polyArraylength(obj) > 0;
-        return true;
+        return Arraylib.length(obj).longValue() != 0;
     }
 }

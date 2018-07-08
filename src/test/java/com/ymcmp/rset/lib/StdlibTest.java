@@ -93,5 +93,8 @@ public class StdlibTest {
         assertTrue(Stdlib.isTruthy("Abc"));
         assertFalse(Stdlib.isTruthy(""));
         assertTrue(Stdlib.isTruthy(new int[4]));
+        assertFalse(Stdlib.isTruthy(new HashMap()));
+        assertFalse(Stdlib.isTruthy(new ArrayList()));
+        assertTrue(Stdlib.isTruthy(this));
     }
 }

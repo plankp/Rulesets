@@ -36,6 +36,11 @@ public class ArraylibTest {
         assertEquals("hello", string);
     }
 
+    @Test(expected = RuntimeException.class)
+    public void reverseWillThrowIfTypeCannotBeReversed() {
+        Arraylib.reverse(this);
+    }
+
     @Test
     public void sortDoesNotPerformInPlace() {
         assertNull(Arraylib.sort(null));
@@ -52,6 +57,11 @@ public class ArraylibTest {
         final String string = "hello";
         assertEquals("ehllo", Arraylib.sort(string));
         assertEquals("hello", string);
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void sortWillThrowIfTypeCannotBeSorted() {
+        Arraylib.sort(this);
     }
 
     @Test
