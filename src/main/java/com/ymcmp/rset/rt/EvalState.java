@@ -14,6 +14,7 @@ import java.util.Collection;
 import java.util.EmptyStackException;
 
 import static com.ymcmp.rset.lib.Mathlib.compare;
+import static com.ymcmp.rset.lib.Arraylib.polyArrayToList;
 
 public class EvalState {
 
@@ -77,12 +78,15 @@ public class EvalState {
         if (k == null) return null;
 
         Object[] destruct = null;
-        if (k.getClass().isArray()) {
-            destruct = (Object[]) k;
-        } else if (k instanceof Collection) {
+        if (k instanceof Collection) {
             destruct = ((Collection<?>) k).toArray();
         } else {
-            return null;
+            final Collection<Object> boxed = polyArrayToList(k);
+            if (boxed == null) {
+                return null;
+            } else {
+                destruct = boxed.toArray();
+            }
         }
 
         final EvalState destructedState = new EvalState();
