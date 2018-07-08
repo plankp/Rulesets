@@ -94,6 +94,12 @@ public class ArraylibTest {
     }
 
     @Test
+    public void subscriptWorksOnCharSequences() {
+        assertEquals('a', Arraylib.subscript("abc", 0));
+        assertEquals('b', Arraylib.subscript(new StringBuilder("abc"), 1));
+    }
+
+    @Test
     public void toIterableReturnsNullIfInputIsNull() {
         assertNull(Arraylib.toIterable(null));
     }
