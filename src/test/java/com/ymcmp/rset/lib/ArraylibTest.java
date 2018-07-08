@@ -5,14 +5,27 @@
 
 package com.ymcmp.rset.lib;
 
+import java.util.Map;
 import java.util.List;
 import java.util.Arrays;
+import java.util.HashMap;
 
 import org.junit.Test;
+import org.junit.BeforeClass;
 
 import static org.junit.Assert.*;
 
 public class ArraylibTest {
+
+    private static Map<String, String> demoMap;
+
+    @BeforeClass
+    public static void populateDemoMap() {
+        demoMap = new HashMap<>();
+        demoMap.put("A", "a");
+        demoMap.put("B", "b");
+        demoMap.put("C", "c");
+    }
 
     private Object[] toArray(Object... arr) {
         return arr;
@@ -70,6 +83,13 @@ public class ArraylibTest {
     }
 
     @Test
+    public void testFlatten() {
+        assertArrayEquals(new Object[]{
+            null, this, 1, 2, 3, "A", "a", "B", "b", "C", "c", "Hello", 'a', 'b', 'c', 'd'
+        }, Arraylib.flatten(null, this, new int[]{1, 2, 3}, demoMap, "Hello", Arrays.asList('a', Arrays.asList('b', 'c'), 'd')));
+    }
+
+    @Test
     public void lengthWorksOnAllArrays() {
         assertEquals(3, Arraylib.length(new byte[]{1, 2, 3}));
         assertEquals(3, Arraylib.length(new short[]{1, 2, 3}));
@@ -79,6 +99,15 @@ public class ArraylibTest {
         assertEquals(3, Arraylib.length(new long[]{1, 2, 3}));
         assertEquals(3, Arraylib.length(new double[]{1, 2, 3}));
         assertEquals(3, Arraylib.length(new Object[]{null, null, null}));
+    }
+
+    @Test
+    public void testLength() {
+        assertEquals(0, Arraylib.length(null));
+        assertEquals(3, Arraylib.length(demoMap));
+        for (final Map.Entry<String, String> entry : demoMap.entrySet()) {
+            assertEquals(2, Arraylib.length(entry));
+        }
     }
 
     @Test
@@ -97,6 +126,30 @@ public class ArraylibTest {
     public void subscriptWorksOnCharSequences() {
         assertEquals('a', Arraylib.subscript("abc", 0));
         assertEquals('b', Arraylib.subscript(new StringBuilder("abc"), 1));
+    }
+
+    @Test
+    public void testSubscript() {
+        assertNull(Arraylib.subscript(null, 10));
+
+        for (final Map.Entry<String, String> entry : demoMap.entrySet()) {
+            final String key = entry.getKey();
+            final String value = entry.getValue();
+            assertEquals(value, Arraylib.subscript(demoMap, key));
+            assertEquals(key, Arraylib.subscript(entry, 0));
+            assertEquals(value, Arraylib.subscript(entry, 1));
+        }
+    }
+
+    @Test(expected = RuntimeException.class)
+    public void subscriptThrowsOnNonIndexable() {
+        Arraylib.subscript(this, 8);
+    }
+
+    @Test
+    public void subscriptReturnsNullOnBadIndex() {
+        assertNull(Arraylib.subscript(new int[] {1, 2, 3}, 10));
+        assertNull(Arraylib.subscript(new int[] {1, 2, 3}, "a"));
     }
 
     @Test
@@ -126,6 +179,12 @@ public class ArraylibTest {
 
         counter = 0;
         for (final Object el : Arraylib.toIterable(new int[] {2, 7, 4})) {
+            ++counter;
+        }
+        assertEquals(3, counter);
+
+        counter = 0;
+        for (final Object el : Arraylib.toIterable(demoMap)) {
             ++counter;
         }
         assertEquals(3, counter);
