@@ -6,6 +6,7 @@
 package com.ymcmp.rset.lib;
 
 import java.util.Map;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Collection;
 import java.util.stream.Stream;
@@ -102,47 +103,54 @@ public final class Stdlib {
     @Export("_join")
     public static String join(final Object... args) {
         final StringBuilder sb = new StringBuilder();
-        joinHelper(sb, args, " ");
+        joinHelper(sb, Arrays.asList(args), " ");
         return sb.toString();
     }
 
     @Export("_djoin")
     public static String joinWithDelim(final Object delim, final Object... args) {
         final StringBuilder sb = new StringBuilder();
-        joinHelper(sb, args, delim.toString());
+        joinHelper(sb, Arrays.asList(args), delim.toString());
         return sb.toString();
     }
 
     @Export("_concat")
     public static String concat(final Object... args) {
         final StringBuilder sb = new StringBuilder();
-        joinHelper(sb, args, "");
+        joinHelper(sb, Arrays.asList(args), "");
         return sb.toString();
     }
 
     @Export("_lines")
     public static String lines(final Object... args) {
         final StringBuilder sb = new StringBuilder();
-        joinHelper(sb, args, "\n");
+        joinHelper(sb, Arrays.asList(args), "\n");
         return sb.toString();
     }
 
-    public static void joinHelper(final StringBuilder sb, final Object[] args, final String c) {
-        for (int i = 0; i < args.length; ++i) {
-            if (i != 0 && c != null) sb.append(c);
-            final Object k = args[i];
+    public static boolean joinHelper(final StringBuilder sb, final Collection<?> args, final String c) {
+        if (args.isEmpty()) return false;
+
+        boolean flag = false;
+        for (final Object k : args) {
+            if (flag && c != null) {
+                sb.append(c);
+            }
+            flag = true;
+
             if (k == null) {
                 sb.append("null");
             } else if (k.getClass().isArray()) {
-                joinHelper(sb, (Object[]) k, c);
+                flag = joinHelper(sb, Arraylib.polyArrayToList(k), c);
             } else if (k instanceof Map) {
-                joinHelper(sb, ((Map<?, ?>) k).values().toArray(), c);
+                flag = joinHelper(sb, ((Map<?, ?>) k).values(), c);
             } else if (k instanceof Collection) {
-                joinHelper(sb, ((Collection<?>) k).toArray(), c);
+                flag = joinHelper(sb, (Collection<?>) k, c);
             } else {
                 sb.append(k);
             }
         }
+        return true;
     }
 
     @Export("_p")

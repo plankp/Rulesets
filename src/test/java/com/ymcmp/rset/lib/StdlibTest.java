@@ -5,6 +5,9 @@
 
 package com.ymcmp.rset.lib;
 
+import java.util.HashMap;
+import java.util.ArrayList;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -37,6 +40,12 @@ public class StdlibTest {
     public void testToFloat() {
         final Object[] ret = Stdlib.toFloat(null, 'a', 6.5, "10", "a", new Object[0]);
         assertArrayEquals(toArray(null, null, 6.5, 10.0, null, null), ret);
+    }
+
+    @Test
+    public void testJoin() {
+        final Object[] data = toArray(null, toArray(), 'a', new HashMap(), 1, new ArrayList(), 5, toArray(1), "Hello");
+        assertEquals("null a 1 5 1 Hello", Stdlib.join(data));
     }
 
     @Test
