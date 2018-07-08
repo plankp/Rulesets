@@ -138,6 +138,7 @@ public class ArraylibTest {
             assertEquals(value, Arraylib.subscript(demoMap, key));
             assertEquals(key, Arraylib.subscript(entry, 0));
             assertEquals(value, Arraylib.subscript(entry, 1));
+            assertNull(Arraylib.subscript(entry, 5));
         }
     }
 
