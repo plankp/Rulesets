@@ -43,8 +43,17 @@ public class IllegalParseTest {
     }
 
     @Test(expected = IllegalParseException.class)
-    public void parseUnclosedAction() {
+    public void parseUnclosedAction1() {
         try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = a { "))) {
+            new RsetParser(lexer).parse();
+        } catch (IOException ex) {
+            fail("No manipulating IO?");
+        }
+    }
+
+    @Test(expected = IllegalParseException.class)
+    public void parseUnclosedAction2() {
+        try (final RsetLexer lexer = new RsetLexer(new StringReader("rule a = a { a a"))) {
             new RsetParser(lexer).parse();
         } catch (IOException ex) {
             fail("No manipulating IO?");
