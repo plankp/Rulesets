@@ -65,7 +65,7 @@ public final class Arraylib {
         final int upperBound = polyArraylength(k);
         if (upperBound < 0) return null;
 
-        final List<Object> list = new ArrayList<>();
+        final List<Object> list = new ArrayList<>(upperBound);
         for (int i = 0; i < upperBound; ++i) list.add(polyAaload(k, i));
         return list;
     }
