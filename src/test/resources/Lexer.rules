@@ -83,14 +83,18 @@ rule mono_op
     | ?_null), ?z~
 },
 
+fragment value
+    = &str_s
+    | &str_d
+    | &num
+    | &ident
+,
+
 rule getToken
     = ep:; # Terminal
     | (&ignore)+ t:&getToken
-    | s:&str_s
-    | d:&str_d
     | m:&mono_op
-    | n:&num
-    | i:&ident
+    | v:&value
 {
-    (?ep & ?_null, | (?t | ?s | ?d | ?m | ?n | ?i),):0
+    (?ep & ?_null, | (?t | ?m | ?v),):0
 }
