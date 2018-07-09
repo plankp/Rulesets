@@ -183,7 +183,8 @@ public class EvalState {
     }
 
     public boolean testSlotOccupied(Collection<Object> col) {
-        return condAdd(!negateFlag, next(), col);
+        final Object k = next();
+        return condAdd(processNegate(!Epsilon.INSTANCE.equals(k)), k, col);
     }
 
     public boolean testEnd(Collection<Object> col) {
