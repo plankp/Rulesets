@@ -246,11 +246,14 @@ public final class Arraylib {
         final Iterable<?> it = toIterable(obj);
         final List<Object> list = new ArrayList<>();
         int i = start - 1;
-        for (Object el : it) {
-            if (++i == offset) {
-                i = -1;
-            } else if (i >= 0) {
-                list.add(el);
+
+        if (it != null) {
+            for (Object el : it) {
+                if (++i == offset) {
+                    i = -1;
+                } else if (i >= 0) {
+                    list.add(el);
+                }
             }
         }
         return list;
