@@ -58,7 +58,7 @@ import com.ymcmp.lexparse.tree.ParseTree;
                     final RefRule rrule = new RefRule(parseValue());
                     final Token<Type> lookahead = getToken();
                     if (lookahead != null && lookahead.type == Type.S_DV) {
-                        rrule.subst = consumeRules(Type.S_DV, this::parseValue);
+                        rrule.subst = consumeRules(Type.S_DV, this::parseRuleAtomic);
                     } else {
                         ungetToken(lookahead);
                     }

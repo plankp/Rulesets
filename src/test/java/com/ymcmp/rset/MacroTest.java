@@ -29,7 +29,9 @@ public class MacroTest {
         final StringReader reader = new StringReader(
             "fragment a = &0,\n" +
             "rule expectA = k:&a/a { ?k },\n" +
-            "rule expectB = k:&a/b { ?k },\n"
+            "rule expectB = k:&a/b { ?k },\n" +
+            "fragment b = &0 &1,\n" +
+            "rule expectAStar = k:&b/a/(*) { ?k },\n"
         );
 
         final RsetLexer lexer = new RsetLexer(reader);
@@ -81,5 +83,21 @@ public class MacroTest {
             if (obj != null) sb.append(obj);
         }
         assertEquals("b", sb.toString());
+    }
+
+    @Test
+    public void testExpecAStar() {
+        final Object[][] tests = {
+            { "a" },
+            { "b" },
+            { "a", "b" },
+        };
+
+        final StringBuilder sb = new StringBuilder();
+        for (final Object[] test : tests) {
+            final Object obj = rsets.getRule("expectAStar").apply(test);
+            if (obj != null) sb.append(obj);
+        }
+        assertEquals("[a, b]", sb.toString());
     }
 }
