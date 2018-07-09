@@ -1,0 +1,96 @@
+#
+# This is an attempt to recreate the Rulesets lexer in Rulesets itself.
+#
+# Should be okay right? I mean Wikipedia implement BNF in BNF itself...
+#
+
+# Takes macro &0
+fragment inner_str
+    = %'\\' (%'\\' | %'\'' | %'"' | %'a' | %'b' | %'t' | %'n' | %'v' | %'f' | %'r')
+    | ~(&0 | %'\\')
+{ },
+
+rule str_s
+    = k:(%'\'' &inner_str/%'\''* %'\'')
+{
+    str, ?k~
+},
+
+rule str_d
+    = k:(%'"' &inner_str/%'"'* %'"')
+{
+    str, ?k~
+},
+
+fragment is_digit
+    = %'0'-%'9'
+{ },
+
+rule num
+    = a:(&is_digit+) b:%'.'? c:(&is_digit*)
+    | a:(&is_digit*) b:%'.' c:(&is_digit*)
+{
+    (?b & real | int), ?a ~ ?b ~ ?c
+},
+
+fragment is_ident
+    = %'a'-%'z'
+    | %'A'-%'Z'
+    | %'$' | %'_'
+    | &is_digit
+{ },
+
+rule ident
+    = k:(&is_ident+)
+{
+    ident, ?k~
+},
+
+fragment comment
+    = %'#' ~%'\n'* (%'\n' | ;)
+{ },
+
+fragment ignore
+    = &comment
+    | %' ' | %'\n' | %'\r' | %'\t'
+{ },
+
+rule mono_op
+    = z:
+    ( a:%',' | l:%'='
+    | b:%'-' | m:%'+'
+    | c:%'?' | n:%':'
+    | d:%'|' | o:%'~'
+    | e:%'*' | p:%'/'
+    | f:%'%' | q:%'!'
+    | g:%'&' | r:%';'
+    | h:%'<' | s:%'>'
+    | i:%'(' | t:%')'
+    | j:%'[' | u:%']'
+    | k:%'{' | v:%'}' )
+{
+    ( ?a & CM | ?l & EQ
+    | ?b & MN | ?m & AD
+    | ?c & QM | ?n & CO
+    | ?d & OR | ?o & TD
+    | ?e & ST | ?p & DV
+    | ?f & MD | ?q & EX
+    | ?g & AM | ?r & SM
+    | ?h & LA | ?s & RA
+    | ?i & LP | ?t & RP
+    | ?j & LS | ?u & RS
+    | ?k & LB | ?v & RB
+    | ?_null), ?z~
+},
+
+rule getToken
+    = ep:; # Terminal
+    | (&ignore)+ t:&getToken
+    | s:&str_s
+    | d:&str_d
+    | m:&mono_op
+    | n:&num
+    | i:&ident
+{
+    (?ep & ?_null, | (?t | ?s | ?d | ?m | ?n | ?i),):0
+}
