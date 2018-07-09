@@ -1,0 +1,86 @@
+#
+# This is an attempt to recreate the Rulesets parser in Rulesets itself.
+#
+# Should be okay right? I mean Wikipedia implement BNF in BNF itself...
+#
+
+fragment is_value
+    = [ (int | real | ident | str | chars | null) (*) ; ]
+,
+
+fragment is_numeric
+    = [ (int | real) (*) ; ]
+,
+
+rule parseValue
+    = a:[MN] k:&is_numeric
+    | b:[MD] k:&is_value
+    | k:&is_value
+{
+    ?a & (?k:0, '-'~?k:1)  |
+    ?b & (chars, '%'~?k:1) |
+    (?k:0, ?k:1)
+},
+
+subrule atomic_helper
+    = a:[ ST (*) ; ]
+    | b:[ SM (*) ; ]
+    | c:[TD] k:&parseAtomic
+    | d:[AM] k:&parseValue j:(([DV] &parseAtomic)*)
+    | [e1:EX | e2:LA | e3:RA] k:&parseValue
+    | f:[LS] k:&parseRule? [RS]
+    | g:[LP] (k:&parseRule j:(([CM] &parseRule)*) i:[CM]?)? [RP]
+{
+    ?a & (slot_occupied,) |
+    ?b & (end_of_data,)   |
+    ?c & (negate, ?k)     |
+    ?d & (ref, ?k, (
+        list = ?_drop_x (?_array 0) 0 0;
+        ?j { ?_array_add ?list ?_it:1 };
+        ?_array_fix ?list
+    )) |
+    ?e1 & (resp, ?k)        |
+    ?e2 & (base_of, ?k)     |
+    ?e3 & (subclass_of, ?k) |
+    ?f & (destr, (?k | (end_of_data,))) |
+    ?g & ((?j | ?i) & (group, (
+        list = ?_array ?k;
+        ?j { ?_array_add ?list ?_it:1 };
+        ?_array_fix ?list
+    )) | ?k | null,)
+},
+
+rule parseAtomic
+    = a:&atomic_helper
+    | k:&parseValue b:[CO] j:&parseAtomic
+    | k:&parseValue c:[MN] j:&parseValue
+    | k:&parseValue
+{
+    ?a |
+    ?b & (capture, ?k, ?j) |
+    ?c & (range, ?k, ?j) |
+    ?k
+},
+
+rule parseInnerLoop
+    = k:&parseAtomic a:[ (QM | AD | ST) (*) ]?
+{
+    ?a & ?a:1, ?k | ?k
+},
+
+subrule rule_seq
+    = k:(&parseInnerLoop+)
+{
+    ?_eqls 1 (?_len ?k) & ?k:0 | seq, (?_array_fix ?k)
+},
+
+rule parseRule
+    = a:&rule_seq b:(([OR] &rule_seq)*)
+{
+    ?b & ('|', (
+        list = ?_array ?a;
+        ?b { ?_array_add ?list ?_it:1 };
+        ?_array_fix ?list
+    )) |
+    ?a
+},
