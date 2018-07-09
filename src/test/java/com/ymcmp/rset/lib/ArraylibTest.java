@@ -190,4 +190,10 @@ public class ArraylibTest {
         }
         assertEquals(3, counter);
     }
+
+    @Test
+    public void testDropEveryXIndex() {
+        assertEquals(Arrays.asList(1, 3, 5), Arraylib.dropEveryXIndex(toArray(1, 2, 3, 4, 5, 6), 1, 0));
+        assertEquals(Arrays.asList(2, 4, 6), Arraylib.dropEveryXIndex(toArray(1, 2, 3, 4, 5, 6), 1, -1));
+    }
 }

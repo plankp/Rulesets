@@ -238,4 +238,21 @@ public final class Arraylib {
         }
         return (Iterable<?>) obj;
     }
+
+    @Export("_drop_x")
+    public static List<?> dropEveryXIndex(final Object obj, Number k, Number init) {
+        final int offset = k.intValue();
+        final int start = init.intValue();
+        final Iterable<?> it = toIterable(obj);
+        final List<Object> list = new ArrayList<>();
+        int i = start - 1;
+        for (Object el : it) {
+            if (++i == offset) {
+                i = -1;
+            } else if (i >= 0) {
+                list.add(el);
+            }
+        }
+        return list;
+    }
 }
